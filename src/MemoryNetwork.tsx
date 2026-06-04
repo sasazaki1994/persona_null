@@ -12,7 +12,10 @@ type Props = {
 export function MemoryNetwork({ nodes, selectedNodeId, visitedNodeIds, onSelectNode }: Props) {
   const hostRef = useRef<HTMLDivElement | null>(null);
   const onSelectRef = useRef(onSelectNode);
-  onSelectRef.current = onSelectNode;
+
+  useEffect(() => {
+    onSelectRef.current = onSelectNode;
+  }, [onSelectNode]);
 
   useEffect(() => {
     const host = hostRef.current;

@@ -266,7 +266,7 @@ function InvestigationScreen(props: InvestigationProps) {
         <div className="actions">
           <p>解析アクション</p>
           {case000.analysisActions.map((action) => (
-            <button key={action.id} onClick={() => props.onExecuteAction(action.id)} disabled={props.executedActionIds.includes(action.id)} title={action.description}>
+            <button key={action.id} onClick={() => props.onExecuteAction(action.id)} disabled={props.executedActionIds.includes(action.id) || props.resources === 0} title={action.description}>
               {props.executedActionIds.includes(action.id) ? `実行済：${action.title}` : action.title}
             </button>
           ))}
