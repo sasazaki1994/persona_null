@@ -24,6 +24,31 @@ export type CityStats = {
   egoStability: number;
 };
 
+export type StructuredCaseLog = {
+  id: string;
+  title: string;
+  summary: string;
+  log: string;
+  simpleFact: string;
+  warning: string;
+  metrics: Record<string, string | number>;
+};
+
+export type PersonLog = StructuredCaseLog & {
+  name: string;
+  role: string;
+};
+
+export type OperatorCandidate = StructuredCaseLog & {
+  candidate: string;
+  supportingNodes: string[];
+};
+
+export type MvpScope = {
+  cutForMvp: string[];
+  keepForExpansion: string[];
+};
+
 export type MemoryNode = {
   id: string;
   title: string;
@@ -59,12 +84,14 @@ export type DecisionOption = {
   statDelta: CityStats;
 };
 
-
 export type CasePreview = {
   id: string;
   title: string;
   subtitle: string;
   previewOnly: true;
+  linkedFromNodeId?: string;
+  handoffSummary?: string;
+  preservedFragment?: string;
 };
 
 export type CaseRecord = {
@@ -78,6 +105,10 @@ export type CaseRecord = {
   overview: string;
   requiredNodesToJudge: number;
   initialStats: CityStats;
+  personLogs: PersonLog[];
+  processingRequest: StructuredCaseLog;
+  operatorCandidates: OperatorCandidate[];
+  mvpScope: MvpScope;
   nodes: MemoryNode[];
   analysisActions: AnalysisAction[];
   decisions: DecisionOption[];

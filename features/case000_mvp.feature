@@ -5,7 +5,7 @@ Feature: Persona Null Case000 playable audit slice
   Background:
     Given the app is running as a React Vite TypeScript single page app
     And the playable case dataset contains only Case000
-    And Case000 has 6 memory nodes, 3 audit resources, 3 analysis actions, and 3 final decisions
+    And Case000 has 7 memory nodes, 3 audit resources, 3 analysis actions, and 3 final decisions
 
   Scenario: Reaching investigation from title
     Given the auditor starts at the Persona Null title screen
@@ -97,3 +97,13 @@ Feature: Persona Null Case000 playable audit slice
     Given the auditor confirms the city OS briefing
     Then localStorage stores the read flag "city-os-briefing" under "persona-null:read-flags"
     And a malformed read flag payload does not prevent the app from opening
+
+  Scenario: Loading the strengthened Case000 scenario data
+    Given the auditor opens Case000
+    Then Case000 has exactly 7 memory nodes
+    And the nodes include "七瀬未織の媒体" and "都市警備局の処理要求"
+    And every memory node contains summary, log, simpleFact, warning, and metrics
+    And the scenario exposes one short person log for 間宮怜司
+    And the scenario exposes exactly 3 operation subject candidates
+    And the Case001 preview is connected from 七瀬未織の媒体 without creating a playable Case001 route
+    And MVP cut items are separated from expansion backlog items

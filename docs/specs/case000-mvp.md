@@ -131,6 +131,31 @@ export type CityStats = {
   egoStability: number;
 };
 
+export type StructuredCaseLog = {
+  id: string;
+  title: string;
+  summary: string;
+  log: string;
+  simpleFact: string;
+  warning: string;
+  metrics: Record<string, string | number>;
+};
+
+export type PersonLog = StructuredCaseLog & {
+  name: string;
+  role: string;
+};
+
+export type OperatorCandidate = StructuredCaseLog & {
+  candidate: string;
+  supportingNodes: string[];
+};
+
+export type MvpScope = {
+  cutForMvp: string[];
+  keepForExpansion: string[];
+};
+
 export type MemoryNode = {
   id: string;
   title: string;
@@ -171,6 +196,9 @@ export type CasePreview = {
   title: string;
   subtitle: string;
   previewOnly: true;
+  linkedFromNodeId?: string;
+  handoffSummary?: string;
+  preservedFragment?: string;
 };
 
 export type CaseRecord = {
@@ -184,6 +212,10 @@ export type CaseRecord = {
   overview: string;
   requiredNodesToJudge: number;
   initialStats: CityStats;
+  personLogs: PersonLog[];
+  processingRequest: StructuredCaseLog;
+  operatorCandidates: OperatorCandidate[];
+  mvpScope: MvpScope;
   nodes: MemoryNode[];
   analysisActions: AnalysisAction[];
   decisions: DecisionOption[];
@@ -225,7 +257,19 @@ export const cases: CaseRecord[] = [
       surveillance: 71,
       egoStability: 39,
     },
-    overview: '都市警備局の操作官・間宮怜司が未登録人格媒体の所持者を射殺した。...',
+    overview: '都市警備局の操作官・間宮怜司の警備用部分義体が、未登録人格媒体の所持者・七瀬未織を射殺した。...',
+    personLogs: [],
+    processingRequest: {
+      id: 'city-security-request',
+      title: '都市警備局 処理要求',
+      summary: '都市警備局は4時間以内の処理確定を要求している。',
+      log: 'REQUEST:CLOSE_WITHIN_04H',
+      simpleFact: '都市警備局は4時間以内の処理確定を要求している。',
+      warning: '処理速度を優先すると操作主体未確定のまま責任が固定される。',
+      metrics: { 要求期限: '4時間' },
+    },
+    operatorCandidates: [],
+    mvpScope: { cutForMvp: [], keepForExpansion: [] },
     nodes: [],
     analysisActions: [],
     decisions: [],
@@ -235,16 +279,17 @@ export const cases: CaseRecord[] = [
 
 ### 5.2 記憶ノード一覧
 
-MVP では以下 6 ノードを実装する。`id` は保存データにも使うため変更不可。
+MVP では以下 7 ノードを実装する。`id` は保存データにも使うため変更不可。
 
 | id | title | importance | hasContradiction | 役割 |
 | --- | --- | --- | --- | --- |
 | `shot-log` | 発砲ログ | `critical` | true | 発砲署名と身体認証瞬断の矛盾 |
 | `missing-memory` | 間宮の発砲記憶 | `critical` | true | 発砲直前 8 秒の NULL 記憶 |
 | `arm-history` | 義体稼働履歴 | `high` | true | 外部制御痕を含む義体駆動 |
-| `victim-medium` | 被害者媒体 | `high` | true | 未登録人格媒体の人格反応 |
-| `last-comm` | 最後の通信 | `standard` | true | 「撃たないで」通信残滓 |
+| `victim-medium` | 七瀬未織の媒体 | `critical` | true | 未登録人格媒体の人格反応と Case001 接続 |
+| `last-comm` | 最後の通信 | `standard` | false | 「撃たないで」通信残滓 |
 | `kasumi-key` | KASUMI-GATE-09認証痕 | `critical` | true | 旧式鍵形式と媒体照合の不安定中心 |
+| `processing-request` | 都市警備局の処理要求 | `high` | true | 4時間以内の処理確定要求 |
 
 各ノードは必ず以下を持つ。
 
@@ -282,8 +327,8 @@ export const contradictionTagLabels: Record<ContradictionTag, string> = {
 | 期待 id | 目的 |
 | --- | --- |
 | `resignature` | 発砲ログの人格署名を再照合する |
-| `memory-recover` | NULL 記憶区間の復元を試行する |
-| `key-compare` | 認証痕と被害者媒体を照合する |
+| `restore-eight` | NULL 記憶区間の復元を試行する |
+| `match-key-medium` | 認証痕と七瀬未織の媒体を照合する |
 
 ### 5.5 最終判断選択肢
 
@@ -292,8 +337,8 @@ export const contradictionTagLabels: Record<ContradictionTag, string> = {
 | id | label | 判断の意味 |
 | --- | --- | --- |
 | `detain-mamiya` | `A. 間宮怜司を発砲責任者として拘束` | 署名と身体を重視して即時処理 |
-| `freeze-evidence` | `B. 間宮の義体と被害者媒体を証拠凍結` | 操作主体未確定のまま境界を保存 |
-| `process-medium` | `C. 被害者媒体を外部操作源として処理` | 媒体を原因として事件を閉鎖 |
+| `freeze-evidence` | `B. 間宮の義体と七瀬未織の媒体を証拠凍結` | 操作主体未確定のまま境界を保存 |
+| `process-medium` | `C. 七瀬未織の媒体を外部操作源として処理` | 媒体を原因として事件を閉鎖 |
 
 各 decision は以下を必ず持つ。
 
@@ -561,3 +606,57 @@ const finalStats: CityStats = {
 - E2E は未定義。UI 操作の完全保証には Playwright の追加が必要。
 - Three.js canvas は jsdom unit test では直接検証しにくいため、データ・進行条件・保存仕様を unit test で優先検証する。
 - `completedAt` は result payload 生成タイミングで ISO 文字列になるため、厳密な snapshot には固定時刻 mock が必要。
+
+## 14. シナリオ補強仕様（KASUMI-GATE-09 実装前提）
+
+MVP では `CaseRecord` を TypeScript/JSON 化しやすい静的データとして拡張し、以下を Case000 の構造化フィールドとして保持する。
+
+- `personLogs`: 間宮怜司の短い人物ログ。発砲義体の登録者、警備局操作官、旧式認証接触歴、疲労警告を含む。
+- `processingRequest`: 都市警備局の処理要求。4時間以内の処理確定、推奨判断、監査異議、処理速度によるリスクを含む。
+- `operatorCandidates`: 操作主体候補3件。A=間宮怜司本人、B=七瀬未織の未登録人格媒体、C=KASUMI-GATE-09境界介入として整理する。
+- `case001Preview`: `victim-medium` から Case001「焼却されなかった声」へ接続する未焼却音声断片を含む。ただし playable route は作らない。
+- `mvpScope`: MVPで削る要素と、拡張で残す要素を分けて保持する。
+
+### 14.1 記憶ノード
+
+Case000 は7個の記憶ノードを持つ。
+
+1. 発砲ログ
+2. 間宮の発砲記憶
+3. 義体稼働履歴
+4. 七瀬未織の媒体
+5. 最後の通信
+6. KASUMI-GATE-09認証痕
+7. 都市警備局の処理要求
+
+各ノードは従来通り `summary`, `log`, `simpleFact`, `inspectorNote`, `warning`, `metrics` を必須とする。ユーザーが指定した補強要件のうち、`inspectorNote` は既存UIの監査体験を維持するため引き続き保持する。
+
+### 14.2 最終判断
+
+最終判断3択は維持する。各判断は以下を必須とする。
+
+- `finalRuling`: 行政ログ上の裁定名
+- `processing`: 実行される処理
+- `prioritizedValue`: 優先価値
+- `disregardedValue`: 犠牲または軽視された価値
+- `statDelta`: 都市ステータス変動
+- `endingText`: 短い結末文
+
+### 14.3 MVPで削る要素
+
+MVPでは以下を実装しない。
+
+- Case001 の playable 調査画面と追加ノード展開
+- 間宮の過去任務を分岐条件にするサブクエスト
+- 七瀬未織の媒体内部を3D空間で探索する演出
+- 都市警備局内の派閥・上長キャラクター会話
+- KASUMI-GATE-09 の完全な技術史説明
+
+### 14.4 拡張で残す要素
+
+拡張では以下を継続候補として残す。
+
+- 七瀬未織の未焼却音声断片を Case001 の導入根拠にする
+- KASUMI-GATE-09 を複数事件にまたがる旧式認証ネットワークとして扱う
+- 間宮怜司の旧式認証接触歴を後続事件の証言信頼度に反映する
+- 処理要求ノードを都市組織圧力システムへ拡張する

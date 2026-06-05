@@ -239,6 +239,27 @@ function CaseOverviewScreen({ onNext }: { onNext: () => void }) {
         <p className="eyebrow">事件概要</p>
         <h2>{case000.title}</h2>
         <p>{case000.overview}</p>
+        <section className="overview-grid">
+          <div>
+            <h3>人物ログ</h3>
+            {case000.personLogs.map((person) => (
+              <p key={person.id}><strong>{person.name}</strong>：{person.summary}</p>
+            ))}
+          </div>
+          <div>
+            <h3>処理要求</h3>
+            <p><strong>{case000.processingRequest.title}</strong>：{case000.processingRequest.simpleFact}</p>
+            <p className="warning-text">{case000.processingRequest.warning}</p>
+          </div>
+        </section>
+        <section>
+          <h3>操作主体候補</h3>
+          <ul>
+            {case000.operatorCandidates.map((candidate) => (
+              <li key={candidate.id}><strong>{candidate.candidate}</strong>：{candidate.simpleFact}</li>
+            ))}
+          </ul>
+        </section>
         <p className="warning-text">操作主体が確定できません。判断は不可逆です。</p>
         <button onClick={onNext}>調査を開始</button>
       </section>
@@ -460,6 +481,8 @@ function ResultScreen({ decision, finalStats, payload, taggedNodes }: { decision
           </ResultSection>
           <ResultSection title="次回記録">
             <p className="warning-text">{case001Preview.id.toUpperCase()}「{case001Preview.title}」：{case001Preview.subtitle}。予告のみ表示。Jam提出版では未開放。</p>
+            {case001Preview.handoffSummary && <p>{case001Preview.handoffSummary}</p>}
+            {case001Preview.preservedFragment && <code>{case001Preview.preservedFragment}</code>}
           </ResultSection>
         </div>
       </section>
