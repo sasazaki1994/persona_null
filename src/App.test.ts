@@ -1,8 +1,20 @@
 import { describe, expect, it } from 'vitest';
+import { canUnlockJudgment, getJudgmentRequirements } from './auditRules';
 import { case000, case001Preview, contradictionTags } from './data/cases';
+import type { DecisionOption } from './types';
+
+const resultScreenFields: (keyof DecisionOption)[] = [
+  'finalRuling',
+  'processing',
+  'prioritizedValue',
+  'disregardedValue',
+  'auditNote',
+  'endingText',
+];
 
 describe('case000 data', () => {
-  it('contains the required playable MVP nodes', () => {
+  it('contains exactly seven playable MVP memory nodes', () => {
+    expect(case000.nodes).toHaveLength(7);
     expect(case000.nodes.map((node) => node.title)).toEqual([
       '発砲ログ',
       '間宮の発砲記憶',
@@ -35,6 +47,24 @@ describe('case000 data', () => {
     expect(case000.analysisActions).toHaveLength(3);
   });
 
+  it('defines judgment unlock conditions as node visits, pinned evidence, and contradiction tags', () => {
+    const locked = getJudgmentRequirements({
+      visitedNodeCount: case000.requiredNodesToJudge - 1,
+      requiredNodesToJudge: case000.requiredNodesToJudge,
+      pinnedNodeCount: 0,
+      taggedNodes: {},
+    });
+
+    expect(locked.map((requirement) => requirement.id)).toEqual(['nodes', 'pins', 'tags']);
+    expect(locked.every((requirement) => requirement.completed)).toBe(false);
+    expect(canUnlockJudgment({
+      visitedNodeCount: case000.requiredNodesToJudge,
+      requiredNodesToJudge: case000.requiredNodesToJudge,
+      pinnedNodeCount: 1,
+      taggedNodes: { 'shot-log': ['persona_signature'] },
+    })).toBe(true);
+  });
+
   it('defines all contradiction tags required by the MVP', () => {
     expect(contradictionTags).toEqual([
       'body_auth',
@@ -56,13 +86,11 @@ describe('case000 data', () => {
   });
 
   it('result decisions include all result-screen report fields', () => {
-    expect(case000.decisions.every((decision) => (
-      decision.finalRuling
-      && decision.processing
-      && decision.prioritizedValue
-      && decision.disregardedValue
-      && decision.auditNote
-      && decision.endingText
-    ))).toBe(true);
+    expect(case000.decisions).toHaveLength(3);
+    case000.decisions.forEach((decision) => {
+      resultScreenFields.forEach((field) => {
+        expect(decision[field], `${decision.id}.${field}`).toBeTruthy();
+      });
+    });
   });
 });

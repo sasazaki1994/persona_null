@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { canUnlockJudgment, getJudgmentRequirements, type JudgmentRequirement } from './auditRules';
 import { case000, case001Preview, contradictionTagLabels, contradictionTags } from './case000';
 import { MemoryNetwork } from './MemoryNetwork';
 import { loadCaseResults, loadReadFlags, markRead, saveCaseResult } from './storage';
@@ -22,13 +23,6 @@ const statLabels: Record<keyof CityStats, string> = {
 
 const cityStatKeys = Object.keys(statLabels) as (keyof CityStats)[];
 
-type JudgmentRequirement = {
-  id: string;
-  label: string;
-  completed: boolean;
-  detail: string;
-};
-
 function App() {
   const [screen, setScreen] = useState<Screen>('title');
   const [selectedNodeId, setSelectedNodeId] = useState(case000.nodes[0].id);
@@ -45,29 +39,19 @@ function App() {
   const selectedNode = case000.nodes.find((node) => node.id === selectedNodeId) ?? case000.nodes[0];
   const visitedCount = visitedNodeIds.length;
   const progress = Math.round((visitedCount / case000.nodes.length) * 100);
-  const hasTaggedContradiction = Object.values(taggedNodes).some((tags) => tags.length > 0);
-  const requirements: JudgmentRequirement[] = [
-    {
-      id: 'nodes',
-      label: '記憶ノード確認',
-      completed: visitedCount >= case000.requiredNodesToJudge,
-      detail: `${Math.min(visitedCount, case000.requiredNodesToJudge)}/${case000.requiredNodesToJudge} 完了`,
-    },
-    {
-      id: 'pins',
-      label: '判断根拠ピン留め',
-      completed: pinnedNodeIds.length > 0,
-      detail: `${pinnedNodeIds.length}/1 必須（最大3）`,
-    },
-    {
-      id: 'tags',
-      label: '矛盾分類タグ',
-      completed: hasTaggedContradiction,
-      detail: `${Object.values(taggedNodes).filter((tags) => tags.length > 0).length}/1 必須`,
-    },
-  ];
+  const requirements = getJudgmentRequirements({
+    visitedNodeCount: visitedCount,
+    requiredNodesToJudge: case000.requiredNodesToJudge,
+    pinnedNodeCount: pinnedNodeIds.length,
+    taggedNodes,
+  });
   const blockers = requirements.filter((requirement) => !requirement.completed).map((requirement) => `${requirement.label}：${requirement.detail}`);
-  const canJudge = requirements.every((requirement) => requirement.completed);
+  const canJudge = canUnlockJudgment({
+    visitedNodeCount: visitedCount,
+    requiredNodesToJudge: case000.requiredNodesToJudge,
+    pinnedNodeCount: pinnedNodeIds.length,
+    taggedNodes,
+  });
   const finalStats = useMemo(() => (decision ? addStats(case000.initialStats, decision.statDelta) : case000.initialStats), [decision]);
 
   const resultPayload = useMemo<SavedCaseResult | null>(() => {
@@ -355,7 +339,7 @@ function InvestigationScreen(props: InvestigationProps) {
         <section className="pane-section pin-box">
           <h3>ピン留め根拠</h3>
           <button onClick={() => props.onTogglePin(props.selectedNode.id)} disabled={!props.pinnedNodeIds.includes(props.selectedNode.id) && props.pinnedNodeIds.length >= 3}>
-            {props.pinnedNodeIds.includes(props.selectedNode.id) ? 'このノードを根拠から外す' : 'このノードを根拠に追加'}
+            {props.pinnedNodeIds.includes(props.selectedNode.id) ? '根拠ピンを解除' : '根拠としてピン留め'}
           </button>
           <div className="pinned-list">
             {pinnedNodes.length ? pinnedNodes.map((node) => <span key={node.id}>{node.title}</span>) : <small>未提出。最低1件が必要。</small>}
@@ -381,7 +365,7 @@ function InvestigationScreen(props: InvestigationProps) {
       </aside>
 
       <footer className="bottom-pane">
-        <button className="judge" disabled={!props.canJudge} onClick={props.onJudge}>最終判断へ進む</button>
+        <button className="judge" disabled={!props.canJudge} onClick={props.onJudge}>{props.canJudge ? '最終判断へ進む' : '最終判断は未開放'}</button>
         <section className="blocker-panel">
           <strong>判断不可理由</strong>
           <div className="requirement-list">
