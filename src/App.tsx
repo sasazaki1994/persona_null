@@ -62,8 +62,10 @@ function App() {
 
   useEffect(() => {
     if (screen === 'result' && resultPayload) {
-      saveCaseResult(resultPayload);
-      setCompletedCaseIds((ids) => (ids.includes(resultPayload.caseId) ? ids : [...ids, resultPayload.caseId]));
+      const saved = saveCaseResult(resultPayload);
+      if (saved) {
+        setCompletedCaseIds((ids) => (ids.includes(resultPayload.caseId) ? ids : [...ids, resultPayload.caseId]));
+      }
     }
   }, [resultPayload, screen]);
 

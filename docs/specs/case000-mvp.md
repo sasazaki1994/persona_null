@@ -11,7 +11,7 @@
 - Case data is managed as TypeScript objects shaped like JSON records.
 - Memory nodes include title, type, importance, summary, log, simpleFact, inspectorNote, warning, metrics, hasContradiction, position, and links.
 - Game state tracks visited nodes, pinned nodes, tagged contradictions, executed analysis actions, audit resources, decision, final city stats, completed cases, and read flags.
-- Save data and read flags are stored in localStorage; malformed JSON or storage failures are logged and do not crash the game.
+- Save data and read flags are stored in localStorage; malformed JSON, invalid saved result entries, or storage failures are logged and do not crash the game.
 
 ## Rules
 - Visiting a node adds the node id to `visitedNodeIds` and updates investigation progress.
@@ -24,7 +24,7 @@
 - Analysis action buttons are disabled when the action is already executed or audit resources are zero.
 - When audit resources are zero, the UI shows `監査リソース不足：追加解析を実行できません`.
 - Final judgment unlocks when required visited node count is met, at least one pinned node exists, and at least one eligible node is tagged.
-- Result arrival saves the completed case to localStorage.
+- Result arrival saves the completed case to localStorage. Completion indicators update only after persistence succeeds.
 
 ## UI
 - Investigation view uses four areas: left case/status pane, center Three.js memory network, right node detail/action pane, and bottom judgment/log pane.

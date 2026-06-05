@@ -61,6 +61,7 @@ Feature: Persona Null Case000 playable audit slice
     When the auditor selects a final decision
     Then the result screen is shown
     And localStorage contains caseId, decisionId, pinnedNodeIds, taggedNodes, executedActionIds, finalStats, and completedAt
+    And the completed case indicator updates only after persistence succeeds
 
   Scenario: Reporting the submitted audit structure
     Given the auditor has reached the result screen
@@ -70,4 +71,5 @@ Feature: Persona Null Case000 playable audit slice
     Given localStorage contains malformed saved result JSON
     When the auditor reaches the result screen
     Then the result screen remains available
+    And invalid saved result entries are ignored
     And the save failure is handled without throwing an application error
