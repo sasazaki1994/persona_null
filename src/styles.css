@@ -45,3 +45,4 @@ meter { width: 100%; }
 .decision-list { display: grid; gap: 1rem; margin: 2rem 0; }
 .secondary { border-color: #69808a; background: rgba(60, 74, 84, 0.55); }
 .result h3 { margin-top: 1.5rem; color: #7eeaff; }
+.ending-text { margin-top: 1.5rem; color: #e6fbff; border-left: 3px solid #58dcff; padding-left: 1rem; }

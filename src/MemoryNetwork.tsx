@@ -101,10 +101,13 @@ export function MemoryNetwork({ nodes, selectedNodeId, visitedNodeIds, onSelectN
         const material = mesh.material as THREE.MeshStandardMaterial;
         const selected = nodeId === selectedNodeId;
         const visited = visitedNodeIds.includes(nodeId);
+        const criticalNoise = node.importance === 'critical' ? Math.sin(elapsed * 17 + node.position[2] * 9) * 0.045 : 0;
         const pulse = node.hasContradiction ? Math.sin(elapsed * 5 + node.position[0]) * 0.08 : 0;
-        mesh.position.y = node.position[1] + Math.sin(elapsed * 1.4 + node.position[0]) * 0.06;
-        mesh.scale.setScalar(selected ? 1.55 : visited ? 1.18 : 1 + pulse);
-        material.emissiveIntensity = selected ? 1.8 : node.importance === 'critical' ? 1.15 + Math.abs(pulse) : 0.55;
+        mesh.position.x = node.position[0] + criticalNoise;
+        mesh.position.y = node.position[1] + Math.sin(elapsed * 1.4 + node.position[0]) * 0.06 + criticalNoise;
+        mesh.position.z = node.position[2] + (node.importance === 'critical' ? Math.cos(elapsed * 13 + node.position[1]) * 0.035 : 0);
+        mesh.scale.setScalar(selected ? 1.55 : visited ? 1.18 : 1 + pulse + Math.abs(criticalNoise));
+        material.emissiveIntensity = selected ? 1.8 : node.importance === 'critical' ? 1.25 + Math.abs(pulse) + Math.abs(criticalNoise) * 6 : 0.55;
       });
       scene.rotation.y = Math.sin(elapsed * 0.22) * 0.08;
       renderer.render(scene, camera);

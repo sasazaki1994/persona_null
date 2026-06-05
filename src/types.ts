@@ -51,9 +51,11 @@ export type DecisionOption = {
   id: string;
   label: string;
   finalRuling: string;
+  processing: string;
   prioritizedValue: string;
-  sacrificedValue: string;
+  disregardedValue: string;
   auditNote: string;
+  endingText: string;
   statDelta: CityStats;
 };
 
@@ -61,7 +63,10 @@ export type CaseRecord = {
   id: string;
   title: string;
   subtitle: string;
+  recordName: string;
+  organizationName: string;
   location: string;
+  auditResourceMax: number;
   overview: string;
   requiredNodesToJudge: number;
   initialStats: CityStats;
