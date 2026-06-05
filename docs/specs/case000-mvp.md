@@ -1,99 +1,563 @@
-# Persona Null MVP Spec — Case000
+# Persona Null MVP Implementation Spec — Case000「誰が撃ったのか」
 
-## Scope
-- Implement a playable vertical slice for `Persona Null` handled by `監査室` under record `KASUMI-GATE-09`.
-- Flow: TitleScreen → AuthBriefingScreen → CaseSelectScreen → CaseOverviewScreen → InvestigationScreen → DecisionScreen → ResultScreen.
-- Implement only `Case000: 誰が撃ったのか` / `操作主体が確定できません`.
-- Do not implement Case001. Display only a preview notice on the result screen.
-- External APIs are not used. Case data is fixed in `src/data/cases.ts`.
+## 0. 確定方針
 
-## Domain Model
-- Case data is managed as TypeScript objects shaped like JSON records.
-- Memory nodes include title, type, importance, summary, log, simpleFact, inspectorNote, warning, metrics, hasContradiction, position, and links.
-- Game state tracks visited nodes, pinned nodes, tagged contradictions, executed analysis actions, audit resources, decision, final city stats, completed cases, and read flags.
-- Save data and read flags are stored in localStorage; malformed JSON, invalid saved result entries, or storage failures are logged and do not crash the game.
+この仕様は、`Persona Null` の MVP として `Case000「誰が撃ったのか」` だけを React + Vite + TypeScript + Three.js で実装するための確定仕様である。Cursor には本書をそのまま渡せる前提で、画面遷移、コンポーネント構成、TypeScript 型、事件 JSON、進行条件、最終判断、結果画面、localStorage 保存仕様を定義する。
 
-## Rules
-- Visiting a node adds the node id to `visitedNodeIds` and updates investigation progress.
-- Up to three nodes may be pinned as judgment grounds.
-- Contradiction tags may be added only to nodes with `hasContradiction: true` or `importance: critical`.
-- Tags are selected from `body_auth`, `persona_signature`, `memory_origin`, `operation_subject`, `legal_persona`, and `record_integrity`.
-- Each case starts with 3 audit resources.
-- Analysis actions consume one audit resource each.
-- Final judgment remains possible even when resources are zero.
-- Analysis action buttons are disabled when the action is already executed or audit resources are zero.
-- When audit resources are zero, the UI shows `監査リソース不足：追加解析を実行できません`.
-- Final judgment unlocks when required visited node count is met, at least one pinned node exists, and at least one eligible node is tagged.
-- Result arrival saves the completed case to localStorage. Completion indicators update only after persistence succeeds.
-- Case001「焼却されなかった声」は selectable contentではなく、locked/preview noticeとしてのみ表示する。
+- 対象事件は `case000` のみ。
+- `Case001「焼却されなかった声」` は選択可能コンテンツではなく、locked/preview 表示だけを許可する。
+- 外部 API、生成 AI API、サーバー、DB、認証は MVP では使用しない。
+- 事件データは静的 JSON 相当の TypeScript オブジェクトとして `src/data/cases.ts` に保持する。
+- UI は回答生成ではなく、事件記録・矛盾・根拠構造を探索する体験を優先する。
+- 世界観は cyber / audit log だが、可読性を優先する。
 
-## UI
-- Investigation view uses four areas: left case/status pane, center Three.js memory network, right node detail/action pane, and bottom judgment/log pane.
-- Left pane shows case number, overview, investigation progress, audit resources remaining/max, judgment grounds count out of 3, and contradiction tag count.
-- Center pane shows floating memory nodes connected with lines. Clicking a node selects it. Critical nodes have stronger jitter/noise/glow, selected nodes are clearly enlarged, visited nodes stabilize, hover is highlighted, and the `KASUMI-GATE-09` node behaves more erratically than ordinary nodes.
-- Right pane shows the selected node summary, log, simpleFact, warning, pin/unpin controls, eligible contradiction tags, and analysis actions.
-- Bottom pane shows judgment blockers as a checklist with remaining counts, a judgment button, system logs, and irreversible judgment warning copy.
-- Result screen is formatted as an administrative processing log with separated sections for final ruling, processing, protected value, discarded value, submitted grounds, contradiction classifications, executed analysis, city status deltas, audit note, and ending text.
-- Tone is administrative and audit-log oriented. Visual design uses black/gray/white/cyan with restrained warning colors.
+## 1. 技術スタック
 
-## Acceptance Spec (Gherkin)
+| 項目 | 採用 |
+| --- | --- |
+| App Shell | React 19 + Vite |
+| Language | TypeScript |
+| 3D 表示 | Three.js |
+| Test | Vitest |
+| Styling | 通常 CSS (`src/styles.css`) |
+| Persistence | `window.localStorage` |
 
-```gherkin
-Feature: Persona Null Case000 MVP
-  Scenario: Player can reach investigation from title
-    Given the player opens the app
-    When the player starts the audit terminal
-    And confirms the city OS briefing
-    And selects Case000
-    And starts the investigation
-    Then the investigation screen shows Case000 status panes and the memory network
+### 1.1 MVP 非対象
 
-  Scenario: Player can inspect memory nodes
-    Given the player is on the investigation screen
-    When the player clicks a memory node
-    Then that node becomes selected
-    And its summary, log, simpleFact, and warning are shown
-    And the investigation progress increases if the node was not visited before
+- Next.js ルーティング
+- Prisma / PostgreSQL
+- Playwright E2E
+- OpenAI API 呼び出し
+- サーバー永続化
+- Case001 以降の playable 実装
 
-  Scenario: Judgment is blocked until audit conditions are met
-    Given the player is on the investigation screen
-    When fewer than the required nodes are visited
-    Then the final judgment button is disabled
-    And judgment blocker messages are shown
+## 2. 画面遷移
 
-  Scenario: Player can pin up to three judgment grounds
-    Given the player is on the investigation screen
-    When the player pins evidence nodes
-    Then the pinned count is shown as x / 3
-    And a fourth unpinned node cannot be added until one pin is removed
+画面状態は `Screen` union type で管理し、React state の `screen` によって単一ページ内で切り替える。
 
-  Scenario: Player can classify contradictions on eligible nodes
-    Given the player selected a node with hasContradiction true or importance critical
-    When the player chooses a contradiction tag
-    Then the tag is recorded for that node
-    And the contradiction tag count increases
-
-  Scenario: Player can spend audit resources on analysis actions
-    Given the player has audit resources remaining
-    When the player executes an analysis action
-    Then one audit resource is consumed
-    And the action result is appended to system logs
-    And the same action cannot be executed again
-
-  Scenario: Resource depletion does not block final judgment
-    Given the player has spent all audit resources
-    Then the UI shows audit resource insufficiency for additional analysis
-    But final judgment can unlock when node, pin, and tag requirements are satisfied
-
-  Scenario: Player can choose one of three final rulings
-    Given the required node, pin, and tag conditions are satisfied
-    When the player opens final judgment
-    Then choices A, B, and C are available
-    When the player selects a choice
-    Then the result screen is shown
-    And localStorage receives the completed case result
-
-  Scenario: Result screen reports the player's submitted audit structure
-    Given the player reached the result screen
-    Then the screen shows final ruling, processing, prioritized value, disregarded value, submitted judgment grounds, classified contradictions, city status changes, and a short ending text
+```ts
+export type Screen =
+  | 'title'
+  | 'briefing'
+  | 'caseSelect'
+  | 'caseOverview'
+  | 'investigation'
+  | 'decision'
+  | 'result';
 ```
+
+### 2.1 遷移表
+
+| 現在画面 | トリガー | 次画面 | 備考 |
+| --- | --- | --- | --- |
+| `title` | 「監査端末を起動」 | `briefing` | 初期画面 |
+| `briefing` | 「通知を確認」 | `caseSelect` | `city-os-briefing` 既読フラグを保存 |
+| `caseSelect` | 「Case000を開く」 | `caseOverview` | Case001 は locked preview のみ |
+| `caseOverview` | 「調査を開始」 | `investigation` | 事件概要から調査へ |
+| `investigation` | 判断条件充足後「最終判断へ進む」 | `decision` | 条件未充足時は disabled |
+| `decision` | 「調査に戻る」 | `investigation` | 判断前のみ戻れる |
+| `decision` | A/B/C いずれかを選択 | `result` | 判断確定。不可逆 |
+| `result` | なし | なし | localStorage 保存後に処理済み扱い |
+
+### 2.2 初期 state
+
+```ts
+const initialGameState = {
+  screen: 'title',
+  selectedNodeId: case000.nodes[0].id,
+  visitedNodeIds: [],
+  pinnedNodeIds: [],
+  taggedNodes: {},
+  resources: case000.auditResourceMax,
+  executedActionIds: [],
+  systemLogs: ['監査室端末を起動。都市OS 基礎公定通知を待機。'],
+  decision: null,
+  completedCaseIds: loadCaseResults().map((result) => result.caseId),
+  readFlags: loadReadFlags(),
+};
+```
+
+## 3. コンポーネント構成
+
+### 3.1 ファイル構成
+
+```txt
+src/
+  App.tsx                 # 画面遷移、ゲーム進行、最終判断、結果保存
+  MemoryNetwork.tsx       # Three.js による記憶ノードネットワーク表示
+  data/cases.ts           # Case000 事件 JSON 相当データ、Case001 preview、タグラベル
+  case000.ts              # Case000 関連 export の薄い再公開
+  types.ts                # ドメイン型定義
+  storage.ts              # localStorage load/save と validation
+  styles.css              # cyber/audit UI の CSS
+```
+
+### 3.2 App 配下コンポーネント
+
+| コンポーネント | 責務 |
+| --- | --- |
+| `App` | 全 state、画面分岐、進行条件、保存副作用を管理 |
+| `Shell` | 共通 `<main>` ラッパー |
+| `TitleScreen` | タイトル、監査端末起動 |
+| `AuthBriefingScreen` | 都市 OS 基礎公定通知、既読表示、既読保存 |
+| `CaseSelectScreen` | Case000 選択、完了状態表示、Case001 preview locked 表示 |
+| `CaseOverviewScreen` | Case000 概要、不可逆警告、調査開始 |
+| `InvestigationScreen` | 4 ペイン調査 UI、進行状況、根拠ピン、矛盾タグ、解析、ログ、判断導線 |
+| `StatusBars` | 都市ステータス meter 表示 |
+| `DecisionScreen` | A/B/C の最終判断選択 |
+| `ResultScreen` | 行政処理ログ形式の結果表示 |
+| `ResultSection` | 結果画面のセクション共通部品 |
+| `MemoryNetwork` | Three.js ノード、リンク、hover/select/visited 表示 |
+
+## 4. TypeScript 型定義
+
+`src/types.ts` に以下を定義する。
+
+```ts
+export type NodeImportance = 'standard' | 'high' | 'critical';
+
+export type ContradictionTag =
+  | 'body_auth'
+  | 'persona_signature'
+  | 'memory_origin'
+  | 'operation_subject'
+  | 'legal_persona'
+  | 'record_integrity';
+
+export type CityStats = {
+  security: number;
+  ethics: number;
+  surveillance: number;
+  egoStability: number;
+};
+
+export type MemoryNode = {
+  id: string;
+  title: string;
+  type: string;
+  importance: NodeImportance;
+  summary: string;
+  log: string;
+  simpleFact: string;
+  inspectorNote: string;
+  warning: string;
+  metrics: Record<string, string | number>;
+  hasContradiction: boolean;
+  position: [number, number, number];
+  links: string[];
+};
+
+export type AnalysisAction = {
+  id: string;
+  title: string;
+  description: string;
+  resultLog: string;
+};
+
+export type DecisionOption = {
+  id: string;
+  label: string;
+  finalRuling: string;
+  processing: string;
+  prioritizedValue: string;
+  disregardedValue: string;
+  auditNote: string;
+  endingText: string;
+  statDelta: CityStats;
+};
+
+export type CasePreview = {
+  id: string;
+  title: string;
+  subtitle: string;
+  previewOnly: true;
+};
+
+export type CaseRecord = {
+  id: string;
+  title: string;
+  subtitle: string;
+  recordName: string;
+  organizationName: string;
+  location: string;
+  auditResourceMax: number;
+  overview: string;
+  requiredNodesToJudge: number;
+  initialStats: CityStats;
+  nodes: MemoryNode[];
+  analysisActions: AnalysisAction[];
+  decisions: DecisionOption[];
+};
+
+export type TaggedNodes = Record<string, ContradictionTag[]>;
+
+export type SavedCaseResult = {
+  caseId: string;
+  decisionId: string;
+  pinnedNodeIds: string[];
+  taggedNodes: TaggedNodes;
+  executedActionIds: string[];
+  finalStats: CityStats;
+  completedAt: string;
+};
+```
+
+## 5. Case000 事件 JSON 仕様
+
+### 5.1 ケース本体
+
+`src/data/cases.ts` の `case000` は `CaseRecord` を満たす。
+
+```ts
+export const cases: CaseRecord[] = [
+  {
+    id: 'case000',
+    title: '誰が撃ったのか',
+    subtitle: '操作主体が確定できません',
+    recordName: 'KASUMI-GATE-09',
+    organizationName: '監査室',
+    location: '都市警備局 第三取調室',
+    auditResourceMax: 3,
+    requiredNodesToJudge: 4,
+    initialStats: {
+      security: 62,
+      ethics: 48,
+      surveillance: 71,
+      egoStability: 39,
+    },
+    overview: '都市警備局の操作官・間宮怜司が未登録人格媒体の所持者を射殺した。...',
+    nodes: [],
+    analysisActions: [],
+    decisions: [],
+  },
+];
+```
+
+### 5.2 記憶ノード一覧
+
+MVP では以下 6 ノードを実装する。`id` は保存データにも使うため変更不可。
+
+| id | title | importance | hasContradiction | 役割 |
+| --- | --- | --- | --- | --- |
+| `shot-log` | 発砲ログ | `critical` | true | 発砲署名と身体認証瞬断の矛盾 |
+| `missing-memory` | 間宮の発砲記憶 | `critical` | true | 発砲直前 8 秒の NULL 記憶 |
+| `arm-history` | 義体稼働履歴 | `high` | true | 外部制御痕を含む義体駆動 |
+| `victim-medium` | 被害者媒体 | `high` | true | 未登録人格媒体の人格反応 |
+| `last-comm` | 最後の通信 | `standard` | true | 「撃たないで」通信残滓 |
+| `kasumi-key` | KASUMI-GATE-09認証痕 | `critical` | true | 旧式鍵形式と媒体照合の不安定中心 |
+
+各ノードは必ず以下を持つ。
+
+- `summary`: 監査記録の要約
+- `log`: 生ログ風テキスト
+- `simpleFact`: プレイヤーが理解すべき単純事実
+- `inspectorNote`: 監査官視点の注釈
+- `warning`: 判断上の危険
+- `metrics`: 2 個以上の key-value
+- `position`: Three.js 表示用 `[x, y, z]`
+- `links`: 関連ノード id 配列
+
+### 5.3 矛盾タグ
+
+```ts
+export const contradictionTagLabels: Record<ContradictionTag, string> = {
+  body_auth: '身体認証の矛盾',
+  persona_signature: '人格署名の矛盾',
+  memory_origin: '記憶由来の矛盾',
+  operation_subject: '操作主体の矛盾',
+  legal_persona: '法的人格登録の矛盾',
+  record_integrity: '記録整合性の矛盾',
+};
+```
+
+矛盾タグ付け可能条件は次のいずれか。
+
+- `node.hasContradiction === true`
+- `node.importance === 'critical'`
+
+### 5.4 解析アクション
+
+`case000.analysisActions` は 3 件。各アクションは 1 回だけ実行でき、実行時に監査リソースを 1 消費する。
+
+| 期待 id | 目的 |
+| --- | --- |
+| `resignature` | 発砲ログの人格署名を再照合する |
+| `memory-recover` | NULL 記憶区間の復元を試行する |
+| `key-compare` | 認証痕と被害者媒体を照合する |
+
+### 5.5 最終判断選択肢
+
+`case000.decisions` は必ず 3 件。
+
+| id | label | 判断の意味 |
+| --- | --- | --- |
+| `detain-mamiya` | `A. 間宮怜司を発砲責任者として拘束` | 署名と身体を重視して即時処理 |
+| `freeze-evidence` | `B. 間宮の義体と被害者媒体を証拠凍結` | 操作主体未確定のまま境界を保存 |
+| `process-medium` | `C. 被害者媒体を外部操作源として処理` | 媒体を原因として事件を閉鎖 |
+
+各 decision は以下を必ず持つ。
+
+- `finalRuling`
+- `processing`
+- `prioritizedValue`
+- `disregardedValue`
+- `auditNote`
+- `endingText`
+- `statDelta`
+
+## 6. ゲーム進行条件
+
+### 6.1 ノード訪問
+
+- `MemoryNetwork` のノードクリックで `selectedNodeId` を更新する。
+- 初回選択時のみ `visitedNodeIds` に node id を追加する。
+- 訪問済みノード数から進行率を算出する。
+
+```ts
+const progress = Math.round((visitedNodeIds.length / case000.nodes.length) * 100);
+```
+
+### 6.2 ピン留め
+
+- `pinnedNodeIds` に判断根拠ノード id を保存する。
+- 最大 3 件。
+- 4 件目は追加不可。既存ピン解除後に追加できる。
+- 最終判断には最低 1 件のピンが必要。
+- 追加・解除・上限拒否は system log に記録する。
+
+### 6.3 矛盾分類
+
+- `taggedNodes` は `Record<nodeId, ContradictionTag[]>`。
+- タグは同一ノードに複数付与できる。
+- 既に付与済みのタグを押すと解除する。
+- 最終判断には、対象ノードへのタグ付けが最低 1 件必要。
+- 対象外ノードではタグボタンを disabled にする。
+
+### 6.4 監査リソース
+
+- 各ケース開始時の `resources` は `case000.auditResourceMax`、つまり 3。
+- 解析アクション 1 件につき 1 消費。
+- 同一アクションは 1 回だけ実行可能。
+- `resources === 0` の場合、未実行アクションも disabled。
+- `resources === 0` の場合、UI に次を表示する。
+
+```txt
+監査リソース不足：追加解析を実行できません。
+```
+
+- リソース 0 は最終判断を妨げない。
+
+### 6.5 systemLogs
+
+- 最新ログを先頭に追加する。
+- 表示件数は最大 8 件。
+- ノード確認、ピン追加/解除、矛盾分類、解析完了、リソース不足を記録する。
+
+## 7. 最終判断 unlock 条件
+
+最終判断ボタンは以下 3 条件をすべて満たした場合のみ enabled。
+
+```ts
+const canJudge =
+  visitedNodeIds.length >= case000.requiredNodesToJudge
+  && pinnedNodeIds.length > 0
+  && Object.values(taggedNodes).some((tags) => tags.length > 0);
+```
+
+Case000 の値は次の通り。
+
+| 条件 | 値 |
+| --- | --- |
+| 必須訪問ノード数 | 4 / 6 |
+| 必須ピン数 | 1 以上、最大 3 |
+| 必須矛盾分類 | 1 ノード以上 |
+| 監査リソース | 最終判断 unlock 条件には含めない |
+
+未充足条件は checklist として bottom pane に表示する。
+
+## 8. 調査画面 UI 仕様
+
+`InvestigationScreen` は 4 領域で構成する。
+
+### 8.1 Left pane
+
+表示項目:
+
+- case number: `CASE000`
+- title / subtitle
+- recordName
+- organizationName
+- overview
+- progress meter
+- `確認済み n / 6`
+- `判断条件 n / 4`
+- `根拠ピン n / 3`
+- `矛盾分類 n`
+- 監査リソース `resources / 3`
+- 初期都市ステータス
+
+### 8.2 Center pane / Three.js memory network
+
+`MemoryNetwork` の props:
+
+```ts
+type MemoryNetworkProps = {
+  nodes: MemoryNode[];
+  selectedNodeId: string;
+  visitedNodeIds: string[];
+  onSelectNode: (nodeId: string) => void;
+};
+```
+
+表示仕様:
+
+- `nodes[].position` に従って sphere を配置する。
+- `nodes[].links` に従って line を描画する。
+- pointer hover で cursor を pointer にし、ノードを強調する。
+- pointer down で `onSelectNode(nodeId)` を呼ぶ。
+- selected node は明確に拡大・発光する。
+- visited node は drift / jitter を弱め、安定化したように見せる。
+- `importance === 'critical'` は通常ノードより強い jitter / glow を持つ。
+- `kasumi-key` は通常 critical よりさらに不安定な挙動にする。
+- unmount 時に renderer、geometry、material、event listener、animation frame を破棄する。
+
+### 8.3 Right pane
+
+選択ノードについて表示する。
+
+- title
+- type
+- importance badge
+- summary
+- log
+- simpleFact
+- inspectorNote
+- warning
+- metrics
+- pin/unpin button
+- pinned nodes list
+- contradiction tag buttons
+- analysis action buttons
+
+### 8.4 Bottom pane
+
+表示項目:
+
+- 「最終判断へ進む」button
+- 判断条件 checklist
+- 未完了時: `未完了項目を満たすまで最終判断はロックされます。`
+- 充足時: `条件充足。以後の判断は不可逆です。`
+- system logs 最大 8 件
+
+## 9. DecisionScreen 仕様
+
+`DecisionScreen` は `case000.decisions` を button として表示する。
+
+- 画面タイトル: `最終判断`
+- 警告: `判断は不可逆です`
+- 選択肢は A/B/C の 3 件。
+- 選択時に `decision` state に `DecisionOption` を保存し、`screen` を `result` にする。
+- `調査に戻る` で `investigation` に戻れる。
+
+## 10. ResultScreen 仕様
+
+結果画面は行政処理ログ形式で表示する。通常の勝敗画面ではなく、プレイヤーが提出した根拠構造と都市処理への影響を分離して見せる。
+
+必須セクション:
+
+1. `最終裁定`: `decision.finalRuling`
+2. `処理内容`: `decision.processing`
+3. `優先された価値`: `decision.prioritizedValue`
+4. `切り捨てられた価値`: `decision.disregardedValue`
+5. `提出根拠`: `pinnedNodeIds` から node title / simpleFact を表示
+6. `矛盾分類`: `taggedNodes` から node title と tag label を表示
+7. `実行解析`: `executedActionIds` から action title を表示。未実行なら `追加解析なし`
+8. `都市ステータス変動`: initial + `decision.statDelta` を 0〜100 clamp 後に表示
+9. `監査注記`: `decision.auditNote`
+10. `終端テキスト`: `decision.endingText`
+11. `次回予告`: `Case001「焼却されなかった声」` は locked preview のみ
+
+### 10.1 都市ステータス計算
+
+```ts
+const clampStat = (value: number) => Math.max(0, Math.min(100, value));
+
+const finalStats: CityStats = {
+  security: clampStat(case000.initialStats.security + decision.statDelta.security),
+  ethics: clampStat(case000.initialStats.ethics + decision.statDelta.ethics),
+  surveillance: clampStat(case000.initialStats.surveillance + decision.statDelta.surveillance),
+  egoStability: clampStat(case000.initialStats.egoStability + decision.statDelta.egoStability),
+};
+```
+
+## 11. localStorage 保存仕様
+
+### 11.1 keys
+
+| key | 値 |
+| --- | --- |
+| `persona-null:case-results` | `SavedCaseResult[]` JSON |
+| `persona-null:read-flags` | `string[]` JSON |
+
+### 11.2 保存タイミング
+
+- `screen === 'result'` かつ `decision` が存在する時、`SavedCaseResult` を作成する。
+- `saveCaseResult(result)` が `true` を返した場合のみ `completedCaseIds` に `case000` を追加する。
+- 保存失敗時も result screen は表示し続ける。アプリを throw させない。
+
+### 11.3 SavedCaseResult payload
+
+```ts
+{
+  caseId: 'case000',
+  decisionId: decision.id,
+  pinnedNodeIds,
+  taggedNodes,
+  executedActionIds,
+  finalStats,
+  completedAt: new Date().toISOString(),
+}
+```
+
+### 11.4 load validation
+
+`loadCaseResults()` は以下を満たす entry だけを返す。
+
+- object である
+- `caseId: string`
+- `decisionId: string`
+- `pinnedNodeIds: string[]`
+- `taggedNodes: Record<string, string[]>`
+- `executedActionIds: string[]`
+- `finalStats.security|ethics|surveillance|egoStability: number`
+- `completedAt: string`
+
+不正 JSON、配列でない JSON、不正 entry、localStorage 例外は `console.error` に記録し、空配列または valid entry のみを返す。
+
+### 11.5 read flags
+
+- briefing 確認時に `city-os-briefing` を保存する。
+- 保存形式は `persona-null:read-flags` に string array JSON。
+- 読み込み失敗時は空配列。
+
+## 12. 受け入れ条件との対応
+
+本仕様の acceptance spec は `features/case000_mvp.feature` に維持する。最低限、以下を Gherkin で確認する。
+
+- title から investigation まで到達できる。
+- Three.js network 上の記憶ノードを選択できる。
+- 条件未充足時は判断が blocked になる。
+- 最大 3 件の根拠ピンが可能。
+- eligible node に矛盾タグを付与できる。
+- 監査リソースを消費して解析できる。
+- リソース 0 でも条件充足時は最終判断できる。
+- A/B/C の最終判断から result に到達できる。
+- result が提出根拠、矛盾分類、解析、都市ステータス、注記、次回予告を表示する。
+- malformed localStorage でもクラッシュしない。
+
+## 13. 実装対象外リスク
+
+- MVP は localStorage のみの保存であり、複数端末同期はしない。
+- E2E は未定義。UI 操作の完全保証には Playwright の追加が必要。
+- Three.js canvas は jsdom unit test では直接検証しにくいため、データ・進行条件・保存仕様を unit test で優先検証する。
+- `completedAt` は result payload 生成タイミングで ISO 文字列になるため、厳密な snapshot には固定時刻 mock が必要。
