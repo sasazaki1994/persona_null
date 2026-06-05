@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { case000, contradictionTagLabels, contradictionTags } from './case000';
 import { MemoryNetwork } from './MemoryNetwork';
-import { saveCaseResult } from './storage';
+import { loadCaseResults, loadReadFlags, markRead, saveCaseResult } from './storage';
 import type { CityStats, ContradictionTag, DecisionOption, MemoryNode, SavedCaseResult, Screen, TaggedNodes } from './types';
 import './styles.css';
 
@@ -26,10 +26,12 @@ function App() {
   const [visitedNodeIds, setVisitedNodeIds] = useState<string[]>([]);
   const [pinnedNodeIds, setPinnedNodeIds] = useState<string[]>([]);
   const [taggedNodes, setTaggedNodes] = useState<TaggedNodes>({});
-  const [resources, setResources] = useState(3);
+  const [resources, setResources] = useState(case000.auditResourceMax);
   const [executedActionIds, setExecutedActionIds] = useState<string[]>([]);
   const [systemLogs, setSystemLogs] = useState<string[]>(['監査室端末を起動。都市OS 基礎公定通知を待機。']);
   const [decision, setDecision] = useState<DecisionOption | null>(null);
+  const [completedCaseIds, setCompletedCaseIds] = useState<string[]>(() => loadCaseResults().map((result) => result.caseId));
+  const [readFlags, setReadFlags] = useState<string[]>(() => loadReadFlags());
 
   const selectedNode = case000.nodes.find((node) => node.id === selectedNodeId) ?? case000.nodes[0];
   const visitedCount = visitedNodeIds.length;
@@ -43,7 +45,7 @@ function App() {
     !hasTaggedContradiction ? '矛盾分類が未完了です。criticalまたは矛盾ノードにタグを付与してください。' : '',
   ].filter(Boolean);
   const canJudge = blockers.length === 0;
-  const finalStats = decision ? addStats(case000.initialStats, decision.statDelta) : case000.initialStats;
+  const finalStats = useMemo(() => (decision ? addStats(case000.initialStats, decision.statDelta) : case000.initialStats), [decision]);
 
   const resultPayload = useMemo<SavedCaseResult | null>(() => {
     if (!decision) return null;
@@ -60,7 +62,10 @@ function App() {
 
   useEffect(() => {
     if (screen === 'result' && resultPayload) {
-      saveCaseResult(resultPayload);
+      const saved = saveCaseResult(resultPayload);
+      if (saved) {
+        setCompletedCaseIds((ids) => (ids.includes(resultPayload.caseId) ? ids : [...ids, resultPayload.caseId]));
+      }
     }
   }, [resultPayload, screen]);
 
@@ -102,8 +107,8 @@ function App() {
   };
 
   if (screen === 'title') return <TitleScreen onNext={() => setScreen('briefing')} />;
-  if (screen === 'briefing') return <AuthBriefingScreen onNext={() => setScreen('caseSelect')} />;
-  if (screen === 'caseSelect') return <CaseSelectScreen onNext={() => setScreen('caseOverview')} />;
+  if (screen === 'briefing') return <AuthBriefingScreen onNext={() => { markRead('city-os-briefing'); setReadFlags((flags) => (flags.includes('city-os-briefing') ? flags : [...flags, 'city-os-briefing'])); setScreen('caseSelect'); }} read={readFlags.includes('city-os-briefing')} />;
+  if (screen === 'caseSelect') return <CaseSelectScreen completed={completedCaseIds.includes(case000.id)} onNext={() => setScreen('caseOverview')} />;
   if (screen === 'caseOverview') return <CaseOverviewScreen onNext={() => setScreen('investigation')} />;
   if (screen === 'decision') {
     return <DecisionScreen onBack={() => setScreen('investigation')} onDecide={(nextDecision) => { setDecision(nextDecision); setScreen('result'); }} />;
@@ -142,7 +147,7 @@ function TitleScreen({ onNext }: { onNext: () => void }) {
   return (
     <Shell>
       <section className="start-card">
-        <p className="eyebrow">監査室記録 KASUMI-GATE-09</p>
+        <p className="eyebrow">{case000.organizationName}記録 {case000.recordName}</p>
         <h1>Persona Null</h1>
         <p>北霞市 都市OS 判断不能案件処理端末</p>
         <p className="muted">公定値は手続き上の事実であり、真実そのものではありません。</p>
@@ -152,11 +157,11 @@ function TitleScreen({ onNext }: { onNext: () => void }) {
   );
 }
 
-function AuthBriefingScreen({ onNext }: { onNext: () => void }) {
+function AuthBriefingScreen({ onNext, read }: { onNext: () => void; read: boolean }) {
   return (
     <Shell>
       <section className="document-card">
-        <p className="eyebrow">都市OS 基礎公定通知</p>
+        <p className="eyebrow">都市OS 基礎公定通知{read ? ' / 既読' : ''}</p>
         <h2>本人性の境界について</h2>
         <ul>
           <li>身体認証：その身体が誰のものか。</li>
@@ -171,14 +176,17 @@ function AuthBriefingScreen({ onNext }: { onNext: () => void }) {
   );
 }
 
-function CaseSelectScreen({ onNext }: { onNext: () => void }) {
+function CaseSelectScreen({ completed, onNext }: { completed: boolean; onNext: () => void }) {
   return (
     <Shell>
       <section className="document-card">
         <p className="eyebrow">事件選択</p>
         <h2>Case000 / {case000.title}</h2>
         <p>{case000.subtitle}</p>
+        <p>記録名：{case000.recordName}</p>
+        <p>管轄：{case000.organizationName}</p>
         <p>場所：{case000.location}</p>
+        {completed && <p className="warning-text">処理済記録あり：localStorageから完了状態を検出。</p>}
         <button onClick={onNext}>Case000を開く</button>
       </section>
     </Shell>
@@ -223,14 +231,16 @@ function InvestigationScreen(props: InvestigationProps) {
   return (
     <main className="game-grid">
       <aside className="pane left-pane">
-        <p className="eyebrow">監査室 / {case000.id.toUpperCase()}</p>
+        <p className="eyebrow">{case000.organizationName} / {case000.id.toUpperCase()}</p>
         <h2>{case000.title}</h2>
         <p>{case000.subtitle}</p>
         <p>{case000.overview}</p>
         <StatusBars stats={case000.initialStats} />
         <div className="meter"><span style={{ width: `${props.progress}%` }} /></div>
         <p>調査進行度：{props.progress}%（{props.visitedNodeIds.length}/{case000.nodes.length}）</p>
-        <p>監査リソース：{props.resources}</p>
+        <p>監査リソース：{props.resources} / {case000.auditResourceMax}</p>
+        <p>判断根拠数：{props.pinnedNodeIds.length} / 3</p>
+        <p>矛盾タグ付け数：{Object.values(props.taggedNodes).filter((tags) => tags.length > 0).length}</p>
         {props.resources === 0 && <p className="warning-text">監査リソース不足：追加解析を実行できません。既存記録のみで判断してください。</p>}
       </aside>
 
@@ -314,8 +324,9 @@ function ResultScreen({ decision, finalStats, payload, taggedNodes }: { decision
       <section className="document-card result wide">
         <p className="eyebrow">結果画面 / 保存完了</p>
         <h2>{decision.finalRuling}</h2>
+        <p><strong>処理内容：</strong>{decision.processing}</p>
         <p><strong>優先された価値：</strong>{decision.prioritizedValue}</p>
-        <p><strong>犠牲になった価値：</strong>{decision.sacrificedValue}</p>
+        <p><strong>軽視された価値：</strong>{decision.disregardedValue}</p>
         <h3>提出された判断根拠</h3>
         {pinned.map((node) => <p key={node.id}>・{node.title}：{node.simpleFact}</p>)}
         <h3>分類された矛盾</h3>
@@ -328,6 +339,7 @@ function ResultScreen({ decision, finalStats, payload, taggedNodes }: { decision
         <h3>都市ステータス変動</h3>
         <StatusBars stats={finalStats} />
         <p><strong>監査注記：</strong>{decision.auditNote}</p>
+        <p className="ending-text">{decision.endingText}</p>
         <p className="warning-text">Case001「焼却されなかった声」：未実装。次回記録として予告のみ表示。</p>
       </section>
     </Shell>
