@@ -27,11 +27,13 @@ Feature: Persona Null Case000 playable audit slice
     When the auditor pins evidence nodes
     Then the pinned count is shown as x / 3
     And no more than three pinned nodes can be submitted
+    And pinning or unpinning evidence appends a system log entry
 
   Scenario: Classifying contradiction tags
     Given the auditor selected a node with hasContradiction true or importance critical
     When the auditor applies a contradiction tag
     Then the tag is recorded for that node
+    And the classification action appends a system log entry
     And the contradiction tag count increases
 
   Scenario: Spending audit resources
@@ -65,7 +67,7 @@ Feature: Persona Null Case000 playable audit slice
 
   Scenario: Reporting the submitted audit structure
     Given the auditor has reached the result screen
-    Then the result screen shows final ruling, processing, prioritized value, disregarded value, submitted grounds, classified contradictions, city status changes, audit notes, a short ending text, and the Case001 preview
+    Then the result screen shows separated administrative-log sections for final ruling, processing, prioritized value, disregarded value, submitted grounds, classified contradictions, executed analysis actions, city status changes, audit notes, a short ending text, and the Case001 preview
 
   Scenario: Resilient result persistence
     Given localStorage contains malformed saved result JSON
