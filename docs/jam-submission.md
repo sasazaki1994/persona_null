@@ -50,7 +50,7 @@ Case001「焼却されなかった声」は、Case000の結果画面と事件選
 - 最終エンディング分岐
 - 音演出
 - 本格的なレスポンシブ対応
-- デプロイ設定
+- Case000 以外の本番事件データ
 
 ## 起動方法
 
@@ -87,13 +87,26 @@ npm run test
 - ESLint
 - Vitest
 - localStorage
+- GitHub Actions CI
+- Vercel 静的公開設定 (`vercel.json`)
+
+
+## Vercel公開手順
+
+`vercel.json` は Vite の静的公開に合わせて、Build Command を `npm run build`、Output Directory を `dist` に固定しています。SPA の直接アクセス/リロードは `index.html` に rewrite されます。
+
+1. GitHub リポジトリを Vercel に Import する。
+2. Framework Preset が **Vite** になっていることを確認する。
+3. Build Command が `npm run build`、Output Directory が `dist` になっていることを確認する。
+4. 環境変数は現時点では不要。
+5. Deploy 後、Case000 がタイトル画面から結果画面まで進行できることを確認する。
 
 ## Jam向けMVPの受け入れ条件
 
 - `npm run build` が成功する。
 - `npm run lint` が成功する。
 - `npm run test` が成功する。
-- このドキュメントだけ読めば、起動方法・操作方法・現在の実装範囲・未実装範囲が分かる。
+- このドキュメントだけ読めば、起動方法・操作方法・Vercel公開方法・現在の実装範囲・未実装範囲が分かる。
 - Case000「誰が撃ったのか」をタイトル画面から結果画面までプレイできる。
 - Case000 は7つの記憶ノードを持つ。
 - 最終判断は、必要ノード確認数、最低1件のピン留め、最低1件の矛盾タグ付けを満たすまで開放されない。
@@ -110,4 +123,4 @@ npm run test
 - 最終判断履歴を参照したエンディング分岐。
 - 音演出、警告音、都市OS通知音の追加。
 - スマートフォンを含む本格的なレスポンシブUI。
-- Jam提出後の静的ホスティング / Vercel 等へのデプロイ設定。
+- Jam提出後の GitHub Pages 等、Vercel 以外の公開先に合わせた追加設定。

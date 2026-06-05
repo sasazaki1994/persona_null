@@ -110,10 +110,12 @@ Feature: Persona Null Case000 playable audit slice
 
   Scenario: Jam submission readiness checklist
     Given the maintainer prepares the Case000 Jam submission build
-    Then Jam submission documentation describes the title, summary, overview, controls, implemented scope, unimplemented scope, start, build, test, technology stack, MVP acceptance conditions, and future expansion candidates
+    Then Jam submission documentation describes the title, summary, overview, controls, implemented scope, unimplemented scope, start, build, test, Vercel publication steps, technology stack, MVP acceptance conditions, and future expansion candidates
     And the repository README links to docs/jam-submission.md for the detailed Jam checklist
+    And the README screenshot section is not left as TODO and identifies the title, investigation, and result screens to capture under public/screenshots
+    And vercel.json publishes the Vite build output from dist using npm run build
     And Markdown files are forced to text diffs and the root README is stored as UTF-8 text so GitHub and review tools can render it instead of treating it as a binary file
-    And GitHub Actions CI runs npm ci, npm run lint, npm run test, and npm run build on push and pull_request using Node.js 20
+    And GitHub Actions CI runs npm install, npm run lint, npm run test, and npm run build on push and pull_request using Node.js 20
     And npm run build succeeds
     And npm run lint succeeds
     And npm run test succeeds

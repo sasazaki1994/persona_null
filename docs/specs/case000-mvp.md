@@ -585,6 +585,18 @@ const finalStats: CityStats = {
 - 保存形式は `persona-null:read-flags` に string array JSON。
 - 読み込み失敗時は空配列。
 
+
+## 11.6 Jam公開設定
+
+Jam提出MVPは Vercel の Vite 静的公開を前提とする。`vercel.json` は以下を満たす。
+
+- Build Command は `npm run build`。
+- Output Directory は Vite の既定出力である `dist`。
+- SPA の直接アクセス/リロードは `index.html` に rewrite する。
+- 公開に必要な環境変数は MVP では使用しない。
+
+README と Jam提出チェックリストは、この実態と一致する Vercel 公開手順を記載する。スクリーンショット欄は TODO のまま残さず、画像未同梱の場合も `public/screenshots/` に撮影予定の画面とファイル名を明記する。
+
 ## 12. 受け入れ条件との対応
 
 本仕様の acceptance spec は `features/case000_mvp.feature` に維持する。最低限、以下を Gherkin で確認する。
@@ -599,6 +611,8 @@ const finalStats: CityStats = {
 - A/B/C の最終判断から result に到達できる。
 - result が提出根拠、矛盾分類、解析、都市ステータス、注記、次回予告を表示する。
 - malformed localStorage でもクラッシュしない。
+- README が Vercel 公開手順、`dist` 出力、スクリーンショット配置方針を TODO なしで説明する。
+- `vercel.json` が `npm run build` と `dist` を Vercel に明示する。
 
 ## 13. 実装対象外リスク
 
