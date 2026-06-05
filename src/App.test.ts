@@ -48,6 +48,7 @@ describe('case000 data', () => {
 
   it('connects 七瀬未織の媒体 to the Case001 preview without making it playable', () => {
     const victimMedium = case000.nodes.find((node) => node.id === 'victim-medium');
+    expect(victimMedium).toBeDefined();
     expect(victimMedium?.simpleFact).toContain('七瀬未織');
     expect(victimMedium?.metrics.Case001接続).toBe('未焼却音声');
     expect(case001Preview.linkedFromNodeId).toBe('victim-medium');
