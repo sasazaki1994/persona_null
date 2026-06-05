@@ -107,3 +107,12 @@ Feature: Persona Null Case000 playable audit slice
     And the scenario exposes exactly 3 operation subject candidates
     And the Case001 preview is connected from 七瀬未織の媒体 without creating a playable Case001 route
     And MVP cut items are separated from expansion backlog items
+
+  Scenario: Jam submission readiness checklist
+    Given the maintainer prepares the Case000 Jam submission build
+    Then Jam submission documentation describes the title, summary, overview, controls, implemented scope, unimplemented scope, start, build, test, technology stack, MVP acceptance conditions, and future expansion candidates
+    And npm run build succeeds
+    And npm run lint succeeds
+    And npm run test succeeds
+    And Case000 remains playable from title screen to result screen
+    And Case001 remains previewOnly locked preview content without a playable route

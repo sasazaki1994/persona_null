@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { loadCaseResults, saveCaseResult } from './storage';
+import { loadCaseResults, loadReadFlags, markRead, saveCaseResult } from './storage';
 import type { SavedCaseResult } from './types';
 
 const validResult: SavedCaseResult = {
@@ -22,7 +22,7 @@ function installLocalStorage(initial: Record<string, string> = {}) {
   };
 
   vi.stubGlobal('window', { localStorage });
-  return localStorage;
+  return { localStorage, data };
 }
 
 afterEach(() => {
@@ -44,13 +44,52 @@ describe('case result storage', () => {
     expect(loadCaseResults()).toEqual([validResult]);
   });
 
-  it('returns whether saving succeeded', () => {
-    const localStorage = installLocalStorage();
+  it('ignores malformed saved result JSON without throwing', () => {
+    installLocalStorage({
+      'persona-null:case-results': '{not-json',
+    });
+
+    expect(loadCaseResults()).toEqual([]);
+  });
+
+  it('returns whether saving succeeded and survives malformed existing data', () => {
+    const { localStorage, data } = installLocalStorage({
+      'persona-null:case-results': '{not-json',
+    });
     expect(saveCaseResult(validResult)).toBe(true);
+    expect(JSON.parse(data.get('persona-null:case-results') ?? '[]')).toEqual([validResult]);
 
     localStorage.setItem.mockImplementationOnce(() => {
       throw new Error('quota exceeded');
     });
     expect(saveCaseResult(validResult)).toBe(false);
+  });
+});
+
+describe('read flag storage', () => {
+  it('loads only string read flags and ignores malformed payloads', () => {
+    installLocalStorage({
+      'persona-null:read-flags': JSON.stringify(['city-os-briefing', 42, null, 'case000-overview']),
+    });
+
+    expect(loadReadFlags()).toEqual(['city-os-briefing', 'case000-overview']);
+
+    installLocalStorage({
+      'persona-null:read-flags': '{bad-json',
+    });
+    expect(loadReadFlags()).toEqual([]);
+  });
+
+  it('marks the city OS briefing read flag and does not throw when saving fails', () => {
+    const { localStorage, data } = installLocalStorage();
+    markRead('city-os-briefing');
+    markRead('city-os-briefing');
+
+    expect(JSON.parse(data.get('persona-null:read-flags') ?? '[]')).toEqual(['city-os-briefing']);
+
+    localStorage.setItem.mockImplementationOnce(() => {
+      throw new Error('read flag quota exceeded');
+    });
+    expect(() => markRead('case000-overview')).not.toThrow();
   });
 });

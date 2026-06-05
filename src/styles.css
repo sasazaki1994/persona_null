@@ -88,3 +88,104 @@ meter { width: 100%; accent-color: #58dcff; }
 .overview-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; margin: 1.25rem 0; }
 .overview-grid > div { border: 1px solid #244555; background: rgba(6, 17, 29, 0.5); padding: 1rem; }
 .overview-grid h3 { margin-top: 0; color: #7eeaff; }
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.46;
+  filter: grayscale(0.45);
+  box-shadow: none;
+}
+
+button.judge:disabled {
+  border-color: #6c3948;
+  background: rgba(78, 27, 40, 0.72);
+  color: #ffd7df;
+}
+
+.pane, .document-card, .start-card, .result-section, .network-caption {
+  overflow-wrap: anywhere;
+}
+
+code {
+  display: block;
+  max-width: 100%;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.result-section {
+  min-width: 0;
+}
+
+@media (max-width: 1180px) {
+  .game-grid {
+    grid-template-columns: minmax(280px, 0.9fr) minmax(360px, 1.1fr);
+    grid-template-rows: minmax(420px, 1fr) auto auto;
+  }
+
+  .right-pane {
+    grid-column: 1 / 3;
+  }
+
+  .bottom-pane {
+    grid-column: 1 / 3;
+    grid-template-columns: 1fr;
+    max-height: none;
+    overflow: visible;
+  }
+
+  .judge {
+    min-height: 4rem;
+  }
+}
+
+@media (max-width: 760px) {
+  .shell {
+    align-items: start;
+    place-items: start stretch;
+    padding: 1rem;
+  }
+
+  .start-card,
+  .document-card,
+  .document-card.wide {
+    width: auto;
+    padding: 1.25rem;
+  }
+
+  .game-grid {
+    min-width: 0;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(360px, 56vh) auto auto;
+    padding: 0.5rem;
+  }
+
+  .left-pane,
+  .right-pane,
+  .center-pane,
+  .bottom-pane {
+    grid-column: 1;
+  }
+
+  .center-pane {
+    min-height: 360px;
+  }
+
+  .network-caption {
+    max-width: calc(100% - 2rem);
+  }
+
+  .overview-grid,
+  .result-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .result-section:nth-child(n) {
+    grid-column: auto;
+  }
+
+  .requirement-list div,
+  .metrics div {
+    grid-template-columns: 1fr;
+  }
+}
