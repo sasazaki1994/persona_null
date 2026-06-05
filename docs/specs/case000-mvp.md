@@ -25,13 +25,15 @@
 - When audit resources are zero, the UI shows `監査リソース不足：追加解析を実行できません`.
 - Final judgment unlocks when required visited node count is met, at least one pinned node exists, and at least one eligible node is tagged.
 - Result arrival saves the completed case to localStorage. Completion indicators update only after persistence succeeds.
+- Case001「焼却されなかった声」は selectable contentではなく、locked/preview noticeとしてのみ表示する。
 
 ## UI
 - Investigation view uses four areas: left case/status pane, center Three.js memory network, right node detail/action pane, and bottom judgment/log pane.
 - Left pane shows case number, overview, investigation progress, audit resources remaining/max, judgment grounds count out of 3, and contradiction tag count.
-- Center pane shows floating memory nodes connected with lines. Clicking a node selects it. Critical nodes have stronger jitter/noise.
+- Center pane shows floating memory nodes connected with lines. Clicking a node selects it. Critical nodes have stronger jitter/noise/glow, selected nodes are clearly enlarged, visited nodes stabilize, hover is highlighted, and the `KASUMI-GATE-09` node behaves more erratically than ordinary nodes.
 - Right pane shows the selected node summary, log, simpleFact, warning, pin/unpin controls, eligible contradiction tags, and analysis actions.
-- Bottom pane shows judgment blockers, a judgment button, system logs, and irreversible judgment warning copy.
+- Bottom pane shows judgment blockers as a checklist with remaining counts, a judgment button, system logs, and irreversible judgment warning copy.
+- Result screen is formatted as an administrative processing log with separated sections for final ruling, processing, protected value, discarded value, submitted grounds, contradiction classifications, executed analysis, city status deltas, audit note, and ending text.
 - Tone is administrative and audit-log oriented. Visual design uses black/gray/white/cyan with restrained warning colors.
 
 ## Acceptance Spec (Gherkin)

@@ -59,6 +59,14 @@ export type DecisionOption = {
   statDelta: CityStats;
 };
 
+
+export type CasePreview = {
+  id: string;
+  title: string;
+  subtitle: string;
+  previewOnly: true;
+};
+
 export type CaseRecord = {
   id: string;
   title: string;

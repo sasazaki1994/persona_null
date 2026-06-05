@@ -37,7 +37,15 @@ export function loadCaseResults(): SavedCaseResult[] {
     const existing = window.localStorage.getItem(STORAGE_KEY);
     if (!existing) return [];
     const value = JSON.parse(existing) as unknown;
-    return Array.isArray(value) ? value.filter(isSavedCaseResult) : [];
+    if (!Array.isArray(value)) {
+      console.error(`Invalid ${STORAGE_KEY}: expected an array.`);
+      return [];
+    }
+    const validResults = value.filter(isSavedCaseResult);
+    if (validResults.length !== value.length) {
+      console.error(`Invalid ${STORAGE_KEY}: ignored ${value.length - validResults.length} malformed result entries.`);
+    }
+    return validResults;
   } catch (error) {
     console.error(`Failed to load ${STORAGE_KEY}.`, error);
     return [];
