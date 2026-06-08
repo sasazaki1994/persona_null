@@ -128,7 +128,10 @@ Feature: Persona Null Case000 playable audit slice
     And GitHub Actions CI runs npm ci, npm run lint, npm run test, and npm run build on push and pull_request using Node.js 20
     And the README links to Vercel deployment instructions that use the Vite preset, npm run build, and the dist output directory
     And the deployment documentation states that no environment variables are required
-    And the README links to a screenshot capture plan when real screenshot assets are not available
+    And the README has a Demo / Play URL field near the top even before the Production URL is finalized
+    And the README screenshot section references docs/images/title.png, docs/images/case000-investigation.png, and docs/images/case000-result.png with short captions
+    And the screenshot capture plan explains how to replace those three files before submission
+    And Production verification details are authoritative in docs/deploy.md instead of being duplicated across README and the Jam checklist
     And the submission checklist requires title, investigation, and result screenshots before the final Jam submission
     And npm run build succeeds
     And npm run lint succeeds
@@ -145,6 +148,8 @@ Feature: Persona Null Case000 playable audit slice
     And reloading after completion allows the Case000 processed indicator to be verified
     And Case001 remains previewOnly without a playable route
     And the checklist states that mobile is minimally readable while a PC browser is recommended
+    And at widths up to 899px the investigation panes stack into one column
+    And at widths up to 520px headings, controls, captions, and logs remain readable without page-level horizontal overflow
 
   Scenario: Restoring audit text with accessible glossary annotations
     Given the auditor opens the city OS briefing or a Case000 record

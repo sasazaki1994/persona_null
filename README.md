@@ -2,11 +2,33 @@
 
 [![CI](https://github.com/sasazaki1994/persona_null/actions/workflows/ci.yml/badge.svg)](https://github.com/sasazaki1994/persona_null/actions/workflows/ci.yml)
 
+> **Demo / Play URL:** Production URL 確定後にここへ記載
+>
+> **推奨環境:** PC ブラウザ（狭い画面でもテキスト確認は可能ですが、Memory Network の探索はPC推奨）
+
 都市OSが「誰が撃ったのか」を確定できない事件を、監査室の端末から記憶ネットワークとして調査する React + Vite + TypeScript + Three.js 製のプレイアブルMVPです。
 
 ## スクリーンショット
 
-この実行環境では画面撮影に利用できるブラウザがないため、実画像は未配置です。提出時は [`docs/screenshots.md`](docs/screenshots.md) の撮影計画に沿って `docs/images/` へタイトル・調査・結果画面を配置し、この欄を画像と短いキャプションに差し替えてください。
+以下の3ファイルを [`docs/screenshots.md`](docs/screenshots.md) の手順で撮影し、同じパスへ配置すれば README に反映されます。現在のリポジトリには実画像が未配置のため、Jam提出前に必ず差し替えてください。
+
+### タイトル画面
+
+![Persona Null タイトル画面](docs/images/title.png)
+
+監査端末へ接続するタイトル画面。
+
+### Case000 調査画面
+
+![Case000 記憶ネットワーク調査画面](docs/images/case000-investigation.png)
+
+7つの記憶ノードを探索し、根拠のピン留め、矛盾分類、追加解析を行う中核画面。
+
+### Case000 結果画面
+
+![Case000 行政処理ログ結果画面](docs/images/case000-result.png)
+
+提出した判断、根拠構造、都市ステータスへの影響、Case001予告を確認する結果画面。
 
 ## ゲーム概要
 
@@ -14,11 +36,11 @@
 
 Jam提出MVPでは、Case000「誰が撃ったのか」のみをタイトル画面から結果画面までプレイできます。プレイヤーは KASUMI-GATE-09 に接続された記憶ネットワークを調査し、証拠をピン留めし、矛盾を分類し、限られた監査リソースで追加解析を行い、最後に不可逆の行政判断を提出します。
 
-Case001「焼却されなかった声」は、事件選択画面と結果画面に表示される previewOnly の予告です。Jam提出MVPではプレイ可能ルートを追加していません。
+> **Case001「焼却されなかった声」は `previewOnly` の予告です。プレイ可能な導線・本編ルートは実装していません。**
 
-Jam提出チェックリスト向けの詳細は [`docs/jam-submission.md`](docs/jam-submission.md) を参照してください。この README は GitHub トップページで初めて見る人が、作品内容・起動方法・実装範囲を素早く把握するための概要です。
+提出直前の確認は [`docs/jam-submission.md`](docs/jam-submission.md)、Vercel の設定と Production 動作確認は [`docs/deploy.md`](docs/deploy.md) を参照してください。
 
-## 操作方法
+## 遊び方
 
 1. タイトル画面で **監査端末を起動** を選択します。
 2. **都市OS 基礎公定通知** を読み、**通知を確認** を選択します。
@@ -28,39 +50,34 @@ Jam提出チェックリスト向けの詳細は [`docs/jam-submission.md`](docs
 6. 重要だと思うノードを **根拠としてピン留め** します。提出可能なピンは最大3件です。
 7. 矛盾対象ノードでは、右側の矛盾分類ボタンからタグを付けます。
 8. 必要に応じて監査リソースを消費し、追加解析を実行します。
-9. 以下の条件を満たすと **最終判断へ進む** が開放されます。
+9. 次の条件をすべて満たすと **最終判断へ進む** が開放されます。
    - `requiredNodesToJudge` 以上の記憶ノードを確認する。
    - 最低1件の判断根拠をピン留めする。
    - 最低1件の矛盾タグを付ける。
 10. 最終判断 A / B / C のいずれかを選ぶと、結果画面に行政処理ログが表示され、localStorage に完了状態が保存されます。
 
-## 現在実装済みの範囲
+## 実装範囲
 
-- タイトル画面
-- 都市OS 基礎公定通知
-- 事件選択
-- Case000 事件概要
-- Three.js 記憶ネットワーク
-- 7つの記憶ノード
-- ノード詳細表示
-- 証拠ピン留め
-- 矛盾タグ付け
-- 監査リソース
-- 最終判断
-- 結果画面
-- localStorage保存
-- Case001 preview
+### 実装済み
 
-## 未実装の範囲
+- タイトル画面、都市OS 基礎公定通知、事件選択、Case000 事件概要
+- Three.js 製 Memory Network と7つの記憶ノード
+- ノード詳細、タイピング演出、用語注釈
+- 証拠ピン留め、矛盾分類、監査リソースを使う追加解析
+- 開放条件付きの最終判断 A / B / C と結果画面
+- Case000 結果と既読フラグの localStorage 保存・破損データ耐性
+- Case001 の `previewOnly` 予告表示
+- 狭い画面で主要ペインを縦に並べ、テキストを読める最低限のレスポンシブ表示
 
-- Case001 playable
-- 複数事件の本編進行
-- 最終エンディング分岐
+### 未実装
+
+- Case001 のプレイ可能な本編
+- 複数事件の本編進行、最終エンディング分岐
 - 音演出
-- 本格的なレスポンシブ対応
-- 実スクリーンショット画像の配置（撮影可能な環境で `docs/screenshots.md` に沿って差し替える）
+- スマートフォン向けの操作・レイアウト最適化を含む完全なレスポンシブ対応
+- Jam提出後の独自ドメイン、OGP画像
 
-## 起動方法
+## ローカル起動
 
 ```bash
 npm ci
@@ -69,90 +86,45 @@ npm run dev
 
 Vite の開発サーバーが起動したら、表示されたローカルURLをブラウザで開いてください。`package-lock.json` をコミットしているため、CI と同じ依存関係を `npm ci` で再現できます。
 
-ローカルで依存関係を更新したい開発時のみ `npm install` を使い、更新後は `package-lock.json` の差分を確認してください。
-
-## ビルド方法
-
-```bash
-npm run build
-```
-
-`npm run build` は `tsc -b` による TypeScript チェックの後、Vite の本番ビルドを作成します。
-
-## テスト方法
+## 品質確認とビルド
 
 ```bash
 npm run lint
 npm run test
+npm run build
 ```
 
 - `npm run lint`: ESLint で TypeScript / React Hooks ルールを確認します。
-- `npm run test`: Vitest で Case000 のデータ構造、判断条件、Case001 preview のロック状態、localStorage の耐障害性を確認します。
+- `npm run test`: Vitest で Case000 のデータ構造、判断条件、Case001 のロック状態、localStorage の耐障害性を確認します。
+- `npm run build`: `tsc -b` による TypeScript チェック後、Vite の本番成果物を `dist/` に生成します。
 
 ## 技術構成
 
-- React
-- Vite
-- TypeScript strict
-- Three.js
-- ESLint
-- Vitest
-- localStorage
-- GitHub Actions CI
+| 分類 | 採用技術 |
+| --- | --- |
+| UI | React 19 |
+| Build | Vite 7 |
+| Language | TypeScript strict |
+| Memory Network | Three.js |
+| State / Save | React state / localStorage |
+| Quality | ESLint / Vitest |
+| CI / Hosting | GitHub Actions / Vercel |
 
-## GitHub Actions CI
+Jam提出MVPはクライアントのみで動作し、外部 API、データベース、環境変数、秘密情報を必要としません。
 
-`.github/workflows/ci.yml` で `push` / `pull_request` 時に以下を自動確認します。
+## 公開
 
-1. Node.js 20 をセットアップする。
-2. npm cache を有効化する。
-3. `npm ci` で依存関係をインストールする。
-4. `npm run lint` を実行する。
-5. `npm run test` を実行する。
-6. `npm run build` を実行する。
+Vercel では **Framework Preset: Vite / Install: `npm ci` / Build: `npm run build` / Output: `dist`** を指定します。詳細な公開手順と、タイトル画面から Case000 結果画面、保存状態、Case001 preview-only 制約までを確認する Production チェックの正本は [`docs/deploy.md`](docs/deploy.md) です。
 
-## Vercel公開手順
+Production URL が確定したら、この README 上部の **Demo / Play URL** と Jam 提出ページへ同じURLを記載してください。
 
-公開済みの Vercel URL はリポジトリ内で確認できなかったため、Demo / Play URL は未記載です。Deploy 完了後は、この README 上部へ確定した Production URL を追加してください。
+## Jam提出資料
 
-Persona Null は Vite アプリとして Vercel に公開できます。詳細な手順と公開後確認は [`docs/deploy.md`](docs/deploy.md) を参照してください。
-
-1. GitHub リポジトリを Vercel に Import する。
-2. Framework Preset が **Vite** になっていることを確認する。
-3. Install Command に `npm ci` を指定する。
-4. Build Command に `npm run build` を指定する。
-5. Output Directory に `dist` を指定する。
-6. 環境変数は不要。外部 API、データベース、秘密情報は Jam提出MVPでは使用していません。
-7. Deploy 後、Case000 がタイトル画面から結果画面まで進行でき、Case001 が previewOnly の予告のままであることを確認する。
-
-GitHub Pages 向けの `base` 設定変更や Pages workflow は、Jam提出MVPでは追加していません。
-
-## Jam向けMVPの受け入れ条件
-
-- `npm ci` が成功する。
-- `npm run lint` が成功する。
-- `npm run test` が成功する。
-- `npm run build` が成功する。
-- GitHub Actions CI で lint / test / build が自動実行される。
-- README だけでゲーム内容、起動方法、操作方法、実装範囲、未実装範囲、技術構成、Vercel公開手順が分かる。
-- README から Jam提出チェックリスト向けの [`docs/jam-submission.md`](docs/jam-submission.md)、公開手順の [`docs/deploy.md`](docs/deploy.md)、スクリーンショット撮影計画の [`docs/screenshots.md`](docs/screenshots.md) に移動できる。
-- Case000「誰が撃ったのか」をタイトル画面から結果画面までプレイできる。
-- Case000 は7つの記憶ノードを持つ。
-- 最終判断は、必要ノード確認数、最低1件のピン留め、最低1件の矛盾タグ付けを満たすまで開放されない。
-- 最終判断は3件あり、各判断は結果画面に必要な裁定・処理・価値・監査注記・結末文を持つ。
-- Case001「焼却されなかった声」は previewOnly の予告表示に留まり、プレイ可能ルートは存在しない。
-- localStorage に Case000 の結果が保存され、再起動時に Case000 の処理済み状態が事件選択画面に表示される。
-- localStorage 内の不正な保存データや壊れた既読フラグでアプリが落ちない。
-- 既存のゲーム体験、サイバー監査室の文体、Case000 シナリオ構造、UI構成を壊していない。
-
-## 今後の拡張候補
-
-- Case001「焼却されなかった声」の本編実装。
-- 複数事件をまたぐ監査ログと人格境界テーマの深化。
-- 最終判断履歴を参照したエンディング分岐。
-- 音演出、警告音、都市OS通知音の追加。
-- スマートフォンを含む本格的なレスポンシブUI。
-- Jam提出後の独自ドメイン設定や OGP 画像整備。
+- [提出直前チェックリスト](docs/jam-submission.md)
+- [スクリーンショット撮影・配置手順](docs/screenshots.md)
+- [Vercel公開・Production確認手順](docs/deploy.md)
+- [Case000 MVP仕様](docs/specs/case000-mvp.md)
+- [Gherkin acceptance spec](features/case000_mvp.feature)
 
 ## ライセンス
 

@@ -123,6 +123,18 @@ describe('case000 data', () => {
     expect(networkSource).not.toContain('kasumiNoise');
   });
 
+  it('documents Jam URL, screenshot, Production, and narrow-screen readiness', () => {
+    const readme = terminologyFiles['../README.md'];
+    const deploy = terminologyFiles['../docs/deploy.md'];
+    const screenshots = terminologyFiles['../docs/screenshots.md'];
+    expect(readme).toContain('Demo / Play URL');
+    expect(readme).toContain('docs/images/title.png');
+    expect(readme).toContain('docs/images/case000-investigation.png');
+    expect(readme).toContain('docs/images/case000-result.png');
+    expect(deploy).toContain('Production動作確認');
+    expect(screenshots).toContain('README は上記パスをすでに参照しています');
+  });
+
   it('result decisions include all result-screen report fields', () => {
     expect(case000.decisions).toHaveLength(3);
     case000.decisions.forEach((decision) => {
