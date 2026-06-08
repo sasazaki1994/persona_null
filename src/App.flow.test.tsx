@@ -89,6 +89,8 @@ describe('Case000 player flow', () => {
 
     expect(container.textContent).toContain('行政処理ログ');
     expect(container.textContent).toContain('最終裁定');
+    expect(container.textContent).toContain('暫定拘束');
+    expect(container.querySelector('.ruling-stamp')).not.toBeNull();
     expect(localStorage.getItem('persona-null:case-results')).not.toBeNull();
   });
   it('shows only suggested contradiction tags and hides controls for unclassified records', () => {
