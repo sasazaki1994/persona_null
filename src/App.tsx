@@ -3,6 +3,7 @@ import { canUnlockJudgment, getCurrentGuidance, getJudgmentRequirements, isAnaly
 import { case000, case001Preview, contradictionTagLabels } from './case000';
 import { AnnotatedText } from './components/AnnotatedText';
 import { TypewriterText } from './components/TypewriterText';
+import { PersonProfile } from './components/PersonProfile';
 import { MemoryNetwork } from './MemoryNetwork';
 import { loadCaseResults, loadReadFlags, markRead, saveCaseResult } from './storage';
 import type { AnalysisAction, AnalysisUnlockCondition, CityStats, ContradictionTag, DecisionOption, MemoryNode, NodeImportance, SavedCaseResult, Screen, TaggedNodes } from './types';
@@ -255,11 +256,11 @@ function CaseOverviewScreen({ onNext }: { onNext: () => void }) {
         <h2>{case000.title}</h2>
         <p><AnnotatedText text={case000.overview} /></p>
         <section className="overview-grid">
-          <div>
-            <h3>人物ログ</h3>
-            {case000.personLogs.map((person) => (
-              <p key={person.id}><strong>{person.name}</strong>：<AnnotatedText text={person.summary} /></p>
-            ))}
+          <div className="person-profiles-panel">
+            <h3>人物プロファイル</h3>
+            <div className="person-profile-list">
+              {case000.personLogs.map((person) => <PersonProfile key={person.id} person={person} />)}
+            </div>
           </div>
           <div>
             <h3>処理要求</h3>

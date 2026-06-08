@@ -34,9 +34,21 @@ describe('case000 data', () => {
   });
 
   it('contains strengthened scenario scaffolding for implementation', () => {
-    expect(case000.personLogs).toHaveLength(1);
-    expect(case000.personLogs[0].name).toBe('間宮怜司');
+    expect(case000.personLogs).toHaveLength(2);
+    expect(case000.personLogs.map((person) => person.name)).toEqual(['間宮怜司', '七瀬未織']);
     expect(case000.personLogs[0].role).toContain('都市警備局 捜査官');
+    expect(case000.personLogs.map(({ portrait, portraitAlt }) => ({ portrait, portraitAlt }))).toEqual([
+      {
+        portrait: '/assets/case000/mamiya-reiji-profile.png',
+        portraitAlt: '間宮怜司 監査記録ポートレート',
+      },
+      {
+        portrait: '/assets/case000/nanase-miori-fragment.png',
+        portraitAlt: '七瀬未織 人格断片プロファイル',
+      },
+    ]);
+    expect(case000.personLogs[0].portraitFallback?.lines).toContain('操作主体：未確定');
+    expect(case000.personLogs[1].portraitFallback?.lines).toContain('証言能力：制限');
     expect(case000.processingRequest.id).toBe('city-security-request');
     expect(case000.operatorCandidates.map((candidate) => candidate.candidate)).toEqual([
       '間宮怜司本人',
