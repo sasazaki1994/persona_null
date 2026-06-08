@@ -138,3 +138,14 @@ Feature: Persona Null Case000 playable audit slice
     And reloading after completion allows the Case000 processed indicator to be verified
     And Case001 remains previewOnly without a playable route
     And the checklist states that mobile is minimally readable while a PC browser is recommended
+
+  Scenario: Restoring audit text with accessible glossary annotations
+    Given the auditor opens the city OS briefing or a Case000 record
+    Then registered terms such as 義体, 都市OS, 人格署名, 法的人格, 間宮怜司, and 七瀬未織 expose glossary annotations
+    And annotations can be opened by pointer hover, keyboard focus, or click and tap
+    When the auditor switches the selected investigation node
+    Then the selected node summary and inspector note restart a lightweight typewriter presentation
+    And only the latest system log uses the typewriter presentation
+    And the auditor can reveal the full text immediately by clicking the presentation or its full-text button
+    And reduced-motion users receive the full text without typing or cursor animation
+    And Case000 progression, judgment conditions, persistence, and the Case001 preview-only restriction remain unchanged

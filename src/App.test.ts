@@ -95,6 +95,14 @@ describe('case000 data', () => {
     ]);
   });
 
+  it('types only the newest prepended system log', () => {
+    const appSource = terminologyFiles['./App.tsx'];
+
+    expect(appSource).toContain('setSystemLogs((logs) => [message, ...logs].slice(0, 8))');
+    expect(appSource).toContain('index === 0');
+    expect(appSource).not.toContain('index === props.systemLogs.length - 1');
+  });
+
   it('connects 七瀬未織の媒体 to the Case001 preview without making it playable', () => {
     const victimMedium = case000.nodes.find((node) => node.id === 'victim-medium');
     expect(victimMedium).toBeDefined();

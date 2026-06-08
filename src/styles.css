@@ -173,3 +173,137 @@ button.judge:disabled {
     grid-template-columns: 1fr;
   }
 }
+
+.typewriter-text {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+  cursor: pointer;
+}
+
+.typewriter-reserve {
+  visibility: hidden;
+  white-space: pre-wrap;
+}
+
+.typewriter-output {
+  position: absolute;
+  inset: 0;
+  white-space: pre-wrap;
+}
+
+.typewriter-cursor {
+  display: inline-block;
+  width: 0.55em;
+  height: 1em;
+  margin-left: 0.12em;
+  vertical-align: -0.12em;
+  background: #7eeaff;
+  box-shadow: 0 0 10px rgba(88, 220, 255, 0.8);
+  animation: typewriter-blink 720ms steps(1, end) infinite;
+}
+
+.typewriter-skip {
+  position: absolute;
+  z-index: 4;
+  right: 0;
+  bottom: -1.35rem;
+  padding: 0.12rem 0.4rem;
+  border-color: rgba(88, 220, 255, 0.45);
+  background: rgba(3, 10, 18, 0.92);
+  color: #86a9b7;
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+}
+
+.glossary-anchor {
+  position: relative;
+  display: inline;
+}
+
+button.annotated-keyword {
+  display: inline;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-bottom: 1px dashed rgba(126, 234, 255, 0.8);
+  border-radius: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  line-height: inherit;
+  text-align: inherit;
+  text-shadow: 0 0 8px rgba(88, 220, 255, 0.2);
+  transform: none;
+}
+
+button.annotated-keyword:hover,
+button.annotated-keyword:focus-visible,
+button.annotated-keyword.active {
+  border-color: #ff9bb2;
+  outline: none;
+  background: rgba(88, 220, 255, 0.12);
+  color: #e6fbff;
+  text-shadow: 0 0 9px rgba(126, 234, 255, 0.55);
+  transform: none;
+}
+
+.glossary-tooltip {
+  position: absolute;
+  z-index: 20;
+  left: 50%;
+  bottom: calc(100% + 0.55rem);
+  display: none;
+  width: max-content;
+  max-width: min(22rem, calc(100vw - 2rem));
+  padding: 0.7rem 0.8rem;
+  border: 1px solid rgba(88, 220, 255, 0.6);
+  background: rgba(2, 8, 15, 0.98);
+  box-shadow: 0 0 24px rgba(52, 226, 255, 0.18);
+  color: #cceff5;
+  font-size: 0.78rem;
+  font-weight: 400;
+  letter-spacing: normal;
+  line-height: 1.5;
+  text-align: left;
+  white-space: normal;
+  transform: translateX(-50%);
+}
+
+.glossary-tooltip strong,
+.glossary-tooltip span {
+  display: block;
+}
+
+.glossary-tooltip strong {
+  margin-bottom: 0.25rem;
+  color: #7eeaff;
+  letter-spacing: 0.05em;
+}
+
+.glossary-anchor:hover .glossary-tooltip,
+.glossary-anchor:focus-within .glossary-tooltip,
+.glossary-tooltip[data-open] {
+  display: block;
+}
+
+@keyframes typewriter-blink {
+  0%, 48% { opacity: 1; }
+  49%, 100% { opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .typewriter-cursor {
+    animation: none;
+  }
+}
