@@ -112,6 +112,17 @@ describe('case000 data', () => {
     expect(case001Preview.previewOnly).toBe(true);
   });
 
+  it('communicates node importance with labeled colors instead of critical instability', () => {
+    const appSource = terminologyFiles['./App.tsx'];
+    const networkSource = terminologyFiles['./MemoryNetwork.tsx'];
+
+    expect(appSource).toContain('色で重要度を表示');
+    expect(appSource).toContain('importance-legend');
+    expect(networkSource).toContain('importanceColors[node.importance]');
+    expect(networkSource).not.toContain('criticalNoise');
+    expect(networkSource).not.toContain('kasumiNoise');
+  });
+
   it('result decisions include all result-screen report fields', () => {
     expect(case000.decisions).toHaveLength(3);
     case000.decisions.forEach((decision) => {

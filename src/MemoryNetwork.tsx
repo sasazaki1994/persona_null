@@ -9,7 +9,11 @@ type Props = {
   onSelectNode: (nodeId: string) => void;
 };
 
-const KASUMI_NODE_ID = 'kasumi-key';
+const importanceColors = {
+  standard: '#5ee7ff',
+  high: '#ffb84d',
+  critical: '#ff476f',
+} as const;
 
 export function MemoryNetwork({ nodes, selectedNodeId, visitedNodeIds, onSelectNode }: Props) {
   const hostRef = useRef<HTMLDivElement | null>(null);
@@ -62,9 +66,8 @@ export function MemoryNetwork({ nodes, selectedNodeId, visitedNodeIds, onSelectN
     });
 
     nodes.forEach((node) => {
-      const isKasumi = node.id === KASUMI_NODE_ID;
       const geometry = new THREE.SphereGeometry(node.importance === 'critical' ? 0.22 : 0.16, 32, 16);
-      const color = isKasumi ? '#b866ff' : node.importance === 'critical' ? '#ff476f' : node.hasContradiction ? '#ffb84d' : '#5ee7ff';
+      const color = importanceColors[node.importance];
       const material = new THREE.MeshStandardMaterial({
         color,
         emissive: color,
@@ -128,40 +131,20 @@ export function MemoryNetwork({ nodes, selectedNodeId, visitedNodeIds, onSelectN
         const selected = nodeId === selectedNodeId;
         const hovered = nodeId === hoverRef.current;
         const visited = visitedNodeIds.includes(nodeId);
-        const isKasumi = nodeId === KASUMI_NODE_ID;
-        const criticalNoise = node.importance === 'critical' ? Math.sin(elapsed * 22 + node.position[2] * 9) * (visited ? 0.025 : 0.075) : 0;
-        const kasumiNoise = isKasumi
-          ? Math.sin(elapsed * 37) * 0.13 + Math.cos(elapsed * 19) * 0.07
-          : 0;
-        const baseDrift = visited ? 0.015 : 0.06;
-        const pulse = node.hasContradiction ? Math.sin(elapsed * (isKasumi ? 8 : 5) + node.position[0]) * (visited ? 0.035 : 0.09) : 0;
-
-        mesh.position.x = node.position[0] + criticalNoise + kasumiNoise;
-        mesh.position.y = node.position[1] + Math.sin(elapsed * 1.4 + node.position[0]) * baseDrift + criticalNoise - kasumiNoise * 0.35;
-        mesh.position.z = node.position[2] + (node.importance === 'critical' ? Math.cos(elapsed * 15 + node.position[1]) * (visited ? 0.025 : 0.06) : 0) + (isKasumi ? Math.sin(elapsed * 29) * 0.09 : 0);
+        mesh.position.set(...node.position);
 
         const selectedScale = selected ? 1.95 : hovered ? 1.55 : 1;
         const visitedScale = visited && !selected && !hovered ? 1.08 : 1;
-        mesh.scale.setScalar(selectedScale * visitedScale + Math.max(0, pulse) + Math.abs(criticalNoise) * 1.8);
-        mesh.material.emissiveIntensity = selected
-          ? 2.8
-          : hovered
-            ? 2.25
-            : isKasumi
-              ? 2 + Math.abs(kasumiNoise) * 7
-              : node.importance === 'critical'
-                ? 1.55 + Math.abs(pulse) + Math.abs(criticalNoise) * 8
-                : visited
-                  ? 0.42
-                  : 0.65;
+        mesh.scale.setScalar(selectedScale * visitedScale);
+        mesh.material.emissiveIntensity = selected ? 2.8 : hovered ? 2.25 : visited ? 0.42 : 0.9;
 
         const halo = haloMeshes.get(nodeId);
         if (halo) {
           halo.position.copy(mesh.position);
-          halo.scale.setScalar(selected ? 2.2 : hovered ? 1.7 : isKasumi ? 1.35 + Math.abs(Math.sin(elapsed * 9)) * 0.7 : node.importance === 'critical' ? 1.25 + Math.abs(pulse) : 0.9);
-          halo.material.opacity = selected ? 0.42 : hovered ? 0.32 : isKasumi ? 0.22 : node.importance === 'critical' ? 0.2 : visited ? 0.07 : 0.12;
-          halo.rotation.x = elapsed * (isKasumi ? 1.6 : 0.35);
-          halo.rotation.y = elapsed * (isKasumi ? -2.2 : 0.25);
+          halo.scale.setScalar(selected ? 2.2 : hovered ? 1.7 : 1);
+          halo.material.opacity = selected ? 0.42 : hovered ? 0.32 : visited ? 0.07 : 0.14;
+          halo.rotation.x = elapsed * 0.35;
+          halo.rotation.y = elapsed * 0.25;
         }
       });
       scene.rotation.y = Math.sin(elapsed * 0.22) * 0.08;

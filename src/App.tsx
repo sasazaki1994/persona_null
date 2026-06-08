@@ -5,7 +5,7 @@ import { AnnotatedText } from './components/AnnotatedText';
 import { TypewriterText } from './components/TypewriterText';
 import { MemoryNetwork } from './MemoryNetwork';
 import { loadCaseResults, loadReadFlags, markRead, saveCaseResult } from './storage';
-import type { CityStats, ContradictionTag, DecisionOption, MemoryNode, SavedCaseResult, Screen, TaggedNodes } from './types';
+import type { CityStats, ContradictionTag, DecisionOption, MemoryNode, NodeImportance, SavedCaseResult, Screen, TaggedNodes } from './types';
 import './styles.css';
 
 const clampStat = (value: number) => Math.max(0, Math.min(100, value));
@@ -24,6 +24,12 @@ const statLabels: Record<keyof CityStats, string> = {
 };
 
 const cityStatKeys = Object.keys(statLabels) as (keyof CityStats)[];
+
+const importanceLabels: Record<NodeImportance, string> = {
+  standard: '標準',
+  high: '高',
+  critical: '重大',
+};
 
 function App() {
   const [screen, setScreen] = useState<Screen>('title');
@@ -313,7 +319,12 @@ function InvestigationScreen(props: InvestigationProps) {
       <section className="center-pane">
         <div className="network-caption">
           <span>Memory Network</span>
-          <small>クリックで選択 / criticalは不安定表示 / 既読は安定化</small>
+          <small>クリックで選択 / 色で重要度を表示</small>
+          <div className="importance-legend" aria-label="問題の重要度">
+            {(Object.entries(importanceLabels) as [NodeImportance, string][]).map(([importance, label]) => (
+              <span className={`importance-key ${importance}`} key={importance}><i />{label}</span>
+            ))}
+          </div>
         </div>
         <MemoryNetwork nodes={case000.nodes} selectedNodeId={props.selectedNodeId} visitedNodeIds={props.visitedNodeIds} onSelectNode={props.onSelectNode} />
       </section>
@@ -324,7 +335,7 @@ function InvestigationScreen(props: InvestigationProps) {
           <h2>{props.selectedNode.title}</h2>
           <div className="node-badges">
             <span>{props.selectedNode.type}</span>
-            <span className={`importance ${props.selectedNode.importance}`}>{props.selectedNode.importance}</span>
+            <span className={`importance ${props.selectedNode.importance}`}>重要度：{importanceLabels[props.selectedNode.importance]}</span>
           </div>
         </section>
         <section className="pane-section">
