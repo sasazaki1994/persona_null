@@ -50,7 +50,7 @@ Case001「焼却されなかった声」は、Case000の結果画面と事件選
 - 最終エンディング分岐
 - 音演出
 - 本格的なレスポンシブ対応
-- 実スクリーンショット画像の配置（提出前に `docs/screenshots.md` に沿って差し替える）
+- 実スクリーンショット画像の配置（撮影可能な環境で `docs/screenshots.md` に沿って差し替える）
 
 ## 起動方法
 
@@ -87,6 +87,22 @@ npm run test
 - ESLint
 - Vitest
 - localStorage
+
+
+## 提出直前チェック
+
+Jam の提出 URL を確定する前に、**PCブラウザを推奨環境**として、Production Deployment で次を上から順に確認してください。スマートフォンでは最低限テキストを読めますが、Memory Network と複数ペインを同時に確認する本作の推奨環境は PC ブラウザです。
+
+- [ ] README 上部に確定した Vercel の **Demo / Play URL** を追加した。
+- [ ] Vercel 公開 URL を開くとタイトル画面が表示される。
+- [ ] タイトル画面から Case000 の結果画面まで、途中で停止せず最後までプレイできる。
+- [ ] Case000 の7ノードを確認でき、根拠のピン留め、対象ノードへの矛盾タグ付け、A / B / C の最終判断ができる。
+- [ ] 結果画面で、最終裁定、処理内容、優先／棄却した価値、監査注記、Case001 予告が見える。
+- [ ] 結果到達後に再読み込みし、事件選択画面で Case000 が処理済みと表示される。
+- [ ] Case001 は `previewOnly` のままで、開く／調査開始などのプレイ可能な導線がない。
+- [ ] `docs/images/title.png`、`docs/images/case000-investigation.png`、`docs/images/case000-result.png` を配置し、README のスクリーンショット欄を実画像と短いキャプションへ差し替えた。画像をまだ撮影できない場合は、README から [`docs/screenshots.md`](screenshots.md) へのリンクが壊れていないことを確認した。
+- [ ] 対象コミットの GitHub Actions CI と Vercel Production Deployment が成功している。
+- [ ] Jam 提出ページにも同じ Vercel Production URL を登録した。
 
 ## Jam向けMVPの受け入れ条件
 

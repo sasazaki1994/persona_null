@@ -118,9 +118,20 @@ Feature: Persona Null Case000 playable audit slice
     And GitHub Actions CI runs npm ci, npm run lint, npm run test, and npm run build on push and pull_request using Node.js 20
     And the README links to Vercel deployment instructions that use the Vite preset, npm run build, and the dist output directory
     And the deployment documentation states that no environment variables are required
-    And the README links to a screenshot capture plan and states that placeholder assets must be replaced before submission
+    And the README links to a screenshot capture plan when real screenshot assets are not available
+    And the submission checklist requires title, investigation, and result screenshots before the final Jam submission
     And npm run build succeeds
     And npm run lint succeeds
     And npm run test succeeds
     And Case000 remains playable from title screen to result screen
     And Case001 remains previewOnly locked preview content without a playable route
+
+  Scenario: Final pre-submission verification
+    Given the maintainer has a Vercel Production URL for the Jam build
+    Then the title screen is visible at that URL
+    And Case000 can be played through to the result screen
+    And all 7 nodes, evidence pinning, contradiction tagging, and final judgment can be verified
+    And the result shows the ruling, processing, values, audit note, and Case001 preview
+    And reloading after completion allows the Case000 processed indicator to be verified
+    And Case001 remains previewOnly without a playable route
+    And the checklist states that mobile is minimally readable while a PC browser is recommended
