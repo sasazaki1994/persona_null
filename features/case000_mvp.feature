@@ -149,13 +149,25 @@ Feature: Persona Null Case000 playable audit slice
     Then Case000 has exactly 7 memory nodes
     And the nodes include "七瀬未織の媒体" and "都市警備局の処理要求"
     And every memory node contains summary, log, simpleFact, warning, and metrics
-    And the scenario exposes one short person log for 間宮怜司
+    And the scenario exposes person profiles for 間宮怜司 and 七瀬未織
     And 間宮怜司 is identified as a 都市警備局 捜査官
     And 操作主体, 操作経路, and 操作源 remain control-system terms
     And no deprecated urban-security investigator title remains in source, specs, or documentation
     And the scenario exposes exactly 3 operation subject candidates
     And the Case001 preview is connected from 七瀬未織の媒体 without creating a playable Case001 route
     And MVP cut items are separated from expansion backlog items
+
+  Scenario: Showing replaceable Case000 audit portraits
+    Given the auditor opens the Case000 overview
+    Then the person profile area shows 間宮怜司 and 七瀬未織
+    And each profile with a portrait path shows a 16:9 audit image card with required alternative text
+    And 間宮怜司 uses the planned path "/assets/case000/mamiya-reiji-profile.png"
+    And 七瀬未織 uses the planned path "/assets/case000/nanase-miori-fragment.png"
+    When either planned PNG cannot be loaded
+    Then the broken image is replaced by that person's audit-terminal fallback
+    And the two fallbacks use different record labels and status details
+    And the existing Case000 nodes, judgment controls, and progression state remain unchanged
+    And production image prompts are documented without committing generated PNG files
 
   Scenario: Jam submission readiness checklist
     Given the maintainer prepares the Case000 Jam submission build

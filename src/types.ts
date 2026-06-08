@@ -41,9 +41,19 @@ export type StructuredCaseLog = {
   metrics: Record<string, string | number>;
 };
 
+export type PortraitFallback = {
+  heading: string;
+  lines: string[];
+};
+
 export type PersonLog = StructuredCaseLog & {
   name: string;
   role: string;
+  portrait?: string;
+  portraitAlt?: string;
+  auditLabel?: string;
+  auditLabels?: string[];
+  portraitFallback?: PortraitFallback;
 };
 
 export type OperatorCandidate = StructuredCaseLog & {
