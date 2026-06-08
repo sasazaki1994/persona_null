@@ -109,7 +109,31 @@ describe('case000 data', () => {
     expect(case000.nodes.find((node) => node.id === 'arm-history')?.suggestedTags).toEqual(['body_auth', 'operation_subject', 'record_integrity']);
     expect(case000.nodes.find((node) => node.id === 'victim-medium')?.suggestedTags).toEqual(['persona_signature', 'legal_persona']);
     expect(case000.nodes.find((node) => node.id === 'kasumi-key')?.suggestedTags).toEqual(['record_integrity', 'operation_subject']);
-    expect(case000.nodes.find((node) => node.id === 'processing-request')?.suggestedTags).toEqual([]);
+    expect(case000.nodes.find((node) => node.id === 'processing-request')).toMatchObject({
+      hasContradiction: false,
+      requiresContradictionReview: false,
+      suggestedTags: [],
+    });
+  });
+
+  it('maps every analysis report to its target memory nodes', () => {
+    expect(case000.analysisActions.map(({ id, targetNodeIds, reportText }) => ({ id, targetNodeIds, reportText }))).toEqual([
+      {
+        id: 'resignature',
+        targetNodeIds: ['shot-log', 'victim-medium'],
+        reportText: '署名一致率は改善せず。間宮署名は残るが、単独の責任確定には不足。',
+      },
+      {
+        id: 'restore-eight',
+        targetNodeIds: ['missing-memory', 'arm-history'],
+        reportText: '欠損区間は断片のみ復元。外部命令断定ではなく境界曖昧化を示唆。',
+      },
+      {
+        id: 'match-key-medium',
+        targetNodeIds: ['kasumi-key', 'victim-medium', 'last-comm'],
+        reportText: '七瀬未織の媒体側に同鍵形式の応答痕。媒体を操作源と断定するには不足。未焼却音声断片をCase001保全候補へ追加。',
+      },
+    ]);
   });
 
   it('unlocks analysis actions only after all configured conditions are met', () => {

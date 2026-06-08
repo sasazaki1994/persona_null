@@ -54,6 +54,12 @@ describe('Case000 player flow', () => {
 
     expect(container.textContent).toContain('次の監査手順');
     expect(container.textContent).toContain('記憶ノードを4件以上確認してください');
+    expect(container.textContent).toContain('記憶ノードを選択してください');
+    expect(container.textContent).toContain('左の争点別ノード一覧、または中央の Memory Network から記録を開けます');
+    expect(container.textContent).toContain('未確認ノードを確認すると、記録状態が「確認済」に変わります');
+    expect(container.textContent).not.toContain('公式記録上の発砲主体は明確');
+
+    clickButton('ノード：発砲ログ');
     expect(container.textContent).toContain('監査官メモ');
     expect(container.textContent).toContain('公式記録上の発砲主体は明確');
     expect(container.textContent).toContain('本人記憶との照合が必要');
@@ -76,6 +82,9 @@ describe('Case000 player flow', () => {
     expect(container.textContent).toContain('未提出');
     expect(container.textContent).toContain('提出根拠との一致 0 / 1');
     expect(container.textContent).toContain('提出根拠との一致 1 / 4');
+    expect(container.textContent).toContain('この裁定案は、現在の提出根拠と一致していません。');
+    expect(container.textContent).toContain('未提出記録を採用根拠として裁定しようとしています。');
+    expect(findButton(case000.decisions[0].label)?.disabled).toBe(false);
     clickButton(case000.decisions[0].label);
 
     expect(container.textContent).toContain('行政処理ログ');
@@ -119,8 +128,24 @@ describe('Case000 player flow', () => {
     expect(container.textContent).toContain('選択中');
   });
 
+
+  it('shows executed analysis reports on each target node', () => {
+    enterInvestigation();
+
+    clickButton('ノード：間宮の発砲記憶');
+    clickButton('ノード：義体稼働履歴');
+    clickButton('欠落8秒の復元');
+
+    expect(container.textContent).toContain('追加解析結果');
+    expect(container.textContent).toContain('欠損区間は断片のみ復元。外部命令断定ではなく境界曖昧化を示唆。');
+
+    clickButton('ノード：発砲ログ');
+    expect(container.querySelector('.analysis-report')).toBeNull();
+  });
+
   it('keeps analysis actions disabled until their record conditions are met', () => {
     enterInvestigation();
+    clickButton('ノード：発砲ログ');
 
     expect(findButton('欠落8秒の復元')?.disabled).toBe(true);
     expect(container.textContent).toContain('状態：未解放');

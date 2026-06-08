@@ -82,6 +82,11 @@ code { display: block; max-width: 100%; padding: 0.75rem; background: #06111d; b
 .compact-stats .status-bars div { grid-template-columns: 5.5rem 1fr; font-size: 0.85rem; }
 meter { width: 100%; accent-color: #58dcff; }
 .node-header { border-bottom: 1px solid #163645; padding-bottom: 0.85rem; }
+.empty-node-detail { display: grid; align-content: center; min-height: 100%; padding: 1rem; text-align: left; }
+.empty-node-detail h2 { color: #e6fbff; }
+.empty-node-detail p:not(.eyebrow) { border-left: 2px solid #315d73; padding-left: 0.75rem; color: #a9d3de; }
+.analysis-report { margin-top: 0.9rem; border: 1px solid #3c8fa5; background: rgba(30, 112, 133, 0.12); padding: 0.75rem; }
+.analysis-report strong { color: #7eeaff; }
 .node-badges { display: flex; flex-wrap: wrap; gap: 0.4rem; }
 .node-badges span, .pinned-list span { border: 1px solid #315d73; background: rgba(49, 93, 115, 0.28); color: #bdf8ff; padding: 0.25rem 0.45rem; font-size: 0.78rem; }
 .importance.standard { border-color: #5ee7ff; color: #9ff4ff; }
@@ -119,6 +124,8 @@ meter { width: 100%; accent-color: #58dcff; }
 .decision-card p > span { display: inline-block; margin-right: 0.4rem; border: 1px solid currentColor; padding: 0.08rem 0.3rem; font-size: 0.65rem; }
 .decision-card .evidence-submitted { color: #7dffbf; }
 .decision-card .evidence-unsubmitted { color: #ffcfda; }
+.decision-evidence-warning { border: 1px solid #ff476f; background: rgba(255, 71, 111, 0.1); padding: 0.65rem; color: #ffcfda; }
+.decision-evidence-warning p { margin: 0.2rem 0 0; color: inherit; }
 .decision-card > button { margin-top: auto; }
 .decision-stat-deltas { display: flex; flex-wrap: wrap; gap: 0.35rem; }
 .decision-stat-deltas span { border: 1px solid currentColor; padding: 0.18rem 0.35rem; font-size: 0.7rem; }

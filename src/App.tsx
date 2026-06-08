@@ -33,7 +33,7 @@ const importanceLabels: Record<NodeImportance, string> = {
 
 function App() {
   const [screen, setScreen] = useState<Screen>('title');
-  const [selectedNodeId, setSelectedNodeId] = useState(case000.nodes[0].id);
+  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [visitedNodeIds, setVisitedNodeIds] = useState<string[]>([]);
   const [pinnedNodeIds, setPinnedNodeIds] = useState<string[]>([]);
   const [taggedNodes, setTaggedNodes] = useState<TaggedNodes>({});
@@ -45,7 +45,7 @@ function App() {
   const [completedCaseIds, setCompletedCaseIds] = useState<string[]>(() => loadCaseResults().map((result) => result.caseId));
   const [readFlags, setReadFlags] = useState<string[]>(() => loadReadFlags());
 
-  const selectedNode = case000.nodes.find((node) => node.id === selectedNodeId) ?? case000.nodes[0];
+  const selectedNode = case000.nodes.find((node) => node.id === selectedNodeId) ?? null;
   const visitedCount = visitedNodeIds.length;
   const progress = Math.round((visitedCount / case000.nodes.length) * 100);
   const requirements = getJudgmentRequirements({
@@ -272,8 +272,8 @@ function CaseOverviewScreen({ onNext }: { onNext: () => void }) {
 }
 
 type InvestigationProps = {
-  selectedNode: MemoryNode;
-  selectedNodeId: string;
+  selectedNode: MemoryNode | null;
+  selectedNodeId: string | null;
   visitedNodeIds: string[];
   pinnedNodeIds: string[];
   taggedNodes: TaggedNodes;
@@ -374,10 +374,18 @@ function AnalysisActionControl(props: {
 }
 
 function InvestigationScreen(props: InvestigationProps) {
-  const suggestedTags = props.selectedNode.suggestedTags ?? [];
+  const selectedNode = props.selectedNode;
+  const suggestedTags = selectedNode?.suggestedTags ?? [];
   const eligibleForTags = suggestedTags.length > 0;
   const taggedNodeCount = Object.values(props.taggedNodes).filter((tags) => tags.length > 0).length;
   const pinnedNodes = case000.nodes.filter((node) => props.pinnedNodeIds.includes(node.id));
+  const analysisReports = selectedNode
+    ? case000.analysisActions.filter((action) => (
+        props.executedActionIds.includes(action.id)
+        && action.targetNodeIds?.includes(selectedNode.id)
+        && action.reportText
+      ))
+    : [];
 
   return (
     <main className="game-grid">
@@ -480,45 +488,59 @@ function InvestigationScreen(props: InvestigationProps) {
       </section>
 
       <aside className="pane right-pane">
-        <section className="node-header">
+        {!selectedNode ? (
+          <section className="empty-node-detail" aria-live="polite">
+            <p className="eyebrow">選択ノード詳細</p>
+            <h2>記憶ノードを選択してください</h2>
+            <p>左の争点別ノード一覧、または中央の Memory Network から記録を開けます</p>
+            <p>未確認ノードを確認すると、記録状態が「確認済」に変わります</p>
+          </section>
+        ) : <>
+          <section className="node-header">
           <p className="eyebrow">選択ノード詳細</p>
-          <h2>{props.selectedNode.title}</h2>
+          <h2>{selectedNode.title}</h2>
           <div className="record-state">
-            <p><span>記録状態：</span><strong>{props.visitedNodeIds.includes(props.selectedNode.id) ? '確認済' : '未確認'}</strong></p>
-            <p><span>記録種別：</span>{props.selectedNode.type}</p>
+            <p><span>記録状態：</span><strong>{props.visitedNodeIds.includes(selectedNode.id) ? '確認済' : '未確認'}</strong></p>
+            <p><span>記録種別：</span>{selectedNode.type}</p>
           </div>
           <div className="node-badges">
-            <span className={`importance ${props.selectedNode.importance}`}>重要度：{importanceLabels[props.selectedNode.importance]}</span>
+            <span className={`importance ${selectedNode.importance}`}>重要度：{importanceLabels[selectedNode.importance]}</span>
           </div>
         </section>
         <NodeActionHint
           canJudge={props.canJudge}
           eligibleForTags={eligibleForTags}
-          isPinned={props.pinnedNodeIds.includes(props.selectedNode.id)}
-          isTagged={(props.taggedNodes[props.selectedNode.id]?.length ?? 0) > 0}
-          isVisited={props.visitedNodeIds.includes(props.selectedNode.id)}
+          isPinned={props.pinnedNodeIds.includes(selectedNode.id)}
+          isTagged={(props.taggedNodes[selectedNode.id]?.length ?? 0) > 0}
+          isVisited={props.visitedNodeIds.includes(selectedNode.id)}
         />
         <section className="pane-section">
           <h3>監査記録</h3>
-          <p><TypewriterText text={props.selectedNode.summary} speed={14} animateKey={`summary-${props.selectedNode.id}`} /></p>
-          <code>{props.selectedNode.log}</code>
-          <p><strong>単純事実：</strong><AnnotatedText text={props.selectedNode.simpleFact} /></p>
-          <p><strong>監査官注：</strong><TypewriterText text={props.selectedNode.inspectorNote} speed={14} animateKey={`note-${props.selectedNode.id}`} /></p>
-          {props.selectedNode.auditHint && (
+          <p><TypewriterText text={selectedNode.summary} speed={14} animateKey={`summary-${selectedNode.id}`} /></p>
+          <code>{selectedNode.log}</code>
+          <p><strong>単純事実：</strong><AnnotatedText text={selectedNode.simpleFact} /></p>
+          <p><strong>監査官注：</strong><TypewriterText text={selectedNode.inspectorNote} speed={14} animateKey={`note-${selectedNode.id}`} /></p>
+          {selectedNode.auditHint && (
             <div className="audit-hint">
               <strong>監査官メモ</strong>
-              <p><AnnotatedText text={props.selectedNode.auditHint} /></p>
+              <p><AnnotatedText text={selectedNode.auditHint} /></p>
             </div>
           )}
-          <p className="warning-text"><strong>警告：</strong><AnnotatedText text={props.selectedNode.warning} /></p>
+          <p className="warning-text"><strong>警告：</strong><AnnotatedText text={selectedNode.warning} /></p>
           <dl className="metrics">
-            {Object.entries(props.selectedNode.metrics).map(([key, value]) => <div key={key}><dt>{key}</dt><dd>{value}</dd></div>)}
+            {Object.entries(selectedNode.metrics).map(([key, value]) => <div key={key}><dt>{key}</dt><dd>{value}</dd></div>)}
           </dl>
+          {analysisReports.length > 0 && (
+            <div className="analysis-report" aria-live="polite">
+              <strong>追加解析結果</strong>
+              {analysisReports.map((action) => <p key={action.id}><AnnotatedText text={action.reportText ?? ''} /></p>)}
+            </div>
+          )}
         </section>
         <section className="pane-section pin-box">
           <h3>提出根拠</h3>
-          <button onClick={() => props.onTogglePin(props.selectedNode.id)} disabled={!props.pinnedNodeIds.includes(props.selectedNode.id) && props.pinnedNodeIds.length >= 3}>
-            {props.pinnedNodeIds.includes(props.selectedNode.id) ? '提出根拠から解除' : '提出根拠に登録'}
+          <button onClick={() => props.onTogglePin(selectedNode.id)} disabled={!props.pinnedNodeIds.includes(selectedNode.id) && props.pinnedNodeIds.length >= 3}>
+            {props.pinnedNodeIds.includes(selectedNode.id) ? '提出根拠から解除' : '提出根拠に登録'}
           </button>
           <div className="pinned-list">
             {pinnedNodes.length ? pinnedNodes.map((node) => <span key={node.id}>{node.title}</span>) : <small>未提出。最低1件が必要。</small>}
@@ -528,7 +550,7 @@ function InvestigationScreen(props: InvestigationProps) {
           <h3>矛盾分類</h3>
           {!eligibleForTags && <small>この記録に分類可能な矛盾は検出されていません</small>}
           {suggestedTags.map((tag) => (
-            <button className={props.taggedNodes[props.selectedNode.id]?.includes(tag) ? 'active' : ''} key={tag} onClick={() => props.onToggleTag(props.selectedNode, tag)}>
+            <button className={props.taggedNodes[selectedNode.id]?.includes(tag) ? 'active' : ''} key={tag} onClick={() => props.onToggleTag(selectedNode, tag)}>
               {contradictionTagLabels[tag]}
             </button>
           ))}
@@ -548,6 +570,7 @@ function InvestigationScreen(props: InvestigationProps) {
             />
           ))}
         </section>
+        </>}
       </aside>
 
       <footer className="bottom-pane">
@@ -615,6 +638,13 @@ function DecisionScreen({ pinnedNodeIds, onBack, onDecide }: { pinnedNodeIds: st
                       <span>{pinnedNodeIds.includes(node.id) ? '根拠提出済' : '未提出'}</span>{node.title}：{node.simpleFact}
                     </p>
                   ))}
+                  {submittedAcceptedCount === 0 && (
+                    <div className="decision-evidence-warning" role="alert">
+                      <strong>警告：</strong>
+                      <p>この裁定案は、現在の提出根拠と一致していません。</p>
+                      <p>未提出記録を採用根拠として裁定しようとしています。</p>
+                    </div>
+                  )}
                 </section>
                 <section>
                   <h4>無視または保留される疑点</h4>
