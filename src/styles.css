@@ -381,3 +381,21 @@ button.annotated-keyword.active {
     animation: none;
   }
 }
+
+.guidance-panel {
+  border: 1px solid rgba(88, 220, 255, 0.5);
+  background: linear-gradient(135deg, rgba(11, 47, 67, 0.82), rgba(5, 20, 32, 0.92));
+  padding: 0.9rem;
+  box-shadow: inset 3px 0 0 #58dcff, 0 0 18px rgba(52, 226, 255, 0.08);
+}
+.guidance-panel.guidance-tag { border-color: rgba(255, 184, 77, 0.62); box-shadow: inset 3px 0 0 #ffb84d, 0 0 18px rgba(255, 184, 77, 0.08); }
+.guidance-panel.guidance-judge { border-color: rgba(125, 255, 191, 0.62); box-shadow: inset 3px 0 0 #7dffbf, 0 0 18px rgba(125, 255, 191, 0.08); }
+.guidance-panel h3 { margin: 0.2rem 0 0.45rem; color: #e6fbff; }
+.guidance-panel .guidance-instruction { color: #e6fbff; line-height: 1.45; }
+.guidance-action { display: grid; grid-template-columns: auto 1fr; gap: 0.5rem; align-items: start; }
+.guidance-action span { border: 1px solid #58dcff; color: #8bedff; padding: 0.08rem 0.3rem; font-size: 0.7rem; letter-spacing: 0.08em; }
+.guidance-panel small { color: #86a9b7; }
+.node-action-hint { margin: 0.75rem 0; padding: 0.75rem; border: 1px solid rgba(88, 220, 255, 0.38); background: rgba(8, 35, 49, 0.66); }
+.node-action-hint strong { color: #7eeaff; font-size: 0.78rem; letter-spacing: 0.12em; }
+.node-action-hint p { margin: 0.35rem 0 0; color: #d9f8ff; font-size: 0.86rem; }
+.requirement-list span { font-size: 1rem; font-weight: 700; }

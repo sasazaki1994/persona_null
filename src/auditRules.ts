@@ -49,3 +49,62 @@ export function canUnlockJudgment(params: {
 }): boolean {
   return getJudgmentRequirements(params).every((requirement) => requirement.completed);
 }
+
+export type CurrentGuidance = {
+  phase: 'review' | 'pin' | 'tag' | 'judge';
+  title: string;
+  instruction: string;
+  action: string;
+  resourceNote: string;
+};
+
+export function getCurrentGuidance(params: {
+  visitedNodeCount: number;
+  requiredNodesToJudge: number;
+  pinnedNodeCount: number;
+  taggedNodeCount: number;
+  resources: number;
+  canJudge: boolean;
+}): CurrentGuidance {
+  const resourceNote = params.resources > 0
+    ? `任意解析：監査リソース残り${params.resources}件`
+    : '任意解析：監査リソース消費済み';
+
+  if (params.visitedNodeCount < params.requiredNodesToJudge) {
+    return {
+      phase: 'review',
+      title: '記憶記録の確認',
+      instruction: `記憶ノードを${params.requiredNodesToJudge}件以上確認してください`,
+      action: 'Memory Network から未確認ノードを選択',
+      resourceNote,
+    };
+  }
+
+  if (params.pinnedNodeCount < 1) {
+    return {
+      phase: 'pin',
+      title: '判断根拠の登録',
+      instruction: '最終判断に使用する根拠を1件以上ピン留めしてください',
+      action: '選択ノードの「根拠としてピン留め」を実行',
+      resourceNote,
+    };
+  }
+
+  if (params.taggedNodeCount < 1) {
+    return {
+      phase: 'tag',
+      title: '矛盾記録の分類',
+      instruction: '矛盾対象ノードを1件以上分類してください',
+      action: 'halo が強い矛盾ノードを選び、矛盾分類を登録',
+      resourceNote,
+    };
+  }
+
+  return {
+    phase: 'judge',
+    title: params.canJudge ? '最終判断の提出' : '判断条件の再照合',
+    instruction: params.canJudge ? '判断条件に必要な操作は完了しています' : '未完了の判断条件を確認してください',
+    action: params.canJudge ? '画面下部の「最終判断へ進む」を選択' : '画面下部の進行チェックリストを確認',
+    resourceNote,
+  };
+}

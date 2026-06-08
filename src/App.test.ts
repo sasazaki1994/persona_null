@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { canUnlockJudgment, getJudgmentRequirements } from './auditRules';
+import { canUnlockJudgment, getCurrentGuidance, getJudgmentRequirements } from './auditRules';
 import { case000, case001Preview, contradictionTags } from './data/cases';
 import type { DecisionOption } from './types';
 
@@ -82,6 +82,18 @@ describe('case000 data', () => {
       pinnedNodeCount: 1,
       taggedNodes: { 'shot-log': ['persona_signature'] },
     })).toBe(true);
+  });
+
+  it('guides the next required audit action in judgment order', () => {
+    const base = {
+      requiredNodesToJudge: case000.requiredNodesToJudge,
+      resources: case000.auditResourceMax,
+    };
+
+    expect(getCurrentGuidance({ ...base, visitedNodeCount: 0, pinnedNodeCount: 0, taggedNodeCount: 0, canJudge: false }).phase).toBe('review');
+    expect(getCurrentGuidance({ ...base, visitedNodeCount: 4, pinnedNodeCount: 0, taggedNodeCount: 0, canJudge: false }).phase).toBe('pin');
+    expect(getCurrentGuidance({ ...base, visitedNodeCount: 4, pinnedNodeCount: 1, taggedNodeCount: 0, canJudge: false }).phase).toBe('tag');
+    expect(getCurrentGuidance({ ...base, visitedNodeCount: 4, pinnedNodeCount: 1, taggedNodeCount: 1, canJudge: true }).phase).toBe('judge');
   });
 
   it('defines all contradiction tags required by the MVP', () => {
