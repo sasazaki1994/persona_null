@@ -3,6 +3,11 @@ import { canUnlockJudgment, getJudgmentRequirements } from './auditRules';
 import { case000, case001Preview, contradictionTags } from './data/cases';
 import type { DecisionOption } from './types';
 
+const terminologyFiles = import.meta.glob(
+  ['../README.md', '../docs/**/*.md', '../features/**/*.feature', './**/*.{ts,tsx}'],
+  { eager: true, query: '?raw', import: 'default' },
+) as Record<string, string>;
+
 const resultScreenFields: (keyof DecisionOption)[] = [
   'finalRuling',
   'processing',
@@ -42,11 +47,14 @@ describe('case000 data', () => {
     expect(case000.mvpScope.keepForExpansion.length).toBeGreaterThan(0);
   });
 
-  it('keeps investigator titles distinct from control-system terminology', () => {
-    const serializedCase = JSON.stringify(case000);
+  it('keeps investigator titles distinct from control-system terminology across repository text', () => {
     const deprecatedTitle = ['操作', '官'].join('');
+    const filesWithDeprecatedTitle = Object.entries(terminologyFiles)
+      .filter(([, content]) => content.includes(deprecatedTitle))
+      .map(([filePath]) => filePath);
+    const serializedCase = JSON.stringify(case000);
 
-    expect(serializedCase).not.toContain(deprecatedTitle);
+    expect(filesWithDeprecatedTitle).toEqual([]);
     expect(serializedCase).toContain('操作主体');
     expect(serializedCase).toContain('操作経路');
     expect(serializedCase).toContain('操作源');
