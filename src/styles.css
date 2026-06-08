@@ -652,7 +652,16 @@ details > summary:focus-visible { color: #ffcfda; }
 .inline-details[open] > summary,
 .decision-details[open] > summary { margin-bottom: 0.65rem; }
 .disclosure-card h3:not(:first-of-type) { margin-top: 1rem; }
-.node-core-facts p { margin: 0.35rem 0; }
+.node-summary p,
+.node-core-facts p,
+.node-warning p { margin: 0.35rem 0; }
+.node-core-facts h3,
+.inspector-note h3,
+.node-warning h3,
+.node-record-details h3 { margin: 0 0 0.35rem; color: #e6fbff; font-size: 0.82rem; letter-spacing: 0.06em; }
+.inspector-note { border-left: 2px solid #7eeaff; background: rgba(16, 58, 75, 0.35); }
+.inspector-note .typewriter-text { line-height: 1.55; }
+.node-record-details code { display: block; margin-bottom: 0.85rem; }
 .analysis-summary { display: grid; gap: 0.45rem; }
 .analysis-summary .actions { display: block; }
 .analysis-summary .analysis-action + .analysis-action { margin-top: 0.45rem; }

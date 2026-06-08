@@ -69,10 +69,28 @@ describe('Case000 player flow', () => {
     clickButton('ノード：発砲ログ');
     const recordDetails = findSummary('詳細記録を表示')?.parentElement as HTMLDetailsElement;
     expect(recordDetails.open).toBe(false);
-    expect(container.querySelector('.node-core-facts')?.textContent).toContain('単純事実');
-    expect(container.querySelector('.node-core-facts .warning-text')?.textContent).toContain(case000.nodes[0].warning);
-    expect(recordDetails.querySelector('code')?.textContent).toBe(case000.nodes[0].log);
-    expect(recordDetails.querySelector('.metrics')).not.toBeNull();
+    const selectedNode = case000.nodes[0];
+    const title = container.querySelector('.node-header h2');
+    const summary = container.querySelector('.node-summary');
+    const simpleFact = container.querySelector('.node-core-facts');
+    const inspectorNote = container.querySelector('.inspector-note');
+    const warning = container.querySelector('.node-warning');
+    const metrics = recordDetails.querySelector('.metrics');
+    const appearsBefore = (earlier: Element | null, later: Element | null) =>
+      Boolean(earlier && later && earlier.compareDocumentPosition(later) & Node.DOCUMENT_POSITION_FOLLOWING);
+
+    expect(simpleFact?.textContent).toContain('単純事実');
+    expect(inspectorNote?.textContent).toContain('監査官メモ');
+    expect(warning?.querySelector('.warning-text')?.textContent).toContain(selectedNode.warning);
+    expect(recordDetails.querySelector('h3')?.textContent).toBe('詳細ログ');
+    expect(recordDetails.querySelector('code')?.textContent).toBe(selectedNode.log);
+    expect(metrics).not.toBeNull();
+    expect(appearsBefore(title, summary)).toBe(true);
+    expect(appearsBefore(summary, simpleFact)).toBe(true);
+    expect(appearsBefore(simpleFact, inspectorNote)).toBe(true);
+    expect(appearsBefore(inspectorNote, warning)).toBe(true);
+    expect(appearsBefore(warning, recordDetails)).toBe(true);
+    expect(appearsBefore(recordDetails.querySelector('code'), metrics)).toBe(true);
     clickSummary('詳細記録を表示');
     expect(recordDetails.open).toBe(true);
 
@@ -107,6 +125,24 @@ describe('Case000 player flow', () => {
     expect(container.querySelector('.ruling-stamp')).not.toBeNull();
     expect(localStorage.getItem('persona-null:case-results')).not.toBeNull();
   });
+  it('omits the inspector note section when the selected node has no inspector note', () => {
+    const node = case000.nodes[0];
+    const originalInspectorNote = node.inspectorNote;
+    node.inspectorNote = '';
+
+    try {
+      enterInvestigation();
+      clickButton(`ノード：${node.title}`);
+
+      expect(container.querySelector('.inspector-note')).toBeNull();
+      const rightPaneText = container.querySelector('.right-pane')?.textContent ?? '';
+      expect(rightPaneText.indexOf('単純事実')).toBeLessThan(rightPaneText.indexOf('警告'));
+      expect(rightPaneText.indexOf('警告')).toBeLessThan(rightPaneText.indexOf('詳細ログ'));
+    } finally {
+      node.inspectorNote = originalInspectorNote;
+    }
+  });
+
   it('shows only suggested contradiction tags and hides controls for unclassified records', () => {
     enterInvestigation();
 

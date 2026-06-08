@@ -503,6 +503,28 @@ function InvestigationScreen(props: InvestigationProps) {
           <section className="node-header">
             <p className="eyebrow">選択ノード要約</p>
             <h2>{selectedNode.title}</h2>
+          </section>
+          <section className="pane-section node-summary">
+            <p><AnnotatedText text={selectedNode.summary} /></p>
+          </section>
+          <section className="pane-section node-core-facts">
+            <h3>単純事実</h3>
+            <p><AnnotatedText text={selectedNode.simpleFact} /></p>
+          </section>
+          {selectedNode.inspectorNote.trim() !== '' && (
+            <section className="pane-section inspector-note">
+              <h3>監査官メモ</h3>
+              <TypewriterText text={selectedNode.inspectorNote} speed={14} animateKey={`note-${selectedNode.id}`} />
+            </section>
+          )}
+          <section className="pane-section node-warning">
+            <h3>警告</h3>
+            <p className="warning-text"><AnnotatedText text={selectedNode.warning} /></p>
+          </section>
+          <details className="pane-section disclosure-card node-record-details">
+            <summary>詳細記録を表示</summary>
+            <h3>詳細ログ</h3>
+            <code>{selectedNode.log}</code>
             <div className="record-state">
               <p><span>記録状態：</span><strong>{props.visitedNodeIds.includes(selectedNode.id) ? '確認済' : '未確認'}</strong></p>
               <p><span>記録種別：</span>{selectedNode.type}</p>
@@ -510,11 +532,22 @@ function InvestigationScreen(props: InvestigationProps) {
             <div className="node-badges">
               <span className={`importance ${selectedNode.importance}`}>重要度：{importanceLabels[selectedNode.importance]}</span>
             </div>
-          </section>
-          <section className="pane-section node-core-facts">
-            <p><strong>単純事実：</strong><AnnotatedText text={selectedNode.simpleFact} /></p>
-            <p className="warning-text"><strong>警告：</strong><AnnotatedText text={selectedNode.warning} /></p>
-          </section>
+            <dl className="metrics">
+              {Object.entries(selectedNode.metrics).map(([key, value]) => <div key={key}><dt>{key}</dt><dd>{value}</dd></div>)}
+            </dl>
+            {selectedNode.auditHint && (
+              <div className="audit-hint">
+                <strong>照合ヒント</strong>
+                <p><AnnotatedText text={selectedNode.auditHint} /></p>
+              </div>
+            )}
+            {analysisReports.length > 0 && (
+              <div className="analysis-report" aria-live="polite">
+                <strong>追加解析結果</strong>
+                {analysisReports.map((action) => <p key={action.id}><AnnotatedText text={action.reportText ?? ''} /></p>)}
+              </div>
+            )}
+          </details>
           <section className="pane-section pin-box">
             <h3>提出根拠</h3>
             <button onClick={() => props.onTogglePin(selectedNode.id)} disabled={!props.pinnedNodeIds.includes(selectedNode.id) && props.pinnedNodeIds.length >= 3}>
@@ -537,27 +570,6 @@ function InvestigationScreen(props: InvestigationProps) {
               ))}
             </section>
           )}
-          <details className="pane-section disclosure-card node-record-details">
-            <summary>詳細記録を表示</summary>
-            <p><TypewriterText text={selectedNode.summary} speed={14} animateKey={`summary-${selectedNode.id}`} /></p>
-            <code>{selectedNode.log}</code>
-            <p><strong>監査官注：</strong><TypewriterText text={selectedNode.inspectorNote} speed={14} animateKey={`note-${selectedNode.id}`} /></p>
-            {selectedNode.auditHint && (
-              <div className="audit-hint">
-                <strong>監査官メモ</strong>
-                <p><AnnotatedText text={selectedNode.auditHint} /></p>
-              </div>
-            )}
-            <dl className="metrics">
-              {Object.entries(selectedNode.metrics).map(([key, value]) => <div key={key}><dt>{key}</dt><dd>{value}</dd></div>)}
-            </dl>
-            {analysisReports.length > 0 && (
-              <div className="analysis-report" aria-live="polite">
-                <strong>追加解析結果</strong>
-                {analysisReports.map((action) => <p key={action.id}><AnnotatedText text={action.reportText ?? ''} /></p>)}
-              </div>
-            )}
-          </details>
           <section className="pane-section analysis-summary">
             <div><span>追加解析</span><strong>{analysisStatus}</strong></div>
             <div><span>監査リソース残数</span><strong>{props.resources} / {case000.auditResourceMax}</strong></div>
