@@ -223,3 +223,28 @@ Feature: Persona Null Case000 playable audit slice
     And the selected node is emphasized
     And a node requiring contradiction review uses a slightly stronger halo until classified
     And no flashing, jitter, or positional noise is added
+
+  Scenario: Reading audit state directly from the Memory Network
+    Given the auditor is on the investigation screen
+    Then importance remains encoded by the existing standard, high, and critical colors
+    And selected nodes use a double ring
+    And submitted evidence nodes use an angular evidence frame
+    And unclassified contradiction nodes use a stronger non-flashing warning halo
+    And classified contradiction nodes use a closed thin ring
+    And reviewed nodes remain visible with reduced glow
+    And analysis target nodes expose an analysis-result marker
+    When the auditor hovers or selects a memory node
+    Then the center pane shows its title, record type, importance, review state, evidence state, contradiction state, and analysis-result state
+
+  Scenario: Presenting a restrained administrative audit terminal
+    Given the auditor opens Case000
+    Then panels use thin rules, clipped corners, and low-saturation blue-white text
+    And red is reserved for warnings and irreversible processing
+    And actionable controls are visually distinct from informational displays
+    And the Memory Network background contains a subtle grid, distant particles, and weak scanlines
+    And ambient movement is slow and does not flash, jitter, or obstruct operation
+
+  Scenario: Stamping the final administrative ruling
+    Given the auditor confirms a final judgment
+    Then the result screen shows a translucent ruling stamp matching 暫定拘束, 証拠凍結, or 媒体起因処理
+    And the ruling stamp remains visually prominent without obscuring the administrative log

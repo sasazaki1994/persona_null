@@ -477,14 +477,20 @@ function InvestigationScreen(props: InvestigationProps) {
       <section className="center-pane">
         <div className="network-caption">
           <span>Memory Network</span>
-          <small>クリックで選択 / 色で重要度を表示</small>
+          <small>クリックで選択 / 色で重要度を表示・外周で監査状態を表示</small>
+          <div className="network-state-legend" aria-label="ノード監査状態">
+            <span><i className="legend-ring double" />選択中</span>
+            <span><i className="legend-frame" />根拠提出済</span>
+            <span><i className="legend-ring closed" />矛盾分類済</span>
+            <span><i className="legend-halo" />矛盾未分類</span>
+          </div>
           <div className="importance-legend" aria-label="問題の重要度">
             {(Object.entries(importanceLabels) as [NodeImportance, string][]).map(([importance, label]) => (
               <span className={`importance-key ${importance}`} key={importance}><i />{label}</span>
             ))}
           </div>
         </div>
-        <MemoryNetwork nodes={case000.nodes} selectedNodeId={props.selectedNodeId} visitedNodeIds={props.visitedNodeIds} taggedNodes={props.taggedNodes} onSelectNode={props.onSelectNode} />
+        <MemoryNetwork nodes={case000.nodes} selectedNodeId={props.selectedNodeId} visitedNodeIds={props.visitedNodeIds} pinnedNodeIds={props.pinnedNodeIds} taggedNodes={props.taggedNodes} executedActionIds={props.executedActionIds} onSelectNode={props.onSelectNode} />
       </section>
 
       <aside className="pane right-pane">
@@ -676,6 +682,11 @@ function ResultScreen({ decision, finalStats, payload, taggedNodes }: { decision
       <section className="document-card result wide admin-log">
         <p className="eyebrow">行政処理ログ / {case000.recordName} / 保存完了</p>
         <h2>Case000 処理記録</h2>
+        <div className={`ruling-stamp ruling-${decision.id}`} aria-label={`裁定印：${decision.finalRuling.split(':')[0]}`}>
+          <span>都市OS監査室</span>
+          <strong>{decision.finalRuling.split(':')[0]}</strong>
+          <small>FINAL / CASE000</small>
+        </div>
         <div className="result-grid">
           <ResultSection title="最終裁定">
             <p><AnnotatedText text={decision.finalRuling} /></p>
