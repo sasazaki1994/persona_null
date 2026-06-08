@@ -22,7 +22,14 @@ Feature: Persona Null Case000 playable audit slice
     Then the node becomes selected
     And its summary, log, simpleFact, inspectorNote, warning, and metrics are shown
     And the investigation progress increases if it was not previously visited
-    And visited nodes become visually more stable than unvisited nodes
+    And node importance is identified by labeled colors: standard cyan, high amber, and critical red or pink
+    And critical nodes do not use jitter, flashing, or positional noise to communicate importance
+
+  Scenario: Keeping the desktop investigation workspace in one viewport
+    Given the auditor is on the investigation screen with a desktop viewport at least 900 pixels wide
+    Then the four investigation regions remain arranged within one viewport
+    And the page itself does not require vertical scrolling
+    And overflow is contained within the relevant pane when necessary
 
   Scenario: Blocking judgment before conditions are met
     Given the auditor is on the investigation screen

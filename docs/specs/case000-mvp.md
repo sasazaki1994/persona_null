@@ -429,7 +429,7 @@ Case000 の値は次の通り。
 
 ## 8. 調査画面 UI 仕様
 
-`InvestigationScreen` は 4 領域で構成する。
+`InvestigationScreen` は 4 領域で構成する。デスクトップ（幅 900px 以上）では調査画面全体を `100dvh` 以内に固定し、ページ自体をスクロールせず主要な監査操作へアクセスできるようにする。情報量が収まらない場合は各ペイン内だけをスクロール対象とし、4 領域の配置は崩さない。
 
 ### 8.1 Left pane
 
@@ -468,9 +468,10 @@ type MemoryNetworkProps = {
 - pointer hover で cursor を pointer にし、ノードを強調する。
 - pointer down で `onSelectNode(nodeId)` を呼ぶ。
 - selected node は明確に拡大・発光する。
-- visited node は drift / jitter を弱め、安定化したように見せる。
-- `importance === 'critical'` は通常ノードより強い jitter / glow を持つ。
-- `kasumi-key` は通常 critical よりさらに不安定な挙動にする。
+- importance は固定色で識別する。`standard` は cyan、`high` は amber、`critical` は red/pink とする。
+- importance 凡例をネットワーク上に常時表示し、色だけに依存せずテキストラベルも併記する。
+- `critical` を jitter、点滅、位置ノイズなどの不安定な動きで表現しない。選択・hover は importance に関係なく同じ拡大・発光規則を使う。
+- visited 状態は importance の色を変えず、発光量の抑制で既読として区別する。
 - unmount 時に renderer、geometry、material、event listener、animation frame を破棄する。
 
 ### 8.3 Right pane
