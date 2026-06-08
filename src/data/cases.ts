@@ -250,7 +250,7 @@ export const cases: CaseRecord[] = [
         inspectorNote: '都市は空白を嫌う。だが、空白を誰かの罪で埋めることが監査ではない。',
         warning: '急がされている。',
         metrics: { 要求期限: '4時間', 推奨判断: 'AまたはC', キュー逼迫: '高', 監査猶予: '低' },
-        hasContradiction: true,
+        hasContradiction: false,
         requiresContradictionReview: false,
         suggestedTags: [],
         position: [-1.6, 1.8, -0.5],
@@ -263,6 +263,8 @@ export const cases: CaseRecord[] = [
         title: '人格署名の再照合',
         description: '発砲ログと人格台帳の署名波形を再照合する。',
         resultLog: '解析完了：署名一致率は改善せず。間宮署名は残るが、単独の責任確定には不足。',
+        targetNodeIds: ['shot-log', 'victim-medium'],
+        reportText: '署名一致率は改善せず。間宮署名は残るが、単独の責任確定には不足。',
         unlockConditions: [
           { type: 'visited_nodes', nodeIds: ['victim-medium'] },
           { type: 'pinned_any', count: 1 },
@@ -273,6 +275,8 @@ export const cases: CaseRecord[] = [
         title: '欠落8秒の復元',
         description: '海馬補助ログから欠損区間の復元を試行する。',
         resultLog: '解析完了：欠損区間は断片のみ復元。外部命令断定ではなく境界曖昧化を示唆。',
+        targetNodeIds: ['missing-memory', 'arm-history'],
+        reportText: '欠損区間は断片のみ復元。外部命令断定ではなく境界曖昧化を示唆。',
         unlockConditions: [
           { type: 'visited_nodes', nodeIds: ['missing-memory', 'arm-history'] },
         ],
@@ -282,6 +286,8 @@ export const cases: CaseRecord[] = [
         title: '認証鍵と媒体の照合',
         description: 'KASUMI-GATE-09 と七瀬未織の媒体の接触痕を照合する。',
         resultLog: '解析完了：七瀬未織の媒体側に同鍵形式の応答痕。媒体を操作源と断定するには不足。未焼却音声断片をCase001保全候補へ追加。',
+        targetNodeIds: ['kasumi-key', 'victim-medium', 'last-comm'],
+        reportText: '七瀬未織の媒体側に同鍵形式の応答痕。媒体を操作源と断定するには不足。未焼却音声断片をCase001保全候補へ追加。',
         unlockConditions: [
           { type: 'visited_nodes', nodeIds: ['kasumi-key', 'last-comm'] },
         ],

@@ -93,6 +93,8 @@ export type AnalysisAction = {
   title: string;
   description: string;
   resultLog: string;
+  targetNodeIds?: string[];
+  reportText?: string;
   unlockConditions?: AnalysisUnlockCondition[];
 };
 

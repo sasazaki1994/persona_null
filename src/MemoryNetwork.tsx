@@ -4,7 +4,7 @@ import type { MemoryNode, TaggedNodes } from './types';
 
 type Props = {
   nodes: MemoryNode[];
-  selectedNodeId?: string;
+  selectedNodeId?: string | null;
   visitedNodeIds: string[];
   taggedNodes: TaggedNodes;
   onSelectNode: (nodeId: string) => void;

@@ -27,7 +27,9 @@ Feature: Persona Null Case000 playable audit slice
 
   Scenario: Distinguishing reviewed memory nodes from unreviewed nodes
     Given the auditor is on the investigation screen
-    Then the left pane lists every memory node as 未確認, 確認済, or 選択中
+    Then no memory node is selected initially
+    And the right pane asks the auditor to select a memory node from the issue list or Memory Network
+    And the left pane lists every memory node as 未確認, 確認済, or 選択中
     And the remaining unreviewed node count is visible at a glance
     When the auditor selects an unreviewed node from the left pane list
     Then the same node is selected in the investigation workspace
@@ -96,6 +98,7 @@ Feature: Persona Null Case000 playable audit slice
     Then one audit resource is consumed
     And the action result is added to the system log
     And the same action is disabled after execution
+    And the action report is shown as an additional analysis result on each target memory node
 
   Scenario: Preventing analysis without audit resources
     Given audit resources are zero
@@ -117,6 +120,8 @@ Feature: Persona Null Case000 playable audit slice
     And every choice shows adopted evidence, ignored or deferred issues, and city status effects
     And adopted evidence indicates whether it is 根拠提出済 or 未提出
     And every choice summarizes how many adopted evidence nodes match the submitted grounds
+    And a choice with adopted evidence but zero matching submitted grounds warns that its adopted evidence is unsubmitted
+    And the warning does not disable that choice
     When the auditor selects a final decision
     Then the result screen is shown
     And localStorage contains caseId, decisionId, pinnedNodeIds, taggedNodes, executedActionIds, finalStats, and completedAt
