@@ -1,6 +1,8 @@
 import { useMemo, useState, type ReactNode } from 'react';
 import { canUnlockJudgment, getJudgmentRequirements, type JudgmentRequirement } from './auditRules';
 import { case000, case001Preview, contradictionTagLabels, contradictionTags } from './case000';
+import { AnnotatedText } from './components/AnnotatedText';
+import { TypewriterText } from './components/TypewriterText';
 import { MemoryNetwork } from './MemoryNetwork';
 import { loadCaseResults, loadReadFlags, markRead, saveCaseResult } from './storage';
 import type { CityStats, ContradictionTag, DecisionOption, MemoryNode, SavedCaseResult, Screen, TaggedNodes } from './types';
@@ -182,12 +184,12 @@ function AuthBriefingScreen({ onNext, read }: { onNext: () => void; read: boolea
         <p className="eyebrow">都市OS 基礎公定通知{read ? ' / 既読' : ''}</p>
         <h2>本人性の境界について</h2>
         <ul>
-          <li>身体認証：その身体が誰のものか。</li>
-          <li>人格認証：応答している人格が誰なのか。</li>
-          <li>操作主体：身体や義体を実際に動かしている主体が誰なのか。</li>
-          <li>法的人格：都市OSが権利、責任、同意、通行、医療判断を与えてよいと認めた人格。</li>
+          <li><AnnotatedText text="身体認証：その身体が誰のものか。" /></li>
+          <li><AnnotatedText text="人格認証：応答している人格が誰なのか。" /></li>
+          <li><AnnotatedText text="操作主体：身体や義体を実際に動かしている主体が誰なのか。" /></li>
+          <li><AnnotatedText text="法的人格：都市OSが権利、責任、同意、通行、医療判断を与えてよいと認めた人格。" /></li>
         </ul>
-        <p>認証失敗または人格未確定の者は、市民生活の端から静かに除外されます。</p>
+        <p><TypewriterText text="認証失敗または人格未確定の者は、市民生活の端から静かに除外されます。" speed={16} animateKey="auth-briefing" /></p>
         <button onClick={onNext}>通知を確認</button>
       </section>
     </Shell>
@@ -222,18 +224,18 @@ function CaseOverviewScreen({ onNext }: { onNext: () => void }) {
       <section className="document-card wide">
         <p className="eyebrow">事件概要</p>
         <h2>{case000.title}</h2>
-        <p>{case000.overview}</p>
+        <p><AnnotatedText text={case000.overview} /></p>
         <section className="overview-grid">
           <div>
             <h3>人物ログ</h3>
             {case000.personLogs.map((person) => (
-              <p key={person.id}><strong>{person.name}</strong>：{person.summary}</p>
+              <p key={person.id}><strong>{person.name}</strong>：<AnnotatedText text={person.summary} /></p>
             ))}
           </div>
           <div>
             <h3>処理要求</h3>
-            <p><strong>{case000.processingRequest.title}</strong>：{case000.processingRequest.simpleFact}</p>
-            <p className="warning-text">{case000.processingRequest.warning}</p>
+            <p><strong>{case000.processingRequest.title}</strong>：<AnnotatedText text={case000.processingRequest.simpleFact} /></p>
+            <p className="warning-text"><AnnotatedText text={case000.processingRequest.warning} /></p>
           </div>
         </section>
         <section>
@@ -327,11 +329,11 @@ function InvestigationScreen(props: InvestigationProps) {
         </section>
         <section className="pane-section">
           <h3>監査記録</h3>
-          <p>{props.selectedNode.summary}</p>
+          <p><TypewriterText text={props.selectedNode.summary} speed={14} animateKey={`summary-${props.selectedNode.id}`} /></p>
           <code>{props.selectedNode.log}</code>
-          <p><strong>単純事実：</strong>{props.selectedNode.simpleFact}</p>
-          <p><strong>監査官注：</strong>{props.selectedNode.inspectorNote}</p>
-          <p className="warning-text"><strong>警告：</strong>{props.selectedNode.warning}</p>
+          <p><strong>単純事実：</strong><AnnotatedText text={props.selectedNode.simpleFact} /></p>
+          <p><strong>監査官注：</strong><TypewriterText text={props.selectedNode.inspectorNote} speed={14} animateKey={`note-${props.selectedNode.id}`} /></p>
+          <p className="warning-text"><strong>警告：</strong><AnnotatedText text={props.selectedNode.warning} /></p>
           <dl className="metrics">
             {Object.entries(props.selectedNode.metrics).map(([key, value]) => <div key={key}><dt>{key}</dt><dd>{value}</dd></div>)}
           </dl>
@@ -382,7 +384,13 @@ function InvestigationScreen(props: InvestigationProps) {
         <section className="logs">
           <strong>システムログ</strong>
           <div className="log-list">
-            {props.systemLogs.map((log) => <p key={log}>{log}</p>)}
+            {props.systemLogs.map((log, index) => (
+              <p key={`${index}-${log}`}>
+                {index === props.systemLogs.length - 1
+                  ? <TypewriterText text={log} speed={12} animateKey={`system-log-${props.systemLogs.length}-${log}`} />
+                  : log}
+              </p>
+            ))}
           </div>
         </section>
       </footer>
@@ -420,10 +428,10 @@ function ResultScreen({ decision, finalStats, payload, taggedNodes }: { decision
         <h2>Case000 処理記録</h2>
         <div className="result-grid">
           <ResultSection title="最終裁定">
-            <p>{decision.finalRuling}</p>
+            <p><AnnotatedText text={decision.finalRuling} /></p>
           </ResultSection>
           <ResultSection title="処理内容">
-            <p>{decision.processing}</p>
+            <p><AnnotatedText text={decision.processing} /></p>
           </ResultSection>
           <ResultSection title="優先された価値">
             <p>{decision.prioritizedValue}</p>
@@ -458,15 +466,15 @@ function ResultScreen({ decision, finalStats, payload, taggedNodes }: { decision
             <StatusBars stats={finalStats} />
           </ResultSection>
           <ResultSection title="監査注記">
-            <p>{decision.auditNote}</p>
+            <p><AnnotatedText text={decision.auditNote} /></p>
           </ResultSection>
           <ResultSection title="結末文">
-            <p className="ending-text">{decision.endingText}</p>
+            <p className="ending-text"><TypewriterText text={decision.endingText} speed={18} animateKey={decision.id} /></p>
           </ResultSection>
           <ResultSection title="次回記録">
             <p className="warning-text">{case001Preview.id.toUpperCase()}「{case001Preview.title}」：{case001Preview.subtitle}。予告のみ表示。Jam提出版では未開放。</p>
-            {case001Preview.handoffSummary && <p>{case001Preview.handoffSummary}</p>}
-            {case001Preview.preservedFragment && <code>{case001Preview.preservedFragment}</code>}
+            {case001Preview.handoffSummary && <p><AnnotatedText text={case001Preview.handoffSummary} /></p>}
+            {case001Preview.preservedFragment && <code><AnnotatedText text={case001Preview.preservedFragment} /></code>}
           </ResultSection>
         </div>
       </section>

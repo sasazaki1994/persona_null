@@ -9,6 +9,13 @@ export type Screen =
 
 export type NodeImportance = 'standard' | 'high' | 'critical';
 
+export type GlossaryEntry = {
+  id: string;
+  term: string;
+  aliases: string[];
+  definition: string;
+};
+
 export type ContradictionTag =
   | 'body_auth'
   | 'persona_signature'
