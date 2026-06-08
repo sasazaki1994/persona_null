@@ -68,10 +68,16 @@ export const glossaryEntries: GlossaryEntry[] = [
     definition: '都市警備局所属の捜査官。Case000で発砲に使用された警備用部分義体の登録者。',
   },
   {
+    id: 'unregistered-persona-recorder',
+    term: '未登録人格記録装置',
+    aliases: ['未登録人格記録装置', '七瀬未織の記録装置'],
+    definition: '都市OSに登録されていない小型記録装置。発話ログ、記憶断片、人格署名の一部を保持するが、完全な人格バックアップではない。',
+  },
+  {
     id: 'miori-nanase',
     term: '七瀬未織',
     aliases: ['七瀬未織'],
-    definition: 'Case000の被害者。未登録人格媒体と、焼却されなかった音声記録が事件に残る。',
+    definition: 'Case000の被害者。身体は死亡しており、所持品の未登録人格記録装置に声と記憶の一部が残る。',
   },
   {
     id: 'audit-office',

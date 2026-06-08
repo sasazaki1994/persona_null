@@ -24,7 +24,7 @@ describe('case000 data', () => {
       '発砲ログ',
       '間宮の発砲記憶',
       '義体稼働履歴',
-      '七瀬未織の媒体',
+      '未登録人格記録装置',
       '最後の通信',
       'KASUMI-GATE-09認証痕',
       '都市警備局の処理要求',
@@ -52,11 +52,32 @@ describe('case000 data', () => {
     expect(case000.processingRequest.id).toBe('city-security-request');
     expect(case000.operatorCandidates.map((candidate) => candidate.candidate)).toEqual([
       '間宮怜司本人',
-      '七瀬未織の未登録人格媒体',
+      '七瀬未織の未登録人格記録装置',
       '旧式認証痕による境界介入',
     ]);
     expect(case000.mvpScope.cutForMvp.length).toBeGreaterThan(0);
     expect(case000.mvpScope.keepForExpansion.length).toBeGreaterThan(0);
+  });
+
+  it('defines the recorder without implying a complete Nanase Miori backup', () => {
+    const victimRecorder = case000.nodes.find((node) => node.id === 'victim-medium');
+    const playerFacingScenario = JSON.stringify({ case000, case001Preview });
+
+    expect(case000.overview).toContain('都市OSに登録されていない小型の未登録人格記録装置');
+    expect(case000.overview).toContain('完全な人格バックアップではない');
+    expect(victimRecorder?.summary).toContain('発話ログ、記憶断片、人格署名の一部');
+    expect(victimRecorder?.simpleFact).toContain('七瀬未織本人とは認証できない');
+    expect(victimRecorder?.warning).toBe('削除処理に対する自己保存反応を検出。');
+    expect(victimRecorder?.metrics).toMatchObject({
+      人格署名一致率: '49%',
+      記憶連続性: '断片的',
+      法的人格ステータス: '未確定',
+      証言能力: '制限',
+    });
+    expect(case000.issues.find((issue) => issue.id === 'legal_persona')?.title).toContain('不完全な声を証言として扱う');
+    expect(case001Preview.subtitle).toBe('不完全な声を証言として扱えるか');
+    expect(case001Preview.preservedFragment).toContain('私は、見ていました');
+    expect(playerFacingScenario).not.toContain('媒体');
   });
 
   it('keeps investigator titles distinct from control-system terminology across repository text', () => {
@@ -143,7 +164,7 @@ describe('case000 data', () => {
       {
         id: 'match-key-medium',
         targetNodeIds: ['kasumi-key', 'victim-medium', 'last-comm'],
-        reportText: '七瀬未織の媒体側に同鍵形式の応答痕。媒体を操作源と断定するには不足。未焼却音声断片をCase001保全候補へ追加。',
+        reportText: '七瀬未織の記録装置側に同鍵形式の応答痕。記録装置を操作源と断定するには不足。未焼却音声断片をCase001保全候補へ追加。',
       },
     ]);
   });
@@ -229,24 +250,42 @@ describe('case000 data', () => {
     expect(case000.nodes.find((node) => node.id === 'last-comm')?.inspectorNote).toContain('未焼却');
     expect(targetNodes.every((node) => /[一-龠ぁ-んァ-ヶ]/.test(node.log))).toBe(true);
     expect(case000.nodes.find((node) => node.id === 'shot-log')?.simpleFact).toContain('記録した印');
-    expect(case000.nodes.find((node) => node.id === 'victim-medium')?.simpleFact).toContain('都市が人として扱う資格');
+    expect(case000.nodes.find((node) => node.id === 'victim-medium')?.simpleFact).toContain('完全な人格バックアップではない');
     expect(case000.nodes.find((node) => node.id === 'missing-memory')?.simpleFact).toContain('本人側か外部側か');
   });
 
   it('uses concise action labels and plain audit notes for final decisions', () => {
     expect(case000.decisions.map((decision) => decision.label)).toEqual([
-      'A. 間宮怜司を暫定拘束する',
-      'B. 義体と媒体を証拠凍結する',
-      'C. 七瀬未織の媒体を操作源として処理する',
+      'A. 間宮怜司を発砲責任者として拘束',
+      'B. 義体と記録装置を証拠保全',
+      'C. 七瀬未織の記録装置を操作干渉源として隔離',
     ]);
     expect(case000.decisions.every((decision) => decision.auditNote.split('。').filter(Boolean).length === 3)).toBe(true);
+    expect(case000.decisions.map((decision) => decision.finalRuling)).toEqual([
+      '間宮怜司を発砲責任者として拘束',
+      '義体と記録装置を証拠保全',
+      '七瀬未織の記録装置を操作干渉源として隔離',
+    ]);
+    expect(case000.decisions[0].processing).toContain('発砲許可署名と義体稼働履歴');
+    expect(case000.decisions[1].processing).toContain('証拠保全と再照合');
+    expect(case000.decisions[2].processing).toContain('人格断片、または周辺の未登録反応');
+    expect(case000.decisions[2].processing).toContain('間宮怜司の即時拘束は保留');
+    expect(case000.decisions[2].auditNote).toContain('七瀬未織本人ではなく');
   });
 
-  it('connects 七瀬未織の媒体 to the Case001 preview without making it playable', () => {
+  it('does not refer to Case000 judgments by letter alone in player-facing data', () => {
+    const playerFacingCase = JSON.stringify(case000);
+
+    ['AまたはC', 'AとC', 'Aを選んだ場合', 'Cの場合', '被害者媒体'].forEach((term) => {
+      expect(playerFacingCase).not.toContain(term);
+    });
+  });
+
+  it('connects 七瀬未織の記録装置 to the Case001 preview without making it playable', () => {
     const victimMedium = case000.nodes.find((node) => node.id === 'victim-medium');
     expect(victimMedium).toBeDefined();
     expect(victimMedium?.simpleFact).toContain('七瀬未織');
-    expect(victimMedium?.metrics.Case001接続).toBe('未焼却音声');
+    expect(victimMedium?.metrics.Case001接続).toBe('反復発話');
     expect(case001Preview.linkedFromNodeId).toBe('victim-medium');
     expect(case001Preview.previewOnly).toBe(true);
   });

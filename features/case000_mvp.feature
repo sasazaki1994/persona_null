@@ -147,14 +147,14 @@ Feature: Persona Null Case000 playable audit slice
   Scenario: Loading the strengthened Case000 scenario data
     Given the auditor opens Case000
     Then Case000 has exactly 7 memory nodes
-    And the nodes include "七瀬未織の媒体" and "都市警備局の処理要求"
+    And the nodes include "未登録人格記録装置" and "都市警備局の処理要求"
     And every memory node contains summary, log, simpleFact, warning, and metrics
     And the scenario exposes person profiles for 間宮怜司 and 七瀬未織
     And 間宮怜司 is identified as a 都市警備局 捜査官
     And 操作主体, 操作経路, and 操作源 remain control-system terms
     And no deprecated urban-security investigator title remains in source, specs, or documentation
     And the scenario exposes exactly 3 operation subject candidates
-    And the Case001 preview is connected from 七瀬未織の媒体 without creating a playable Case001 route
+    And the Case001 preview is connected from the 未登録人格記録装置 node without creating a playable Case001 route
     And MVP cut items are separated from expansion backlog items
 
   Scenario: Showing replaceable Case000 audit portraits
@@ -260,7 +260,7 @@ Feature: Persona Null Case000 playable audit slice
 
   Scenario: Stamping the final administrative ruling
     Given the auditor confirms a final judgment
-    Then the result screen shows a translucent ruling stamp matching 暫定拘束, 証拠凍結, or 媒体起因処理
+    Then the result screen shows a translucent ruling stamp matching 発砲責任拘束, 証拠保全, or 操作干渉源隔離
     And the ruling stamp remains visually prominent without obscuring the administrative log
 
   Scenario: 調査画面の右ペインは監査情報を固定順で表示する
@@ -300,7 +300,7 @@ Feature: Persona Null Case000 playable audit slice
     And inspectorNote は2文から4文で構成される
     And inspectorNote は監査上の注意点と次に疑うべき矛盾軸と裁定上の含意を示す
     And summary と log と warning の情報量は従来の表示密度を維持する
-    And 七瀬未織の媒体と最後の通信は未焼却音声を Case001 へ保全する含意を示す
+    And 七瀬未織の記録装置と最後の通信は未焼却音声を Case001 へ保全する含意を示す
 
   Scenario: 監査端末テーマで状態とログを判別する
     Given プレイヤーが Case000 の調査画面を開いている
@@ -325,7 +325,7 @@ Feature: Persona Null Case000 playable audit slice
 
   Scenario: Case000 の監査文面を一読で理解できる
     Given プレイヤーが Case000 の事件概要を開く
-    Then 事件概要は短い文で発砲、記憶欠落、外部制御痕、被害者媒体、旧式認証痕を説明する
+    Then 事件概要は短い文で発砲、記憶欠落、外部制御痕、七瀬未織の記録装置、旧式認証痕を説明する
     And 判断に関係しない技術史や設定説明を含まない
     When プレイヤーが各記憶ノードを開く
     Then 各ノードは log、simpleFact、inspectorNote の3層を持つ
@@ -336,7 +336,25 @@ Feature: Persona Null Case000 playable audit slice
 
   Scenario: 最終判断と監査結果を平易な文面で確認できる
     Given プレイヤーが最終判断画面を開く
-    Then 各判断ボタンは実行する処理を短く示す
+    Then 判断ボタンは「間宮怜司を発砲責任者として拘束」「義体と記録装置を証拠保全」「七瀬未織の記録装置を操作干渉源として隔離」の対象と処理を示す
+    And 各裁定カードは判断の根拠、処理対象、優先方針を初期表示する
     And 裁定詳細は優先する価値と失う価値を具体的に示す
+    And Case000 のプレイヤー向け文面は判断を「AまたはC」「AとC」「Aを選んだ場合」「Cの場合」のような記号だけで参照しない
+    And 「被害者媒体」または単独の「媒体」を記録装置の名称として表示しない
+    And 記録装置隔離案は七瀬未織本人ではなく、装置内の人格断片または周辺の未登録反応を操作干渉源として扱う
     When プレイヤーが判断を確定する
-    Then 監査注記は選んだ処理、判断根拠、残るリスクを短い文で示す
+    Then 最終裁定は選択肢記号ではなく具体的な処理名を表示する
+    And 監査注記は選んだ処理、判断根拠、残るリスクを短い文で示す
+
+  Scenario: Explaining Nanase Miori's unregistered persona recorder
+    Given the auditor reads the Case000 overview and the Case001 preview
+    Then the first player-facing mention identifies the unregistered persona recorder as a small recording device not registered with the city OS
+    And the recorder contains only parts of Nanase Miori's speech logs, memory fragments, and persona signature
+    And the text states that the recorder is not a complete persona backup
+    And the city OS cannot authenticate the fragments as Nanase Miori herself
+    And testimony capability is restricted because the persona signature is partial and memory continuity is fragmentary
+    And the recorder reports a self-preservation response to deletion processing
+    And the Case001 question is whether an incomplete voice can be treated as testimony
+    And the preview repeats "私は、見ていました"
+    And player-facing labels do not use the standalone term "媒体" for the recorder
+    And Case001 remains previewOnly without a playable route

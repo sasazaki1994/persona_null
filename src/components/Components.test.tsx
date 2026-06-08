@@ -78,7 +78,7 @@ describe('PersonProfile', () => {
     });
     expect(case000.personLogs[1].portraitFallback).toEqual({
       heading: '人格断片記録',
-      lines: ['対象：七瀬 未織', '画像未登録', '証言能力：制限', '媒体状態：破損'],
+      lines: ['対象：七瀬 未織', '画像未登録', '証言能力：制限', '記録装置状態：破損'],
     });
   });
 });
