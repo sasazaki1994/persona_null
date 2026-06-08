@@ -161,3 +161,26 @@ Feature: Persona Null Case000 playable audit slice
     And the auditor can reveal the full text immediately by clicking the presentation or its full-text button
     And reduced-motion users receive the full text without typing or cursor animation
     And Case000 progression, judgment conditions, persistence, and the Case001 preview-only restriction remain unchanged
+
+  Scenario: Guiding the auditor through the next required investigation action
+    Given the auditor is on the investigation screen
+    Then the left pane shows the next audit procedure
+    And node review is guided before evidence pinning
+    And evidence pinning is guided before contradiction classification
+    And final judgment is guided after all judgment conditions are complete
+    And remaining audit resources are shown only as optional analysis information
+
+  Scenario: Explaining selected-node actions and final judgment progress
+    Given the auditor is on the investigation screen
+    When a memory node is selected
+    Then the right pane states whether the node is reviewed, pinnable, or eligible for contradiction classification
+    And the bottom pane is titled "最終判断まで"
+    And node review, evidence pinning, and contradiction classification are shown as a progress checklist
+
+  Scenario: Distinguishing actionable memory nodes without excessive motion
+    Given the auditor is on the investigation screen
+    Then unreviewed nodes use the normal glow
+    And reviewed nodes are dimmed
+    And the selected node is emphasized
+    And an unclassified contradiction node uses a slightly stronger halo
+    And no flashing, jitter, or positional noise is added

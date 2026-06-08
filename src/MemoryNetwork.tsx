@@ -1,11 +1,12 @@
 import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
-import type { MemoryNode } from './types';
+import type { MemoryNode, TaggedNodes } from './types';
 
 type Props = {
   nodes: MemoryNode[];
   selectedNodeId?: string;
   visitedNodeIds: string[];
+  taggedNodes: TaggedNodes;
   onSelectNode: (nodeId: string) => void;
 };
 
@@ -15,7 +16,7 @@ const importanceColors = {
   critical: '#ff476f',
 } as const;
 
-export function MemoryNetwork({ nodes, selectedNodeId, visitedNodeIds, onSelectNode }: Props) {
+export function MemoryNetwork({ nodes, selectedNodeId, visitedNodeIds, taggedNodes, onSelectNode }: Props) {
   const hostRef = useRef<HTMLDivElement | null>(null);
   const onSelectRef = useRef(onSelectNode);
   const hoverRef = useRef<string | null>(null);
@@ -131,18 +132,19 @@ export function MemoryNetwork({ nodes, selectedNodeId, visitedNodeIds, onSelectN
         const selected = nodeId === selectedNodeId;
         const hovered = nodeId === hoverRef.current;
         const visited = visitedNodeIds.includes(nodeId);
+        const unclassifiedContradiction = (node.hasContradiction || node.importance === 'critical') && (taggedNodes[nodeId]?.length ?? 0) === 0;
         mesh.position.set(...node.position);
 
         const selectedScale = selected ? 1.95 : hovered ? 1.55 : 1;
-        const visitedScale = visited && !selected && !hovered ? 1.08 : 1;
+        const visitedScale = visited && !selected && !hovered ? 0.94 : 1;
         mesh.scale.setScalar(selectedScale * visitedScale);
-        mesh.material.emissiveIntensity = selected ? 2.8 : hovered ? 2.25 : visited ? 0.42 : 0.9;
+        mesh.material.emissiveIntensity = selected ? 2.8 : hovered ? 2.25 : visited ? 0.32 : 0.95;
 
         const halo = haloMeshes.get(nodeId);
         if (halo) {
           halo.position.copy(mesh.position);
           halo.scale.setScalar(selected ? 2.2 : hovered ? 1.7 : 1);
-          halo.material.opacity = selected ? 0.42 : hovered ? 0.32 : visited ? 0.07 : 0.14;
+          halo.material.opacity = selected ? 0.42 : hovered ? 0.32 : unclassifiedContradiction ? (visited ? 0.18 : 0.24) : visited ? 0.05 : 0.14;
           halo.rotation.x = elapsed * 0.35;
           halo.rotation.y = elapsed * 0.25;
         }
@@ -174,7 +176,7 @@ export function MemoryNetwork({ nodes, selectedNodeId, visitedNodeIds, onSelectN
         (line.material as THREE.Material).dispose();
       });
     };
-  }, [nodes, selectedNodeId, visitedNodeIds]);
+  }, [nodes, selectedNodeId, taggedNodes, visitedNodeIds]);
 
   return <div className="network" ref={hostRef} aria-label="記憶ノードネットワーク" />;
 }

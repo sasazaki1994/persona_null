@@ -1,5 +1,5 @@
 import { useMemo, useState, type ReactNode } from 'react';
-import { canUnlockJudgment, getJudgmentRequirements, type JudgmentRequirement } from './auditRules';
+import { canUnlockJudgment, getCurrentGuidance, getJudgmentRequirements, type CurrentGuidance, type JudgmentRequirement } from './auditRules';
 import { case000, case001Preview, contradictionTagLabels, contradictionTags } from './case000';
 import { AnnotatedText } from './components/AnnotatedText';
 import { TypewriterText } from './components/TypewriterText';
@@ -54,12 +54,20 @@ function App() {
     pinnedNodeCount: pinnedNodeIds.length,
     taggedNodes,
   });
-  const blockers = requirements.filter((requirement) => !requirement.completed).map((requirement) => `${requirement.label}：${requirement.detail}`);
   const canJudge = canUnlockJudgment({
     visitedNodeCount: visitedCount,
     requiredNodesToJudge: case000.requiredNodesToJudge,
     pinnedNodeCount: pinnedNodeIds.length,
     taggedNodes,
+  });
+  const taggedNodeCount = Object.values(taggedNodes).filter((tags) => tags.length > 0).length;
+  const guidance = getCurrentGuidance({
+    visitedNodeCount: visitedCount,
+    requiredNodesToJudge: case000.requiredNodesToJudge,
+    pinnedNodeCount: pinnedNodeIds.length,
+    taggedNodeCount,
+    resources,
+    canJudge,
   });
   const finalStats = useMemo(() => (decision ? addStats(case000.initialStats, decision.statDelta) : case000.initialStats), [decision]);
 
@@ -153,7 +161,7 @@ function App() {
       executedActionIds={executedActionIds}
       systemLogs={systemLogs}
       progress={progress}
-      blockers={blockers}
+      guidance={guidance}
       requirements={requirements}
       canJudge={canJudge}
       onSelectNode={selectNode}
@@ -269,7 +277,7 @@ type InvestigationProps = {
   executedActionIds: string[];
   systemLogs: string[];
   progress: number;
-  blockers: string[];
+  guidance: CurrentGuidance;
   requirements: JudgmentRequirement[];
   canJudge: boolean;
   onSelectNode: (nodeId: string) => void;
@@ -278,6 +286,35 @@ type InvestigationProps = {
   onExecuteAction: (actionId: string) => void;
   onJudge: () => void;
 };
+
+function GuidancePanel({ guidance }: { guidance: CurrentGuidance }) {
+  return (
+    <section className={`pane-section guidance-panel guidance-${guidance.phase}`} aria-live="polite">
+      <p className="eyebrow">次の監査手順</p>
+      <h3>{guidance.title}</h3>
+      <p className="guidance-instruction">{guidance.instruction}</p>
+      <p className="guidance-action"><span>実行</span>{guidance.action}</p>
+      <small>{guidance.resourceNote}</small>
+    </section>
+  );
+}
+
+function NodeActionHint(props: { canJudge: boolean; eligibleForTags: boolean; isPinned: boolean; isTagged: boolean; isVisited: boolean }) {
+  const hints = props.canJudge
+    ? ['判断条件に必要な操作は完了しています']
+    : [
+        props.isVisited ? 'このノードは確認済みです' : 'このノードを選択すると確認済みになります',
+        props.isPinned ? 'このノードは判断根拠として登録済みです' : 'このノードは根拠としてピン留めできます',
+        props.eligibleForTags && (props.isTagged ? 'このノードは矛盾分類済みです' : 'このノードは矛盾分類対象です'),
+      ].filter((hint): hint is string => Boolean(hint));
+
+  return (
+    <section className="node-action-hint" aria-label="選択ノード操作案内">
+      <strong>操作照合</strong>
+      {hints.map((hint) => <p key={hint}>› {hint}</p>)}
+    </section>
+  );
+}
 
 function InvestigationScreen(props: InvestigationProps) {
   const eligibleForTags = props.selectedNode.hasContradiction || props.selectedNode.importance === 'critical';
@@ -294,6 +331,7 @@ function InvestigationScreen(props: InvestigationProps) {
           <h3>事件概要</h3>
           <p>{case000.overview}</p>
         </section>
+        <GuidancePanel guidance={props.guidance} />
         <section className="pane-section">
           <h3>進行度</h3>
           <div className="meter"><span style={{ width: `${props.progress}%` }} /></div>
@@ -326,7 +364,7 @@ function InvestigationScreen(props: InvestigationProps) {
             ))}
           </div>
         </div>
-        <MemoryNetwork nodes={case000.nodes} selectedNodeId={props.selectedNodeId} visitedNodeIds={props.visitedNodeIds} onSelectNode={props.onSelectNode} />
+        <MemoryNetwork nodes={case000.nodes} selectedNodeId={props.selectedNodeId} visitedNodeIds={props.visitedNodeIds} taggedNodes={props.taggedNodes} onSelectNode={props.onSelectNode} />
       </section>
 
       <aside className="pane right-pane">
@@ -338,6 +376,13 @@ function InvestigationScreen(props: InvestigationProps) {
             <span className={`importance ${props.selectedNode.importance}`}>重要度：{importanceLabels[props.selectedNode.importance]}</span>
           </div>
         </section>
+        <NodeActionHint
+          canJudge={props.canJudge}
+          eligibleForTags={eligibleForTags}
+          isPinned={props.pinnedNodeIds.includes(props.selectedNode.id)}
+          isTagged={(props.taggedNodes[props.selectedNode.id]?.length ?? 0) > 0}
+          isVisited={props.visitedNodeIds.includes(props.selectedNode.id)}
+        />
         <section className="pane-section">
           <h3>監査記録</h3>
           <p><TypewriterText text={props.selectedNode.summary} speed={14} animateKey={`summary-${props.selectedNode.id}`} /></p>
@@ -380,17 +425,17 @@ function InvestigationScreen(props: InvestigationProps) {
       <footer className="bottom-pane">
         <button className="judge" disabled={!props.canJudge} onClick={props.onJudge}>{props.canJudge ? '最終判断へ進む' : '最終判断は未開放'}</button>
         <section className="blocker-panel">
-          <strong>判断不可理由</strong>
+          <strong>最終判断まで</strong>
           <div className="requirement-list">
             {props.requirements.map((requirement) => (
               <div className={requirement.completed ? 'complete' : 'incomplete'} key={requirement.id}>
-                <span>{requirement.completed ? '完了' : '未完了'}</span>
+                <span aria-label={requirement.completed ? '完了' : '未完了'}>{requirement.completed ? '✓' : '□'}</span>
                 <p>{requirement.label}</p>
                 <small>{requirement.detail}</small>
               </div>
             ))}
           </div>
-          {props.blockers.length ? <p className="muted">未完了項目を満たすまで最終判断はロックされます。</p> : <p className="warning-text">条件充足。以後の判断は不可逆です。</p>}
+          <p className={props.canJudge ? 'warning-text' : 'muted'}>{props.canJudge ? '条件充足。以後の判断は不可逆です。' : '未完了項目を上から順に照合してください。'}</p>
         </section>
         <section className="logs">
           <strong>システムログ</strong>
