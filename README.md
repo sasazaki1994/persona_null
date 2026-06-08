@@ -1,10 +1,12 @@
 # Persona Null
 
+[![CI](https://github.com/sasazaki1994/persona_null/actions/workflows/ci.yml/badge.svg)](https://github.com/sasazaki1994/persona_null/actions/workflows/ci.yml)
+
 都市OSが「誰が撃ったのか」を確定できない事件を、監査室の端末から記憶ネットワークとして調査する React + Vite + TypeScript + Three.js 製のプレイアブルMVPです。
 
 ## スクリーンショット
 
-実画像はまだ配置していません。提出前に [`docs/screenshots.md`](docs/screenshots.md) の撮影計画に沿って、調査画面と結果画面のスクリーンショットへ差し替えます。
+この実行環境では画面撮影に利用できるブラウザがないため、実画像は未配置です。提出時は [`docs/screenshots.md`](docs/screenshots.md) の撮影計画に沿って `docs/images/` へタイトル・調査・結果画面を配置し、この欄を画像と短いキャプションに差し替えてください。
 
 ## ゲーム概要
 
@@ -56,7 +58,7 @@ Jam提出チェックリスト向けの詳細は [`docs/jam-submission.md`](docs
 - 最終エンディング分岐
 - 音演出
 - 本格的なレスポンシブ対応
-- 実スクリーンショット画像の配置（提出前に `docs/screenshots.md` に沿って差し替える）
+- 実スクリーンショット画像の配置（撮影可能な環境で `docs/screenshots.md` に沿って差し替える）
 
 ## 起動方法
 
@@ -110,6 +112,8 @@ npm run test
 6. `npm run build` を実行する。
 
 ## Vercel公開手順
+
+公開済みの Vercel URL はリポジトリ内で確認できなかったため、Demo / Play URL は未記載です。Deploy 完了後は、この README 上部へ確定した Production URL を追加してください。
 
 Persona Null は Vite アプリとして Vercel に公開できます。詳細な手順と公開後確認は [`docs/deploy.md`](docs/deploy.md) を参照してください。
 
