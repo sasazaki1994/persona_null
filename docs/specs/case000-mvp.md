@@ -2,6 +2,13 @@
 
 ## 0. 確定方針
 
+### 0.1 Case000 用語ルール
+
+- 都市警備局所属の間宮怜司の職名は「捜査官」とする。
+- プレイヤーおよび監査室側の人物は「監査官」とする。
+- 義体やシステムの制御主体を示す「操作主体」「操作経路」「操作源」は職名ではないため、そのまま使用する。
+- 旧職名（「操作」+「官」）は、Case000 関連の実装・仕様・ドキュメントに残さない。
+
 この仕様は、`Persona Null` の MVP として `Case000「誰が撃ったのか」` だけを React + Vite + TypeScript + Three.js で実装するための確定仕様である。Cursor には本書をそのまま渡せる前提で、画面遷移、コンポーネント構成、TypeScript 型、事件 JSON、進行条件、最終判断、結果画面、localStorage 保存仕様を定義する。
 
 - 対象事件は `case000` のみ。
@@ -257,7 +264,7 @@ export const cases: CaseRecord[] = [
       surveillance: 71,
       egoStability: 39,
     },
-    overview: '都市警備局の操作官・間宮怜司の警備用部分義体が、未登録人格媒体の所持者・七瀬未織を射殺した。...',
+    overview: '都市警備局の捜査官・間宮怜司の警備用部分義体が、未登録人格媒体の所持者・七瀬未織を射殺した。...',
     personLogs: [],
     processingRequest: {
       id: 'city-security-request',
@@ -611,7 +618,7 @@ const finalStats: CityStats = {
 
 MVP では `CaseRecord` を TypeScript/JSON 化しやすい静的データとして拡張し、以下を Case000 の構造化フィールドとして保持する。
 
-- `personLogs`: 間宮怜司の短い人物ログ。発砲義体の登録者、警備局操作官、旧式認証接触歴、疲労警告を含む。
+- `personLogs`: 間宮怜司の短い人物ログ。発砲義体の登録者、警備局捜査官、旧式認証接触歴、疲労警告を含む。
 - `processingRequest`: 都市警備局の処理要求。4時間以内の処理確定、推奨判断、監査異議、処理速度によるリスクを含む。
 - `operatorCandidates`: 操作主体候補3件。A=間宮怜司本人、B=七瀬未織の未登録人格媒体、C=KASUMI-GATE-09境界介入として整理する。
 - `case001Preview`: `victim-medium` から Case001「焼却されなかった声」へ接続する未焼却音声断片を含む。ただし playable route は作らない。

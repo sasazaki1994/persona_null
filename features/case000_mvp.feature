@@ -104,6 +104,9 @@ Feature: Persona Null Case000 playable audit slice
     And the nodes include "七瀬未織の媒体" and "都市警備局の処理要求"
     And every memory node contains summary, log, simpleFact, warning, and metrics
     And the scenario exposes one short person log for 間宮怜司
+    And 間宮怜司 is identified as a 都市警備局 捜査官
+    And 操作主体, 操作経路, and 操作源 remain control-system terms
+    And no deprecated urban-security investigator title remains in source, specs, or documentation
     And the scenario exposes exactly 3 operation subject candidates
     And the Case001 preview is connected from 七瀬未織の媒体 without creating a playable Case001 route
     And MVP cut items are separated from expansion backlog items
