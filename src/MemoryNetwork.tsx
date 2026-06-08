@@ -132,7 +132,8 @@ export function MemoryNetwork({ nodes, selectedNodeId, visitedNodeIds, taggedNod
         const selected = nodeId === selectedNodeId;
         const hovered = nodeId === hoverRef.current;
         const visited = visitedNodeIds.includes(nodeId);
-        const unclassifiedContradiction = (node.hasContradiction || node.importance === 'critical') && (taggedNodes[nodeId]?.length ?? 0) === 0;
+        const requiresContradictionReview = node.requiresContradictionReview ?? (node.suggestedTags?.length ?? 0) > 0;
+        const unclassifiedContradiction = requiresContradictionReview && (taggedNodes[nodeId]?.length ?? 0) === 0;
         mesh.position.set(...node.position);
 
         const selectedScale = selected ? 1.95 : hovered ? 1.55 : 1;

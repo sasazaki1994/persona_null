@@ -34,17 +34,23 @@ describe('Case000 player flow', () => {
     container.remove();
   });
 
+  const findButton = (label: string) => [...container.querySelectorAll('button')].find((candidate) => candidate.textContent?.includes(label));
+
   const clickButton = (label: string) => {
-    const button = [...container.querySelectorAll('button')].find((candidate) => candidate.textContent?.includes(label));
+    const button = findButton(label);
     expect(button, `button containing ${label}`).toBeDefined();
     act(() => button?.click());
   };
 
-  it('progresses from title through the guided investigation to a result', () => {
+  const enterInvestigation = () => {
     clickButton('監査端末を起動');
     clickButton('通知を確認');
     clickButton('Case000を開く');
     clickButton('調査を開始');
+  };
+
+  it('progresses from title through the guided investigation to a result', () => {
+    enterInvestigation();
 
     expect(container.textContent).toContain('次の監査手順');
     expect(container.textContent).toContain('記憶ノードを4件以上確認してください');
@@ -55,7 +61,7 @@ describe('Case000 player flow', () => {
     clickButton('根拠としてピン留め');
     expect(container.textContent).toContain('矛盾記録の分類');
 
-    clickButton('身体認証の矛盾');
+    clickButton('人格署名の矛盾');
     expect(container.textContent).toContain('判断条件に必要な操作は完了しています');
     expect(container.textContent).toContain('最終判断まで');
 
@@ -66,4 +72,32 @@ describe('Case000 player flow', () => {
     expect(container.textContent).toContain('最終裁定');
     expect(localStorage.getItem('persona-null:case-results')).not.toBeNull();
   });
+  it('shows only suggested contradiction tags and hides controls for unclassified records', () => {
+    enterInvestigation();
+
+    clickButton('ノード：間宮の発砲記憶');
+    expect(findButton('記憶由来の矛盾')).toBeDefined();
+    expect(findButton('操作主体の矛盾')).toBeDefined();
+    expect(findButton('身体認証の矛盾')).toBeUndefined();
+
+    clickButton('ノード：都市警備局の処理要求');
+    expect(container.textContent).toContain('この記録に分類可能な矛盾は検出されていません');
+    expect(findButton('記憶由来の矛盾')).toBeUndefined();
+  });
+
+  it('keeps analysis actions disabled until their record conditions are met', () => {
+    enterInvestigation();
+
+    expect(findButton('欠落8秒の復元')?.disabled).toBe(true);
+    expect(container.textContent).toContain('状態：未解放');
+    expect(container.textContent).toContain('間宮の発砲記憶');
+    expect(container.textContent).toContain('義体稼働履歴');
+
+    clickButton('ノード：間宮の発砲記憶');
+    expect(findButton('欠落8秒の復元')?.disabled).toBe(true);
+    clickButton('ノード：義体稼働履歴');
+    expect(findButton('欠落8秒の復元')?.disabled).toBe(false);
+    expect(findButton('認証鍵と媒体の照合')?.disabled).toBe(true);
+  });
+
 });

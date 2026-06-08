@@ -1,4 +1,28 @@
-import type { TaggedNodes } from './types';
+import type { AnalysisAction, TaggedNodes } from './types';
+
+export function isAnalysisActionUnlocked(params: {
+  action: AnalysisAction;
+  visitedNodeIds: string[];
+  pinnedNodeIds: string[];
+  taggedNodes: TaggedNodes;
+}): boolean {
+  const taggedNodeIds = Object.entries(params.taggedNodes)
+    .filter(([, tags]) => tags.length > 0)
+    .map(([nodeId]) => nodeId);
+
+  return (params.action.unlockConditions ?? []).every((condition) => {
+    switch (condition.type) {
+      case 'visited_nodes':
+        return condition.nodeIds.every((nodeId) => params.visitedNodeIds.includes(nodeId));
+      case 'pinned_any':
+        return params.pinnedNodeIds.length >= condition.count;
+      case 'tagged_any':
+        return taggedNodeIds.length >= condition.count;
+      case 'tagged_node':
+        return taggedNodeIds.includes(condition.nodeId);
+    }
+  });
+}
 
 export type JudgmentRequirement = {
   id: 'nodes' | 'pins' | 'tags';

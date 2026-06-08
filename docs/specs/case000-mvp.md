@@ -175,15 +175,24 @@ export type MemoryNode = {
   warning: string;
   metrics: Record<string, string | number>;
   hasContradiction: boolean;
+  requiresContradictionReview?: boolean;
+  suggestedTags?: ContradictionTag[];
   position: [number, number, number];
   links: string[];
 };
+
+export type AnalysisUnlockCondition =
+  | { type: 'visited_nodes'; nodeIds: string[] }
+  | { type: 'pinned_any'; count: number }
+  | { type: 'tagged_any'; count: number }
+  | { type: 'tagged_node'; nodeId: string };
 
 export type AnalysisAction = {
   id: string;
   title: string;
   description: string;
   resultLog: string;
+  unlockConditions?: AnalysisUnlockCondition[];
 };
 
 export type DecisionOption = {
@@ -329,13 +338,15 @@ export const contradictionTagLabels: Record<ContradictionTag, string> = {
 
 ### 5.4 解析アクション
 
-`case000.analysisActions` は 3 件。各アクションは 1 回だけ実行でき、実行時に監査リソースを 1 消費する。
+`case000.analysisActions` は 3 件。各アクションは 1 回だけ実行でき、解放条件をすべて満たした場合に限り実行時に監査リソースを 1 消費する。未解放アクションは disabled とし、未達条件をチェックリスト表示する。
 
-| 期待 id | 目的 |
-| --- | --- |
-| `resignature` | 発砲ログの人格署名を再照合する |
-| `restore-eight` | NULL 記憶区間の復元を試行する |
-| `match-key-medium` | 認証痕と七瀬未織の媒体を照合する |
+| 期待 id | 目的 | 解放条件 |
+| --- | --- | --- |
+| `resignature` | 人格署名を再照合する | 七瀬未織の媒体を確認済み、かつ任意の記録を1件以上ピン留め |
+| `restore-eight` | NULL 記憶区間の復元を試行する | 間宮の発砲記憶と義体稼働履歴を確認済み |
+| `match-key-medium` | 認証痕と七瀬未織の媒体を照合する | KASUMI-GATE-09認証痕と最後の通信を確認済み |
+
+解放条件は `visited_nodes`、`pinned_any`、`tagged_any`、`tagged_node` を扱い、`isAnalysisActionUnlocked` が `visitedNodeIds`、`pinnedNodeIds`、`taggedNodes` を照合する。
 
 ### 5.5 最終判断選択肢
 
@@ -379,11 +390,12 @@ const progress = Math.round((visitedNodeIds.length / case000.nodes.length) * 100
 
 ### 6.3 矛盾分類
 
-- `taggedNodes` は `Record<nodeId, ContradictionTag[]>`。
-- タグは同一ノードに複数付与できる。
-- 既に付与済みのタグを押すと解除する。
+- 各 `MemoryNode` は `suggestedTags` に、その記録から分類可能な候補だけを持つ。
+- 右ペインは全 `ContradictionTag` を常時表示せず、選択ノードの `suggestedTags` のみをボタン表示する。
+- `suggestedTags` が空配列または未定義なら分類ボタンを表示せず、`この記録に分類可能な矛盾は検出されていません` と表示する。
+- 分類ハンドラも `suggestedTags` にないタグ登録を拒否する。
 - 最終判断には、対象ノードへのタグ付けが最低 1 件必要。
-- 対象外ノードではタグボタンを disabled にする。
+- `requiresContradictionReview` は監査上の分類推奨を表し、Case000 では候補を持つノードに設定する。Memory Network の未分類 halo もこの値を参照する。
 
 ### 6.4 監査リソース
 

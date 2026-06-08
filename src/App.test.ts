@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { canUnlockJudgment, getCurrentGuidance, getJudgmentRequirements } from './auditRules';
+import { canUnlockJudgment, getCurrentGuidance, getJudgmentRequirements, isAnalysisActionUnlocked } from './auditRules';
 import { case000, case001Preview, contradictionTags } from './data/cases';
 import type { DecisionOption } from './types';
 
@@ -94,6 +94,55 @@ describe('case000 data', () => {
     expect(getCurrentGuidance({ ...base, visitedNodeCount: 4, pinnedNodeCount: 0, taggedNodeCount: 0, canJudge: false }).phase).toBe('pin');
     expect(getCurrentGuidance({ ...base, visitedNodeCount: 4, pinnedNodeCount: 1, taggedNodeCount: 0, canJudge: false }).phase).toBe('tag');
     expect(getCurrentGuidance({ ...base, visitedNodeCount: 4, pinnedNodeCount: 1, taggedNodeCount: 1, canJudge: true }).phase).toBe('judge');
+  });
+
+  it('limits contradiction candidates per node and marks records without classifications', () => {
+    expect(case000.nodes.find((node) => node.id === 'missing-memory')?.suggestedTags).toEqual(['memory_origin', 'operation_subject']);
+    expect(case000.nodes.find((node) => node.id === 'arm-history')?.suggestedTags).toEqual(['body_auth', 'operation_subject', 'record_integrity']);
+    expect(case000.nodes.find((node) => node.id === 'victim-medium')?.suggestedTags).toEqual(['persona_signature', 'legal_persona']);
+    expect(case000.nodes.find((node) => node.id === 'kasumi-key')?.suggestedTags).toEqual(['record_integrity', 'operation_subject']);
+    expect(case000.nodes.find((node) => node.id === 'processing-request')?.suggestedTags).toEqual([]);
+  });
+
+  it('unlocks analysis actions only after all configured conditions are met', () => {
+    const resignature = case000.analysisActions.find((action) => action.id === 'resignature');
+    expect(resignature).toBeDefined();
+    if (!resignature) return;
+
+    expect(isAnalysisActionUnlocked({
+      action: resignature,
+      visitedNodeIds: ['victim-medium'],
+      pinnedNodeIds: [],
+      taggedNodes: {},
+    })).toBe(false);
+    expect(isAnalysisActionUnlocked({
+      action: resignature,
+      visitedNodeIds: ['victim-medium'],
+      pinnedNodeIds: ['shot-log'],
+      taggedNodes: {},
+    })).toBe(true);
+  });
+
+  it('supports every analysis unlock condition type', () => {
+    const action = {
+      id: 'condition-matrix',
+      title: '条件照合',
+      description: '条件照合',
+      resultLog: '完了',
+      unlockConditions: [
+        { type: 'visited_nodes' as const, nodeIds: ['shot-log'] },
+        { type: 'pinned_any' as const, count: 1 },
+        { type: 'tagged_any' as const, count: 1 },
+        { type: 'tagged_node' as const, nodeId: 'arm-history' },
+      ],
+    };
+
+    expect(isAnalysisActionUnlocked({
+      action,
+      visitedNodeIds: ['shot-log'],
+      pinnedNodeIds: ['victim-medium'],
+      taggedNodes: { 'arm-history': ['body_auth'] },
+    })).toBe(true);
   });
 
   it('defines all contradiction tags required by the MVP', () => {

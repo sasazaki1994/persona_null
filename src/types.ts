@@ -68,15 +68,24 @@ export type MemoryNode = {
   warning: string;
   metrics: Record<string, string | number>;
   hasContradiction: boolean;
+  requiresContradictionReview?: boolean;
+  suggestedTags?: ContradictionTag[];
   position: [number, number, number];
   links: string[];
 };
+
+export type AnalysisUnlockCondition =
+  | { type: 'visited_nodes'; nodeIds: string[] }
+  | { type: 'pinned_any'; count: number }
+  | { type: 'tagged_any'; count: number }
+  | { type: 'tagged_node'; nodeId: string };
 
 export type AnalysisAction = {
   id: string;
   title: string;
   description: string;
   resultLog: string;
+  unlockConditions?: AnalysisUnlockCondition[];
 };
 
 export type DecisionOption = {
