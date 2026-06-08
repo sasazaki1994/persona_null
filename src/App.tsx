@@ -406,43 +406,52 @@ function InvestigationScreen(props: InvestigationProps) {
             <small>未確認 {case000.nodes.length - props.visitedNodeIds.length}</small>
           </div>
           <div className="issue-list">
-            {case000.issues.map((issue) => (
-              <section className="issue-group" key={issue.id}>
-                <div className="issue-heading">
-                  <span>争点 {issue.id}</span>
-                  <h4>{issue.title}</h4>
-                  <p>{issue.description}</p>
-                </div>
-                <div className="memory-node-list">
-                  {issue.relatedNodeIds.map((nodeId) => {
-                    const node = case000.nodes.find((item) => item.id === nodeId);
-                    if (!node) return null;
-                    const isSelected = node.id === props.selectedNodeId;
-                    const isVisited = props.visitedNodeIds.includes(node.id);
-                    const isPinned = props.pinnedNodeIds.includes(node.id);
-                    const isTagged = (props.taggedNodes[node.id]?.length ?? 0) > 0;
+            {case000.issues.map((issue) => {
+              const reviewedCount = issue.relatedNodeIds.filter((nodeId) => props.visitedNodeIds.includes(nodeId)).length;
+              const submittedCount = issue.relatedNodeIds.filter((nodeId) => props.pinnedNodeIds.includes(nodeId)).length;
 
-                    return (
-                      <button
-                        className={`memory-node-item ${isSelected ? 'selected' : isVisited ? 'visited' : 'unvisited'}`}
-                        type="button"
-                        aria-pressed={isSelected}
-                        onClick={() => props.onSelectNode(node.id)}
-                        key={`${issue.id}-${node.id}`}
-                      >
-                        <strong>{node.title}</strong>
-                        <span className="node-state-badges">
-                          <i>{isVisited ? '確認済' : '未確認'}</i>
-                          {isSelected && <i>選択中</i>}
-                          {isPinned && <i>根拠提出済</i>}
-                          {isTagged && <i>矛盾分類済</i>}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </section>
-            ))}
+              return (
+                <section className="issue-group" key={issue.id}>
+                  <div className="issue-heading">
+                    <span>争点 {issue.id}</span>
+                    <h4>{issue.title}</h4>
+                    <p>{issue.description}</p>
+                    <div className="issue-progress" aria-label={`${issue.title}の監査進捗`}>
+                      <span>確認 {reviewedCount} / {issue.relatedNodeIds.length}</span>
+                      <span>根拠 {submittedCount}</span>
+                    </div>
+                  </div>
+                  <div className="memory-node-list">
+                    {issue.relatedNodeIds.map((nodeId) => {
+                      const node = case000.nodes.find((item) => item.id === nodeId);
+                      if (!node) return null;
+                      const isSelected = node.id === props.selectedNodeId;
+                      const isVisited = props.visitedNodeIds.includes(node.id);
+                      const isPinned = props.pinnedNodeIds.includes(node.id);
+                      const isTagged = (props.taggedNodes[node.id]?.length ?? 0) > 0;
+
+                      return (
+                        <button
+                          className={`memory-node-item ${isSelected ? 'selected' : isVisited ? 'visited' : 'unvisited'}`}
+                          type="button"
+                          aria-pressed={isSelected}
+                          onClick={() => props.onSelectNode(node.id)}
+                          key={`${issue.id}-${node.id}`}
+                        >
+                          <strong>{node.title}</strong>
+                          <span className="node-state-badges">
+                            <i>{isVisited ? '確認済' : '未確認'}</i>
+                            {isSelected && <i>選択中</i>}
+                            {isPinned && <i>根拠提出済</i>}
+                            {isTagged && <i>矛盾分類済</i>}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </section>
+              );
+            })}
           </div>
         </section>
         <section className="pane-section resource-card">
@@ -588,6 +597,7 @@ function DecisionScreen({ pinnedNodeIds, onBack, onDecide }: { pinnedNodeIds: st
           {case000.decisions.map((option) => {
             const acceptedNodes = case000.nodes.filter((node) => option.acceptedEvidenceNodeIds?.includes(node.id));
             const ignoredIssues = case000.issues.filter((issue) => option.ignoredIssueIds?.includes(issue.id));
+            const submittedAcceptedCount = acceptedNodes.filter((node) => pinnedNodeIds.includes(node.id)).length;
 
             return (
               <article className="decision-card" key={option.id}>
@@ -596,7 +606,10 @@ function DecisionScreen({ pinnedNodeIds, onBack, onDecide }: { pinnedNodeIds: st
                   <h3>{option.label}</h3>
                 </div>
                 <section>
-                  <h4>採用される根拠</h4>
+                  <div className="decision-section-heading">
+                    <h4>採用される根拠</h4>
+                    <span>提出根拠との一致 {submittedAcceptedCount} / {acceptedNodes.length}</span>
+                  </div>
                   {acceptedNodes.map((node) => (
                     <p className={pinnedNodeIds.includes(node.id) ? 'evidence-submitted' : 'evidence-unsubmitted'} key={node.id}>
                       <span>{pinnedNodeIds.includes(node.id) ? '根拠提出済' : '未提出'}</span>{node.title}：{node.simpleFact}

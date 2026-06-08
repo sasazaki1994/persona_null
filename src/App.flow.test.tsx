@@ -74,6 +74,8 @@ describe('Case000 player flow', () => {
     expect(container.textContent).toContain('都市ステータスへの影響');
     expect(container.textContent).toContain('根拠提出済');
     expect(container.textContent).toContain('未提出');
+    expect(container.textContent).toContain('提出根拠との一致 0 / 1');
+    expect(container.textContent).toContain('提出根拠との一致 1 / 4');
     clickButton(case000.decisions[0].label);
 
     expect(container.textContent).toContain('行政処理ログ');
@@ -100,11 +102,17 @@ describe('Case000 player flow', () => {
     expect(container.textContent).toContain('発砲操作主体は誰か');
     expect(container.textContent).toContain(`未確認 ${case000.nodes.length}`);
     expect(findButton('発砲ログ')).toBeDefined();
+    expect(container.textContent).toContain('確認 0 / 4');
+    expect(container.textContent).toContain('根拠 0');
 
     clickButton('発砲ログ');
     expect(container.textContent).toContain(`未確認 ${case000.nodes.length - 1}`);
     expect(container.textContent).toContain('記録状態：確認済');
     expect(container.textContent).toContain(`記録種別：${case000.nodes[0].type}`);
+    expect(container.textContent).toContain('確認 1 / 4');
+
+    clickButton('提出根拠に登録');
+    expect(container.textContent).toContain('根拠 1');
 
     clickButton('間宮の発砲記憶');
     expect(container.textContent).toContain('確認済');

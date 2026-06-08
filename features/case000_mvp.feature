@@ -62,6 +62,7 @@ Feature: Persona Null Case000 playable audit slice
     Given the auditor is on the investigation screen
     Then the left pane groups memory nodes under operation subject, legal persona, and public order issues
     And each issue shows a short description and its related clickable memory nodes
+    And each issue shows reviewed and submitted evidence counts for its related nodes
     And each related node shows 未確認 or 確認済 together with any applicable 選択中, 根拠提出済, and 矛盾分類済 badges
     When the auditor selects an important memory node with an auditHint
     Then the node detail shows a "監査官メモ" without asserting a final answer
@@ -115,6 +116,7 @@ Feature: Persona Null Case000 playable audit slice
     Then choices A, B, and C are available
     And every choice shows adopted evidence, ignored or deferred issues, and city status effects
     And adopted evidence indicates whether it is 根拠提出済 or 未提出
+    And every choice summarizes how many adopted evidence nodes match the submitted grounds
     When the auditor selects a final decision
     Then the result screen is shown
     And localStorage contains caseId, decisionId, pinnedNodeIds, taggedNodes, executedActionIds, finalStats, and completedAt
