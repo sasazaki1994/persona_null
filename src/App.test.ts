@@ -31,6 +31,7 @@ describe('case000 data', () => {
   it('contains strengthened scenario scaffolding for implementation', () => {
     expect(case000.personLogs).toHaveLength(1);
     expect(case000.personLogs[0].name).toBe('間宮怜司');
+    expect(case000.personLogs[0].role).toContain('都市警備局 捜査官');
     expect(case000.processingRequest.id).toBe('city-security-request');
     expect(case000.operatorCandidates.map((candidate) => candidate.candidate)).toEqual([
       '間宮怜司本人',
@@ -39,6 +40,16 @@ describe('case000 data', () => {
     ]);
     expect(case000.mvpScope.cutForMvp.length).toBeGreaterThan(0);
     expect(case000.mvpScope.keepForExpansion.length).toBeGreaterThan(0);
+  });
+
+  it('keeps investigator titles distinct from control-system terminology', () => {
+    const serializedCase = JSON.stringify(case000);
+    const deprecatedTitle = ['操作', '官'].join('');
+
+    expect(serializedCase).not.toContain(deprecatedTitle);
+    expect(serializedCase).toContain('操作主体');
+    expect(serializedCase).toContain('操作経路');
+    expect(serializedCase).toContain('操作源');
   });
 
   it('provides three final decisions, three resources, and three analysis actions', () => {
