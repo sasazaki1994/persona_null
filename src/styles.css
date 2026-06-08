@@ -60,6 +60,8 @@ code { display: block; max-width: 100%; padding: 0.75rem; background: #06111d; b
 .issue-heading > span { color: #7eeaff; font-size: 0.66rem; letter-spacing: 0.08em; text-transform: uppercase; }
 .issue-heading h4 { margin: 0.15rem 0; color: #e6fbff; font-size: 0.86rem; }
 .issue-heading p { margin: 0; color: #86a9b7; font-size: 0.72rem; line-height: 1.45; }
+.issue-progress { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.4rem; }
+.issue-progress span { border: 1px solid rgba(126, 234, 255, 0.35); padding: 0.1rem 0.3rem; color: #bdf8ff; font-size: 0.64rem; font-variant-numeric: tabular-nums; }
 .memory-node-list { display: grid; gap: 0.35rem; }
 .memory-node-item { display: grid; gap: 0.35rem; width: 100%; padding: 0.48rem 0.55rem; border-color: #315d73; background: rgba(8, 27, 43, 0.58); color: #badce4; font-size: 0.76rem; line-height: 1.35; text-align: left; }
 .node-state-badges { display: flex; flex-wrap: wrap; gap: 0.25rem; }
@@ -109,6 +111,9 @@ meter { width: 100%; accent-color: #58dcff; }
 .decision-card { display: flex; min-width: 0; flex-direction: column; gap: 0.85rem; border: 1px solid #315d73; background: rgba(6, 17, 29, 0.72); padding: 1rem; }
 .decision-card h3, .decision-card h4 { margin: 0; color: #e6fbff; }
 .decision-card h3 { font-size: 1rem; }
+.decision-section-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 0.75rem; }
+.decision-section-heading h4 { margin-bottom: 0.45rem; }
+.decision-section-heading span { color: #7eeaff; font-size: 0.72rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .decision-card h4 { border-bottom: 1px solid #244555; padding-bottom: 0.3rem; color: #7eeaff; font-size: 0.82rem; }
 .decision-card p { color: #a9d3de; font-size: 0.78rem; line-height: 1.5; }
 .decision-card p > span { display: inline-block; margin-right: 0.4rem; border: 1px solid currentColor; padding: 0.08rem 0.3rem; font-size: 0.65rem; }
