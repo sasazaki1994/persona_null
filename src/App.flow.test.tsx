@@ -125,6 +125,25 @@ describe('Case000 player flow', () => {
     expect(container.querySelector('.ruling-stamp')).not.toBeNull();
     expect(localStorage.getItem('persona-null:case-results')).not.toBeNull();
   });
+  it('presents the investigation as an audit terminal with semantic cards, chips, and chronological logs', () => {
+    enterInvestigation();
+
+    expect(container.querySelector('.app-shell.game-grid')).not.toBeNull();
+    expect(container.textContent).toContain('AUDIT LOG');
+    expect(container.querySelectorAll('.status-chip').length).toBeGreaterThanOrEqual(4);
+    expect(container.textContent).toContain('既読数');
+    expect(container.textContent).toContain('監査リソース');
+
+    clickButton('ノード：発砲ログ');
+    expect(container.querySelector('.node-core-facts')).not.toBeNull();
+    expect(container.querySelector('.inspector-note')).not.toBeNull();
+    expect(container.querySelector('.node-warning .warning-text')).not.toBeNull();
+
+    const logItems = [...container.querySelectorAll('.log-list p')];
+    expect(logItems.at(0)?.textContent).toContain('監査室端末を起動');
+    expect(logItems.at(-1)?.textContent).toContain('記憶ノード確認');
+  });
+
   it('omits the inspector note section when the selected node has no inspector note', () => {
     const node = case000.nodes[0];
     const originalInspectorNote = node.inspectorNote;

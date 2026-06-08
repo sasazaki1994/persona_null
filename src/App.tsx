@@ -25,6 +25,19 @@ const statLabels: Record<keyof CityStats, string> = {
 
 const cityStatKeys = Object.keys(statLabels) as (keyof CityStats)[];
 
+const warningLogPattern = /警告|不足|拒否|未解放|矛盾|不可逆/;
+
+function getStatTone(key: keyof CityStats, value: number) {
+  if (key === 'surveillance') {
+    if (value >= 75) return 'critical';
+    if (value >= 60) return 'warning';
+    return value <= 35 ? 'valid' : 'muted';
+  }
+  if (value <= 35) return 'critical';
+  if (value <= 55) return 'warning';
+  return value >= 70 ? 'valid' : 'muted';
+}
+
 const importanceLabels: Record<NodeImportance, string> = {
   standard: '標準',
   high: '高',
@@ -91,7 +104,7 @@ function App() {
     setScreen('result');
   };
 
-  const appendLog = (message: string) => setSystemLogs((logs) => [message, ...logs].slice(0, 8));
+  const appendLog = (message: string) => setSystemLogs((logs) => [...logs, message].slice(-8));
   const selectNode = (nodeId: string) => {
     setSelectedNodeId(nodeId);
     setVisitedNodeIds((ids) => (ids.includes(nodeId) ? ids : [...ids, nodeId]));
@@ -176,7 +189,7 @@ function App() {
 }
 
 function Shell({ children }: { children: ReactNode }) {
-  return <main className="shell">{children}</main>;
+  return <main className="app-shell shell">{children}</main>;
 }
 
 function TitleScreen({ onNext }: { onNext: () => void }) {
@@ -392,15 +405,16 @@ function InvestigationScreen(props: InvestigationProps) {
     : 'なし';
 
   return (
-    <main className="game-grid">
+    <main className="app-shell game-grid">
       <aside className="pane left-pane">
         <p className="eyebrow">{case000.organizationName} / {case000.id.toUpperCase()}</p>
         <h2>{case000.title}</h2>
         <GuidancePanel guidance={props.guidance} />
-        <section className="pane-section compact-progress" aria-label="監査進行">
-          <span>確認 <strong>{props.visitedNodeIds.length}/{case000.requiredNodesToJudge}</strong></span>
-          <span>提出根拠 <strong>{props.pinnedNodeIds.length}/1</strong></span>
-          <span>矛盾分類 <strong>{taggedNodeCount}/1</strong></span>
+        <section className="pane-section compact-progress status-chip-row" aria-label="監査進行">
+          <span className={props.visitedNodeIds.length >= case000.requiredNodesToJudge ? 'status-chip valid' : 'status-chip muted'}>既読数 <strong>{props.visitedNodeIds.length}/{case000.requiredNodesToJudge}</strong></span>
+          <span className={props.pinnedNodeIds.length >= 1 ? 'status-chip valid' : 'status-chip muted'}>提出根拠 <strong>{props.pinnedNodeIds.length}/1</strong></span>
+          <span className={taggedNodeCount >= 1 ? 'status-chip valid' : 'status-chip warning'}>矛盾分類 <strong>{taggedNodeCount}/1</strong></span>
+          <span className={props.resources === 0 ? 'status-chip critical' : props.resources <= 1 ? 'status-chip warning' : 'status-chip muted'}>監査リソース <strong>{props.resources}/{case000.auditResourceMax}</strong></span>
         </section>
         <section className="pane-section memory-node-index" aria-labelledby="memory-node-index-title">
           <div className="node-index-heading">
@@ -598,13 +612,16 @@ function InvestigationScreen(props: InvestigationProps) {
           <p><strong>最終判断：{props.canJudge ? '開放済' : '未開放'}</strong></p>
           <p>不足：{missingRequirement}</p>
         </section>
-        <section className="logs">
-          <strong>最新システムログ</strong>
-          <p className="latest-log"><TypewriterText text={props.systemLogs[0] ?? 'ログなし'} speed={12} animateKey={`system-log-${props.systemLogs.length}-${props.systemLogs[0] ?? ''}`} /></p>
+        <section className="logs audit-log">
+          <div className="audit-log-heading"><strong>AUDIT LOG</strong><span>監査ログ / {String(props.systemLogs.length).padStart(2, '0')}</span></div>
+          {(() => {
+            const latestLog = props.systemLogs.at(-1) ?? 'ログなし';
+            return <p className={`latest-log ${warningLogPattern.test(latestLog) ? 'warning-log' : ''}`}><TypewriterText text={latestLog} speed={12} animateKey={`system-log-${props.systemLogs.length}-${latestLog}`} /></p>;
+          })()}
           <details className="inline-details">
             <summary>ログを表示</summary>
             <div className="log-list">
-              {props.systemLogs.map((log, index) => <p key={`${index}-${log}`}>{log}</p>)}
+              {props.systemLogs.map((log, index) => <p className={warningLogPattern.test(log) ? 'warning-log' : ''} key={`${index}-${log}`}><span>{String(index + 1).padStart(2, '0')}</span>{log}</p>)}
             </div>
           </details>
         </section>
@@ -614,7 +631,15 @@ function InvestigationScreen(props: InvestigationProps) {
 }
 
 function StatusBars({ stats }: { stats: CityStats }) {
-  return <div className="status-bars">{cityStatKeys.map((key) => <div key={key}><span>{statLabels[key]}</span><meter min="0" max="100" value={stats[key]} /></div>)}</div>;
+  return (
+    <div className="status-chips" aria-label="都市ステータス">
+      {cityStatKeys.map((key) => (
+        <span className={`status-chip ${getStatTone(key, stats[key])}`} key={key}>
+          {statLabels[key]} <strong>{stats[key]}</strong>
+        </span>
+      ))}
+    </div>
+  );
 }
 
 function DecisionScreen({ pinnedNodeIds, onBack, onDecide }: { pinnedNodeIds: string[]; onBack: () => void; onDecide: (decision: DecisionOption) => void }) {

@@ -188,12 +188,12 @@ describe('case000 data', () => {
     ]);
   });
 
-  it('types only the newest prepended system log', () => {
+  it('types only the newest log while preserving chronological audit order', () => {
     const appSource = terminologyFiles['./App.tsx'];
 
-    expect(appSource).toContain('setSystemLogs((logs) => [message, ...logs].slice(0, 8))');
-    expect(appSource).toContain('props.systemLogs[0]');
-    expect(appSource).toContain('最新システムログ');
+    expect(appSource).toContain('setSystemLogs((logs) => [...logs, message].slice(-8))');
+    expect(appSource).toContain("props.systemLogs.at(-1)");
+    expect(appSource).toContain('AUDIT LOG');
     expect(appSource).toContain('<summary>ログを表示</summary>');
   });
 
