@@ -34,7 +34,7 @@ describe('PersonProfile image fallback behavior', () => {
     expect(container.querySelector('img')).toBeNull();
     expect(container.textContent).toContain('人格断片記録');
     expect(container.textContent).toContain('証言能力：制限');
-    expect(container.textContent).toContain('媒体状態：破損');
+    expect(container.textContent).toContain('記録装置状態：破損');
 
     act(() => root.unmount());
   });

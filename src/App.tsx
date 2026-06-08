@@ -28,6 +28,12 @@ const cityStatKeys = Object.keys(statLabels) as (keyof CityStats)[];
 
 const warningLogPattern = /警告|不足|拒否|未解放|矛盾|不可逆/;
 
+const rulingStampLabels: Record<string, string> = {
+  'detain-mamiya': '発砲責任拘束',
+  'freeze-evidence': '証拠保全',
+  'process-medium': '操作干渉源隔離',
+};
+
 function getStatTone(key: keyof CityStats, value: number) {
   if (key === 'surveillance') {
     if (value >= 75) return 'critical';
@@ -662,6 +668,10 @@ function DecisionScreen({ pinnedNodeIds, onBack, onDecide }: { pinnedNodeIds: st
                   <p className="eyebrow">裁定案</p>
                   <h3>{option.label}</h3>
                 </div>
+                <section className="decision-processing">
+                  <h4>判断内容</h4>
+                  <p><AnnotatedText text={option.processing} /></p>
+                </section>
                 <section className="decision-values">
                   <p><strong>優先される価値</strong>{option.prioritizedValue}</p>
                   <p><strong>軽視される価値</strong>{option.disregardedValue}</p>
@@ -718,13 +728,13 @@ function ResultScreen({ decision, finalStats, payload, taggedNodes }: { decision
         <p className="eyebrow">行政処理ログ / {case000.recordName} / 保存完了</p>
         <h2>Case000 処理記録</h2>
         <section className="result-summary" aria-label="裁定結果要約">
-          <p><span>裁定</span><strong>{decision.finalRuling.split(':')[0]}</strong></p>
+          <p><span>裁定</span><strong>{decision.finalRuling}</strong></p>
           <p><span>優先</span><strong>{decision.prioritizedValue}</strong></p>
           <p><span>影響</span><strong>{cityStatKeys.map((key) => `${statLabels[key]} ${decision.statDelta[key] >= 0 ? '+' : ''}${decision.statDelta[key]}`).join(' / ')}</strong></p>
         </section>
-        <div className={`ruling-stamp ruling-${decision.id}`} aria-label={`裁定印：${decision.finalRuling.split(':')[0]}`}>
+        <div className={`ruling-stamp ruling-${decision.id}`} aria-label={`裁定印：${rulingStampLabels[decision.id] ?? decision.finalRuling}`}>
           <span>都市OS監査室</span>
-          <strong>{decision.finalRuling.split(':')[0]}</strong>
+          <strong>{rulingStampLabels[decision.id] ?? decision.finalRuling}</strong>
           <small>FINAL / CASE000</small>
         </div>
         <div className="result-grid">

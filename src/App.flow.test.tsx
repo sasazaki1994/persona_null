@@ -108,20 +108,26 @@ describe('Case000 player flow', () => {
     expect(container.textContent).toContain('優先される価値');
     expect(container.textContent).toContain('軽視される価値');
     expect(container.textContent).toContain('都市ステータスへの影響');
+    expect(container.querySelectorAll('.decision-processing')).toHaveLength(3);
+    expect(container.textContent).toContain('記録整合性と治安維持を優先');
+    expect(container.textContent).toContain('証拠保全と再照合を優先');
+    expect(container.textContent).toContain('人格断片、または周辺の未登録反応');
     const decisionDetails = [...container.querySelectorAll<HTMLDetailsElement>('.decision-details')];
     expect(decisionDetails).toHaveLength(case000.decisions.length);
     expect(decisionDetails.every((details) => !details.open)).toBe(true);
     clickSummary('裁定詳細を表示');
     expect(decisionDetails[0].open).toBe(true);
     expect(decisionDetails[0].textContent).toContain('採用される根拠');
-    expect(decisionDetails[0].textContent).toContain('提出根拠との一致 0 / 1');
+    expect(decisionDetails[0].textContent).toContain('提出根拠との一致 0 / 2');
     expect(decisionDetails[0].textContent).toContain('この裁定案は、現在の提出根拠と一致していません。');
     expect(findButton(case000.decisions[0].label)?.disabled).toBe(false);
     clickButton(case000.decisions[0].label);
 
     expect(container.textContent).toContain('行政処理ログ');
     expect(container.querySelector('[aria-label="裁定結果要約"]')).not.toBeNull();
-    expect(container.textContent).toContain('暫定拘束');
+    expect(container.textContent).toContain('最終裁定');
+    expect(container.querySelector('[aria-label="裁定結果要約"]')?.textContent).toContain('間宮怜司を発砲責任者として拘束');
+    expect(container.textContent).not.toContain('選択肢A');
     expect(container.querySelector('.ruling-stamp')).not.toBeNull();
     expect(localStorage.getItem('persona-null:case-results')).not.toBeNull();
   });
@@ -234,7 +240,7 @@ describe('Case000 player flow', () => {
     expect(findButton('欠落8秒の復元')?.disabled).toBe(true);
     clickButton('ノード：義体稼働履歴');
     expect(findButton('欠落8秒の復元')?.disabled).toBe(false);
-    expect(findButton('認証鍵と媒体の照合')?.disabled).toBe(true);
+    expect(findButton('認証鍵と記録装置の照合')?.disabled).toBe(true);
   });
 
 });
