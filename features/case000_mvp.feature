@@ -25,6 +25,18 @@ Feature: Persona Null Case000 playable audit slice
     And node importance is identified by labeled colors: standard cyan, high amber, and critical red or pink
     And critical nodes do not use jitter, flashing, or positional noise to communicate importance
 
+  Scenario: Distinguishing reviewed memory nodes from unreviewed nodes
+    Given the auditor is on the investigation screen
+    Then the left pane lists every memory node as 未確認, 確認済, or 選択中
+    And the remaining unreviewed node count is visible at a glance
+    When the auditor selects an unreviewed node from the left pane list
+    Then the same node is selected in the investigation workspace
+    And the selected node is added to visitedNodeIds
+    And the previously selected reviewed node is shown as 確認済 after another node is selected
+    And the node detail header shows its 記録状態 and 記録種別
+    And the memory network renders unreviewed nodes slightly brighter than reviewed nodes
+    And selected nodes remain more strongly emphasized than either review state
+
   Scenario: Keeping the desktop investigation workspace in one viewport
     Given the auditor is on the investigation screen with a desktop viewport at least 900 pixels wide
     Then the four investigation regions remain arranged within one viewport

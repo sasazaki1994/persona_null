@@ -85,6 +85,23 @@ describe('Case000 player flow', () => {
     expect(findButton('記憶由来の矛盾')).toBeUndefined();
   });
 
+  it('selects nodes from the memory node index and distinguishes review states', () => {
+    enterInvestigation();
+
+    expect(container.textContent).toContain('記憶ノード一覧');
+    expect(container.textContent).toContain(`未確認 ${case000.nodes.length}`);
+    expect(findButton('[選択中]発砲ログ')).toBeDefined();
+
+    clickButton('[選択中]発砲ログ');
+    expect(container.textContent).toContain(`未確認 ${case000.nodes.length - 1}`);
+    expect(container.textContent).toContain('記録状態：確認済');
+    expect(container.textContent).toContain(`記録種別：${case000.nodes[0].type}`);
+
+    clickButton('[未確認]間宮の発砲記憶');
+    expect(findButton('[確認済]発砲ログ')).toBeDefined();
+    expect(findButton('[選択中]間宮の発砲記憶')).toBeDefined();
+  });
+
   it('keeps analysis actions disabled until their record conditions are met', () => {
     enterInvestigation();
 

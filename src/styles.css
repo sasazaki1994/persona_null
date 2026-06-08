@@ -52,6 +52,21 @@ code { display: block; max-width: 100%; padding: 0.75rem; background: #06111d; b
 .meter span { display: block; height: 100%; background: linear-gradient(90deg, #34e2ff, #ff4770); box-shadow: 0 0 18px rgba(52, 226, 255, 0.4); }
 .status-grid { display: grid; grid-template-columns: 1fr auto; gap: 0.35rem 0.8rem; color: #9dbfca; }
 .status-grid strong { color: #e6fbff; }
+.node-index-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 0.75rem; }
+.node-index-heading small { color: #ffcfda; font-variant-numeric: tabular-nums; }
+.memory-node-list { display: grid; gap: 0.35rem; }
+.memory-node-item { display: grid; grid-template-columns: 4.7rem minmax(0, 1fr); gap: 0.45rem; width: 100%; padding: 0.48rem 0.55rem; border-color: #315d73; background: rgba(8, 27, 43, 0.58); color: #badce4; font-size: 0.76rem; line-height: 1.35; text-align: left; }
+.memory-node-item span { color: #7fabb7; white-space: nowrap; }
+.memory-node-item strong { overflow-wrap: anywhere; color: inherit; }
+.memory-node-item.unvisited { border-color: rgba(126, 234, 255, 0.72); background: rgba(28, 92, 112, 0.42); color: #edfcff; box-shadow: inset 2px 0 0 #7eeaff, 0 0 10px rgba(88, 220, 255, 0.08); }
+.memory-node-item.unvisited span { color: #9ff4ff; }
+.memory-node-item.visited { opacity: 0.72; }
+.memory-node-item.selected { border-color: #ff9bb2; background: rgba(126, 36, 58, 0.72); color: #fff3f6; box-shadow: inset 3px 0 0 #ff9bb2, 0 0 15px rgba(255, 71, 111, 0.2); }
+.memory-node-item.selected span { color: #ffd2dc; }
+.record-state { display: grid; gap: 0.2rem; margin: 0.65rem 0; padding: 0.55rem 0.65rem; border-left: 2px solid #58dcff; background: rgba(8, 27, 43, 0.52); }
+.record-state p { margin: 0; color: #cceff5; font-size: 0.82rem; }
+.record-state span { color: #86a9b7; }
+.record-state strong { color: #e6fbff; }
 .resource-card { border: 1px solid rgba(88, 220, 255, 0.28); padding: 0.9rem; background: rgba(8, 27, 43, 0.45); }
 .resource-count { font-size: 2rem; margin: 0.2rem 0; color: #e6fbff; }
 .status-bars div { display: grid; grid-template-columns: 6rem 1fr; align-items: center; gap: 0.5rem; margin: 0.4rem 0; }
