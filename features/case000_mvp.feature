@@ -249,18 +249,27 @@ Feature: Persona Null Case000 playable audit slice
     Then the result screen shows a translucent ruling stamp matching 暫定拘束, 証拠凍結, or 媒体起因処理
     And the ruling stamp remains visually prominent without obscuring the administrative log
 
-  Scenario: 調査画面は核心情報だけを初期表示する
+  Scenario: 調査画面の右ペインは監査情報を固定順で表示する
     Given プレイヤーが Case000 の調査画面を開いている
-    When 記憶ノードを1件選択する
-    Then simpleFact と warning が初期表示される
-    And summary と raw log と監査官メモと metrics は「詳細記録を表示」に格納される
+    When inspectorNote を持つ記憶ノードを1件選択する
+    Then 右ペインが選択したノードの内容へ更新される
+    And ノードタイトル、summary、単純事実、監査官メモ、警告の順に初期表示される
+    And 監査官メモは単純事実の直下かつ警告と詳細ログより上に表示される
+    And 詳細ログは「詳細記録を表示」に格納される
+    And metrics と追加解析結果などの追加情報は詳細ログより後に表示される
     And 解析アクション一覧は「解析メニューを表示」に格納される
     And システムログは最新1件だけ初期表示される
 
-  Scenario: 展開操作で従来の詳細情報を確認できる
+  Scenario: inspectorNote がない記憶ノードでは監査官メモを省略する
+    Given プレイヤーが Case000 の調査画面を開いている
+    When inspectorNote がない記憶ノードを1件選択する
+    Then 監査官メモのセクションは表示されない
+    And 単純事実の次に警告が表示される
+
+  Scenario: 展開操作で下部の詳細情報を確認できる
     Given プレイヤーが Case000 の調査画面を開いている
     When 「詳細記録を表示」を展開する
-    Then summary と raw log と監査官メモと metrics を確認できる
+    Then 詳細ログと metrics と追加情報をこの順で確認できる
     When 「解析メニューを表示」を展開する
     Then 各解析アクションと未解放条件を確認できる
 
