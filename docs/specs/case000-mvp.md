@@ -453,12 +453,16 @@ Case000 の値は次の通り。
 - organizationName
 - overview
 - progress meter
-- `確認済み n / 6`
+- `確認済 n / 7`
 - `判断条件 n / 4`
 - `根拠ピン n / 3`
 - `矛盾分類 n`
 - 監査リソース `resources / 3`
 - 初期都市ステータス
+- 全記憶ノードをクリック可能な「記憶ノード一覧」として表示する。
+- 一覧では各ノードを `未確認`、`確認済`、`選択中` のいずれかで表示し、`選択中` を最優先する。
+- 一覧上部に残り未確認ノード数を表示する。
+- 一覧クリックは MemoryNetwork と同じ選択処理を呼び、初回選択時に `visitedNodeIds` へ追加する。
 
 ### 8.2 Center pane / Three.js memory network
 
@@ -483,7 +487,8 @@ type MemoryNetworkProps = {
 - importance は固定色で識別する。`standard` は cyan、`high` は amber、`critical` は red/pink とする。
 - importance 凡例をネットワーク上に常時表示し、色だけに依存せずテキストラベルも併記する。
 - `critical` を jitter、点滅、位置ノイズなどの不安定な動きで表現しない。選択・hover は importance に関係なく同じ拡大・発光規則を使う。
-- visited 状態は importance の色を変えず、発光量の抑制で既読として区別する。
+- 未確認状態は通常より少し強い発光、確認済状態は見失わない範囲で弱い発光にし、importance の色を変えずに区別する。
+- selected 状態は未確認・確認済より優先し、従来どおり明確に拡大・発光する。
 - unmount 時に renderer、geometry、material、event listener、animation frame を破棄する。
 
 ### 8.3 Right pane
@@ -491,7 +496,8 @@ type MemoryNetworkProps = {
 選択ノードについて表示する。
 
 - title
-- type
+- 記録状態 (`確認済` または `未確認`)
+- `記録種別：${type}`
 - importance badge
 - summary
 - log

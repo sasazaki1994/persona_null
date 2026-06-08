@@ -139,13 +139,13 @@ export function MemoryNetwork({ nodes, selectedNodeId, visitedNodeIds, taggedNod
         const selectedScale = selected ? 1.95 : hovered ? 1.55 : 1;
         const visitedScale = visited && !selected && !hovered ? 0.94 : 1;
         mesh.scale.setScalar(selectedScale * visitedScale);
-        mesh.material.emissiveIntensity = selected ? 2.8 : hovered ? 2.25 : visited ? 0.32 : 0.95;
+        mesh.material.emissiveIntensity = selected ? 2.8 : hovered ? 2.25 : visited ? 0.48 : 1.15;
 
         const halo = haloMeshes.get(nodeId);
         if (halo) {
           halo.position.copy(mesh.position);
           halo.scale.setScalar(selected ? 2.2 : hovered ? 1.7 : 1);
-          halo.material.opacity = selected ? 0.42 : hovered ? 0.32 : unclassifiedContradiction ? (visited ? 0.18 : 0.24) : visited ? 0.05 : 0.14;
+          halo.material.opacity = selected ? 0.42 : hovered ? 0.32 : unclassifiedContradiction ? (visited ? 0.18 : 0.26) : visited ? 0.08 : 0.18;
           halo.rotation.x = elapsed * 0.35;
           halo.rotation.y = elapsed * 0.25;
         }

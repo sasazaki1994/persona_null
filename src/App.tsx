@@ -394,10 +394,36 @@ function InvestigationScreen(props: InvestigationProps) {
           <h3>進行度</h3>
           <div className="meter"><span style={{ width: `${props.progress}%` }} /></div>
           <div className="status-grid">
-            <span>確認済み</span><strong>{props.visitedNodeIds.length}/{case000.nodes.length}</strong>
+            <span>確認済</span><strong>{props.visitedNodeIds.length}/{case000.nodes.length}</strong>
             <span>判断条件</span><strong>{Math.min(props.visitedNodeIds.length, case000.requiredNodesToJudge)}/{case000.requiredNodesToJudge}</strong>
             <span>根拠ピン</span><strong>{props.pinnedNodeIds.length}/3</strong>
             <span>矛盾分類</span><strong>{taggedNodeCount}</strong>
+          </div>
+        </section>
+        <section className="pane-section memory-node-index" aria-labelledby="memory-node-index-title">
+          <div className="node-index-heading">
+            <h3 id="memory-node-index-title">記憶ノード一覧</h3>
+            <small>未確認 {case000.nodes.length - props.visitedNodeIds.length}</small>
+          </div>
+          <div className="memory-node-list">
+            {case000.nodes.map((node) => {
+              const isSelected = node.id === props.selectedNodeId;
+              const isVisited = props.visitedNodeIds.includes(node.id);
+              const state = isSelected ? '選択中' : isVisited ? '確認済' : '未確認';
+
+              return (
+                <button
+                  className={`memory-node-item ${isSelected ? 'selected' : isVisited ? 'visited' : 'unvisited'}`}
+                  type="button"
+                  aria-pressed={isSelected}
+                  onClick={() => props.onSelectNode(node.id)}
+                  key={node.id}
+                >
+                  <span>[{state}]</span>
+                  <strong>{node.title}</strong>
+                </button>
+              );
+            })}
           </div>
         </section>
         <section className="pane-section resource-card">
@@ -429,8 +455,11 @@ function InvestigationScreen(props: InvestigationProps) {
         <section className="node-header">
           <p className="eyebrow">選択ノード詳細</p>
           <h2>{props.selectedNode.title}</h2>
+          <div className="record-state">
+            <p><span>記録状態：</span><strong>{props.visitedNodeIds.includes(props.selectedNode.id) ? '確認済' : '未確認'}</strong></p>
+            <p><span>記録種別：</span>{props.selectedNode.type}</p>
+          </div>
           <div className="node-badges">
-            <span>{props.selectedNode.type}</span>
             <span className={`importance ${props.selectedNode.importance}`}>重要度：{importanceLabels[props.selectedNode.importance]}</span>
           </div>
         </section>
