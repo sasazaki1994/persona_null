@@ -386,7 +386,7 @@ function InvestigationScreen(props: InvestigationProps) {
           <div className="log-list">
             {props.systemLogs.map((log, index) => (
               <p key={`${index}-${log}`}>
-                {index === props.systemLogs.length - 1
+                {index === 0
                   ? <TypewriterText text={log} speed={12} animateKey={`system-log-${props.systemLogs.length}-${log}`} />
                   : log}
               </p>

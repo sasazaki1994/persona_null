@@ -36,6 +36,7 @@ describe('AnnotatedText', () => {
     expect(markup).toContain('都市OS');
     expect(markup).toContain('間宮怜司');
     expect(markup).toContain('role="tooltip"');
+    expect(markup.match(/aria-describedby="glossary-/g)).toHaveLength(3);
   });
 
   it('matches longer aliases before shorter aliases', () => {

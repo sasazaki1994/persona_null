@@ -56,7 +56,7 @@ export function AnnotatedText({ text, className }: AnnotatedTextProps) {
             <button
               type="button"
               className="annotated-keyword"
-              aria-describedby={isOpen ? tooltipId : undefined}
+              aria-describedby={tooltipId}
               aria-expanded={isOpen}
               onMouseEnter={() => setOpenIndex(index)}
               onMouseLeave={() => setOpenIndex((current) => current === index ? null : current)}
