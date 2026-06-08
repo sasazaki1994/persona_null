@@ -197,6 +197,26 @@ describe('case000 data', () => {
     expect(appSource).toContain('<summary>ログを表示</summary>');
   });
 
+  it('separates verified node facts from bounded inspector interpretation', () => {
+    const targetNodeIds = [
+      'shot-log',
+      'missing-memory',
+      'arm-history',
+      'victim-medium',
+      'last-comm',
+      'kasumi-key',
+      'processing-request',
+    ];
+    const sentenceCount = (value: string) => value.split('。').filter(Boolean).length;
+    const targetNodes = case000.nodes.filter((node) => targetNodeIds.includes(node.id));
+
+    expect(targetNodes).toHaveLength(7);
+    expect(targetNodes.every((node) => sentenceCount(node.simpleFact) >= 2 && sentenceCount(node.simpleFact) <= 3)).toBe(true);
+    expect(targetNodes.every((node) => sentenceCount(node.inspectorNote) >= 2 && sentenceCount(node.inspectorNote) <= 4)).toBe(true);
+    expect(case000.nodes.find((node) => node.id === 'victim-medium')?.inspectorNote).toContain('Case001');
+    expect(case000.nodes.find((node) => node.id === 'last-comm')?.inspectorNote).toContain('未焼却');
+  });
+
   it('connects 七瀬未織の媒体 to the Case001 preview without making it playable', () => {
     const victimMedium = case000.nodes.find((node) => node.id === 'victim-medium');
     expect(victimMedium).toBeDefined();
