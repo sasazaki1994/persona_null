@@ -58,6 +58,15 @@ Feature: Persona Null Case000 playable audit slice
     And a fourth node cannot be pinned until one existing pin is removed
     And pinning or unpinning evidence appends a system log entry
 
+  Scenario: Building an audit report from issue-grouped records
+    Given the auditor is on the investigation screen
+    Then the left pane groups memory nodes under operation subject, legal persona, and public order issues
+    And each issue shows a short description and its related clickable memory nodes
+    And each related node shows 未確認 or 確認済 together with any applicable 選択中, 根拠提出済, and 矛盾分類済 badges
+    When the auditor selects an important memory node with an auditHint
+    Then the node detail shows a "監査官メモ" without asserting a final answer
+    And the evidence registration control is labeled "提出根拠に登録"
+
   Scenario: Showing only node-specific contradiction candidates
     Given the auditor selected a memory node with suggested contradiction tags
     Then only that node's suggestedTags are shown as contradiction classification buttons
@@ -104,6 +113,8 @@ Feature: Persona Null Case000 playable audit slice
     Given the auditor has unlocked final judgment
     When the auditor opens the final judgment screen
     Then choices A, B, and C are available
+    And every choice shows adopted evidence, ignored or deferred issues, and city status effects
+    And adopted evidence indicates whether it is 根拠提出済 or 未提出
     When the auditor selects a final decision
     Then the result screen is shown
     And localStorage contains caseId, decisionId, pinnedNodeIds, taggedNodes, executedActionIds, finalStats, and completedAt
