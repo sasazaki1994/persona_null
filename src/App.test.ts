@@ -39,11 +39,11 @@ describe('case000 data', () => {
     expect(case000.personLogs[0].role).toContain('都市警備局 捜査官');
     expect(case000.personLogs.map(({ portrait, portraitAlt }) => ({ portrait, portraitAlt }))).toEqual([
       {
-        portrait: '/assets/case000/mamiya-reiji-profile.png',
+        portrait: '/assets/case000/mamiya-reiji-profile.svg',
         portraitAlt: '間宮怜司 監査記録ポートレート',
       },
       {
-        portrait: '/assets/case000/nanase-miori-fragment.png',
+        portrait: '/assets/case000/nanase-miori-fragment.svg',
         portraitAlt: '七瀬未織 人格断片プロファイル',
       },
     ]);

@@ -45,7 +45,7 @@ export const cases: CaseRecord[] = [
         title: '人物ログ：間宮怜司',
         name: '間宮怜司',
         role: '都市警備局 捜査官 / 警備用部分義体登録者',
-        portrait: '/assets/case000/mamiya-reiji-profile.png',
+        portrait: '/assets/case000/mamiya-reiji-profile.svg',
         portraitAlt: '間宮怜司 監査記録ポートレート',
         auditLabel: '人物照合記録 / 操作主体未確定',
         auditLabels: [
@@ -72,7 +72,7 @@ export const cases: CaseRecord[] = [
         title: '人格断片ログ：七瀬未織',
         name: '七瀬未織',
         role: '被害者側人格断片 / 破損媒体内人格反応',
-        portrait: '/assets/case000/nanase-miori-fragment.png',
+        portrait: '/assets/case000/nanase-miori-fragment.svg',
         portraitAlt: '七瀬未織 人格断片プロファイル',
         auditLabel: '人格断片記録 / 証言能力制限',
         auditLabels: [
