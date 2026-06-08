@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import { canUnlockJudgment, getJudgmentRequirements, type JudgmentRequirement } from './auditRules';
 import { case000, case001Preview, contradictionTagLabels, contradictionTags } from './case000';
 import { MemoryNetwork } from './MemoryNetwork';
@@ -33,6 +33,7 @@ function App() {
   const [executedActionIds, setExecutedActionIds] = useState<string[]>([]);
   const [systemLogs, setSystemLogs] = useState<string[]>(['監査室端末を起動。都市OS 基礎公定通知を待機。']);
   const [decision, setDecision] = useState<DecisionOption | null>(null);
+  const [resultPayload, setResultPayload] = useState<SavedCaseResult | null>(null);
   const [completedCaseIds, setCompletedCaseIds] = useState<string[]>(() => loadCaseResults().map((result) => result.caseId));
   const [readFlags, setReadFlags] = useState<string[]>(() => loadReadFlags());
 
@@ -54,27 +55,26 @@ function App() {
   });
   const finalStats = useMemo(() => (decision ? addStats(case000.initialStats, decision.statDelta) : case000.initialStats), [decision]);
 
-  const resultPayload = useMemo<SavedCaseResult | null>(() => {
-    if (!decision) return null;
-    return {
+  const submitDecision = (nextDecision: DecisionOption) => {
+    const nextFinalStats = addStats(case000.initialStats, nextDecision.statDelta);
+    const nextResultPayload: SavedCaseResult = {
       caseId: case000.id,
-      decisionId: decision.id,
+      decisionId: nextDecision.id,
       pinnedNodeIds,
       taggedNodes,
       executedActionIds,
-      finalStats,
+      finalStats: nextFinalStats,
       completedAt: new Date().toISOString(),
     };
-  }, [decision, executedActionIds, finalStats, pinnedNodeIds, taggedNodes]);
 
-  useEffect(() => {
-    if (screen === 'result' && resultPayload) {
-      const saved = saveCaseResult(resultPayload);
-      if (saved) {
-        setCompletedCaseIds((ids) => (ids.includes(resultPayload.caseId) ? ids : [...ids, resultPayload.caseId]));
-      }
+    const saved = saveCaseResult(nextResultPayload);
+    if (saved) {
+      setCompletedCaseIds((ids) => (ids.includes(nextResultPayload.caseId) ? ids : [...ids, nextResultPayload.caseId]));
     }
-  }, [resultPayload, screen]);
+    setResultPayload(nextResultPayload);
+    setDecision(nextDecision);
+    setScreen('result');
+  };
 
   const appendLog = (message: string) => setSystemLogs((logs) => [message, ...logs].slice(0, 8));
   const selectNode = (nodeId: string) => {
@@ -128,7 +128,7 @@ function App() {
   if (screen === 'caseSelect') return <CaseSelectScreen completed={completedCaseIds.includes(case000.id)} onNext={() => setScreen('caseOverview')} />;
   if (screen === 'caseOverview') return <CaseOverviewScreen onNext={() => setScreen('investigation')} />;
   if (screen === 'decision') {
-    return <DecisionScreen onBack={() => setScreen('investigation')} onDecide={(nextDecision) => { setDecision(nextDecision); setScreen('result'); }} />;
+    return <DecisionScreen onBack={() => setScreen('investigation')} onDecide={submitDecision} />;
   }
   if (screen === 'result' && decision && resultPayload) {
     return <ResultScreen decision={decision} finalStats={finalStats} payload={resultPayload} taggedNodes={taggedNodes} />;

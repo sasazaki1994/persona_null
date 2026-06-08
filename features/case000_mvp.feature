@@ -113,7 +113,12 @@ Feature: Persona Null Case000 playable audit slice
     Then Jam submission documentation describes the title, summary, overview, controls, implemented scope, unimplemented scope, start, build, test, technology stack, MVP acceptance conditions, and future expansion candidates
     And the repository README links to docs/jam-submission.md for the detailed Jam checklist
     And Markdown files are forced to text diffs and the root README is stored as UTF-8 text so GitHub and review tools can render it instead of treating it as a binary file
+    And package-lock.json is committed for reproducible npm installs
+    And npm ci succeeds without changing the package.json scripts
     And GitHub Actions CI runs npm ci, npm run lint, npm run test, and npm run build on push and pull_request using Node.js 20
+    And the README links to Vercel deployment instructions that use the Vite preset, npm run build, and the dist output directory
+    And the deployment documentation states that no environment variables are required
+    And the README links to a screenshot capture plan and states that placeholder assets must be replaced before submission
     And npm run build succeeds
     And npm run lint succeeds
     And npm run test succeeds
