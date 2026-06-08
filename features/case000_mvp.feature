@@ -322,3 +322,21 @@ Feature: Persona Null Case000 playable audit slice
     And importance が critical のノードは警告リングで表示される
     And 接続線は薄い青緑の発光ラインで表示される
     And 動きを減らす設定では明滅と揺らぎを停止する
+
+  Scenario: Case000 の監査文面を一読で理解できる
+    Given プレイヤーが Case000 の事件概要を開く
+    Then 事件概要は短い文で発砲、記憶欠落、外部制御痕、被害者媒体、旧式認証痕を説明する
+    And 判断に関係しない技術史や設定説明を含まない
+    When プレイヤーが各記憶ノードを開く
+    Then 各ノードは log、simpleFact、inspectorNote の3層を持つ
+    And log は時刻、状態、主体を短く示す硬質な記録文である
+    And simpleFact は1文1事実を基本とする2文から3文である
+    And inspectorNote は断定できない点と次に照合する記録を2文から4文で示す
+    And 専門用語を使う場合は同じ文または直後の文に短い説明がある
+
+  Scenario: 最終判断と監査結果を平易な文面で確認できる
+    Given プレイヤーが最終判断画面を開く
+    Then 各判断ボタンは実行する処理を短く示す
+    And 裁定詳細は優先する価値と失う価値を具体的に示す
+    When プレイヤーが判断を確定する
+    Then 監査注記は選んだ処理、判断根拠、残るリスクを短い文で示す

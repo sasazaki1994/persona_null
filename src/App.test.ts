@@ -227,6 +227,19 @@ describe('case000 data', () => {
     expect(targetNodes.every((node) => sentenceCount(node.inspectorNote) >= 2 && sentenceCount(node.inspectorNote) <= 4)).toBe(true);
     expect(case000.nodes.find((node) => node.id === 'victim-medium')?.inspectorNote).toContain('Case001');
     expect(case000.nodes.find((node) => node.id === 'last-comm')?.inspectorNote).toContain('未焼却');
+    expect(targetNodes.every((node) => /[一-龠ぁ-んァ-ヶ]/.test(node.log))).toBe(true);
+    expect(case000.nodes.find((node) => node.id === 'shot-log')?.simpleFact).toContain('記録した印');
+    expect(case000.nodes.find((node) => node.id === 'victim-medium')?.simpleFact).toContain('都市が人として扱う資格');
+    expect(case000.nodes.find((node) => node.id === 'missing-memory')?.simpleFact).toContain('本人側か外部側か');
+  });
+
+  it('uses concise action labels and plain audit notes for final decisions', () => {
+    expect(case000.decisions.map((decision) => decision.label)).toEqual([
+      'A. 間宮怜司を暫定拘束する',
+      'B. 義体と媒体を証拠凍結する',
+      'C. 七瀬未織の媒体を操作源として処理する',
+    ]);
+    expect(case000.decisions.every((decision) => decision.auditNote.split('。').filter(Boolean).length === 3)).toBe(true);
   });
 
   it('connects 七瀬未織の媒体 to the Case001 preview without making it playable', () => {
