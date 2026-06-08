@@ -269,3 +269,12 @@ Feature: Persona Null Case000 playable audit slice
     When 最終判断画面を開く
     Then 各裁定案の価値と都市ステータス変動と確定ボタンが初期表示される
     And 採用根拠と提出根拠との一致と保留疑点は「裁定詳細を表示」に格納される
+
+  Scenario: MemoryNode本文で事実と監査解釈を分離する
+    Given プレイヤーが Case000 の対象記憶ノードを選択する
+    Then simpleFact は2文から3文で構成される
+    And simpleFact は当該記録から確実に確認できる事実だけを示す
+    And inspectorNote は2文から4文で構成される
+    And inspectorNote は監査上の注意点と次に疑うべき矛盾軸と裁定上の含意を示す
+    And summary と log と warning の情報量は従来の表示密度を維持する
+    And 七瀬未織の媒体と最後の通信は未焼却音声を Case001 へ保全する含意を示す
