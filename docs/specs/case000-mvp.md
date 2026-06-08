@@ -462,7 +462,7 @@ Case000 の値は次の通り。
 
 | 条件 | 値 |
 | --- | --- |
-| 必須訪問ノード数 | 4 / 6 |
+| 必須訪問ノード数 | 4 / 7 |
 | 必須ピン数 | 1 以上、最大 3 |
 | 必須矛盾分類 | 1 ノード以上 |
 | 監査リソース | 最終判断 unlock 条件には含めない |
@@ -561,7 +561,7 @@ type MemoryNetworkProps = {
 - 各裁定案は `acceptedEvidenceNodeIds` から採用される根拠を表示し、現在の `pinnedNodeIds` に含まれる根拠は `根拠提出済` として示す。
 - 各裁定案は `ignoredIssueIds` から無視または保留される疑点を表示する。
 - 各裁定案は `statDelta` から都市ステータスへの影響を表示する。
-- `acceptedEvidenceNodeIds` と現在の `pinnedNodeIds` の一致数が 0 件の場合、現在の提出根拠と一致せず未提出記録を採用しようとしている旨を警告する。ただし価値判断を妨げないため確定 button は disabled にしない。
+- `acceptedEvidenceNodeIds` が1件以上あり、現在の `pinnedNodeIds` との一致数が 0 件の場合、現在の提出根拠と一致せず未提出記録を採用しようとしている旨を警告する。ただし価値判断を妨げないため確定 button は disabled にしない。
 - 選択時に `decision` state に `DecisionOption` を保存し、`screen` を `result` にする。
 - `調査に戻る` で `investigation` に戻れる。
 

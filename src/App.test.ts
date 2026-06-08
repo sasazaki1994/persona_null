@@ -228,6 +228,12 @@ describe('case000 data', () => {
     expect(screenshots).toContain('README は上記パスをすでに参照しています');
   });
 
+  it('warns only when a decision has adopted evidence with no submitted match', () => {
+    const appSource = terminologyFiles['./App.tsx'];
+
+    expect(appSource).toContain('acceptedNodes.length > 0 && submittedAcceptedCount === 0');
+  });
+
   it('result decisions include all result-screen report fields', () => {
     expect(case000.decisions).toHaveLength(3);
     case000.decisions.forEach((decision) => {

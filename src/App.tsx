@@ -638,7 +638,7 @@ function DecisionScreen({ pinnedNodeIds, onBack, onDecide }: { pinnedNodeIds: st
                       <span>{pinnedNodeIds.includes(node.id) ? '根拠提出済' : '未提出'}</span>{node.title}：{node.simpleFact}
                     </p>
                   ))}
-                  {submittedAcceptedCount === 0 && (
+                  {acceptedNodes.length > 0 && submittedAcceptedCount === 0 && (
                     <div className="decision-evidence-warning" role="alert">
                       <strong>警告：</strong>
                       <p>この裁定案は、現在の提出根拠と一致していません。</p>

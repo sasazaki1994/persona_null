@@ -120,7 +120,7 @@ Feature: Persona Null Case000 playable audit slice
     And every choice shows adopted evidence, ignored or deferred issues, and city status effects
     And adopted evidence indicates whether it is 根拠提出済 or 未提出
     And every choice summarizes how many adopted evidence nodes match the submitted grounds
-    And a choice with zero matching submitted grounds warns that its adopted evidence is unsubmitted
+    And a choice with adopted evidence but zero matching submitted grounds warns that its adopted evidence is unsubmitted
     And the warning does not disable that choice
     When the auditor selects a final decision
     Then the result screen is shown
