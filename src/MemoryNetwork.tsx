@@ -122,7 +122,7 @@ export function MemoryNetwork({
           new THREE.Vector3(...node.position),
           new THREE.Vector3(...target.position),
         ]);
-        const material = new THREE.LineBasicMaterial({ color: '#315d73', transparent: true, opacity: 0.5 });
+        const material = new THREE.LineBasicMaterial({ color: '#5cced0', transparent: true, opacity: 0.34, blending: THREE.AdditiveBlending, depthWrite: false });
         const line = new THREE.Line(geometry, material);
         networkGroup.add(line);
         linkLines.push(line);
@@ -172,6 +172,12 @@ export function MemoryNetwork({
       selectedOuter.userData.state = 'selected-outer';
       const classifiedRing = makeRing(radius + 0.14, 0.006, 0.58);
       classifiedRing.userData.state = 'classified';
+      const criticalRing = makeRing(radius + 0.27, 0.008, 0.64);
+      criticalRing.material.color.set('#ff5c72');
+      criticalRing.userData.state = 'critical';
+      const contradictionRing = makeRing(radius + 0.2, 0.006, 0.38);
+      contradictionRing.material.color.set('#ff405f');
+      contradictionRing.userData.state = 'contradiction';
 
       const evidenceGeometry = new THREE.EdgesGeometry(new THREE.BoxGeometry((radius + 0.17) * 2, (radius + 0.17) * 2, 0.02));
       const evidenceFrame = new THREE.LineSegments(
@@ -259,9 +265,14 @@ export function MemoryNetwork({
         const classified = (taggedNodes[nodeId]?.length ?? 0) > 0;
         const unclassified = requiresContradictionReview(node) && !classified;
         const analyzed = analyzedNodeIds.has(nodeId);
-        const selectedScale = selected ? 1.45 : hovered ? 1.25 : 1;
-        mesh.scale.setScalar(selectedScale * (visited && !selected && !hovered ? 0.96 : 1));
-        mesh.material.emissiveIntensity = selected ? 2.3 : hovered ? 1.8 : visited ? 0.35 : 1.05;
+        const baseColor = importanceColors[node.importance];
+        const unreadPulse = reduceMotion || visited ? 1 : 1 + Math.sin(elapsed * 1.8 + mesh.position.x) * 0.045;
+        const contradictionPulse = reduceMotion || !node.hasContradiction ? 1 : 1 + Math.sin(elapsed * 2.4 + mesh.position.y) * 0.035;
+        const selectedScale = selected ? 1.5 : hovered ? 1.26 : 1;
+        mesh.scale.setScalar(selectedScale * unreadPulse * contradictionPulse * (visited && !selected && !hovered ? 0.93 : 1));
+        mesh.material.color.set(visited && !selected ? '#38535a' : node.hasContradiction ? '#d9495f' : baseColor);
+        mesh.material.emissive.set(node.hasContradiction ? '#ff314f' : baseColor);
+        mesh.material.emissiveIntensity = selected ? 2.8 : hovered ? 1.9 : visited ? 0.2 : 0.92 + (reduceMotion ? 0 : Math.sin(elapsed * 1.8 + mesh.position.x) * 0.16);
 
         stateObjects.get(nodeId)?.forEach((object) => {
           object.position.copy(mesh.position);
@@ -270,12 +281,26 @@ export function MemoryNetwork({
             const halo = object as THREE.Mesh<THREE.SphereGeometry, THREE.MeshBasicMaterial>;
             halo.material.opacity = visited ? 0.06 : 0.13;
             halo.rotation.set(elapsed * 0.08, elapsed * 0.06, 0);
-          } else if (state.startsWith('selected')) object.visible = selected;
-          else if (state === 'evidence') object.visible = pinned;
+          } else if (state.startsWith('selected')) {
+            object.visible = selected;
+            object.rotation.z = reduceMotion ? 0 : elapsed * (state === 'selected-outer' ? -0.24 : 0.18);
+          } else if (state === 'evidence') object.visible = pinned;
           else if (state === 'warning') object.visible = unclassified;
           else if (state === 'classified') object.visible = classified;
-          else if (state === 'analysis') object.visible = analyzed;
+          else if (state === 'critical') {
+            object.visible = node.importance === 'critical';
+            object.rotation.z = reduceMotion ? 0 : elapsed * 0.11;
+          } else if (state === 'contradiction') {
+            object.visible = node.hasContradiction;
+            const ring = object as THREE.Mesh<THREE.TorusGeometry, THREE.MeshBasicMaterial>;
+            ring.material.opacity = reduceMotion ? 0.32 : 0.25 + (Math.sin(elapsed * 2.2 + mesh.position.x) + 1) * 0.1;
+            object.rotation.z = reduceMotion ? 0 : Math.sin(elapsed * 0.9 + mesh.position.y) * 0.16;
+          } else if (state === 'analysis') object.visible = analyzed;
         });
+      });
+      linkLines.forEach((line, index) => {
+        const material = line.material as THREE.LineBasicMaterial;
+        material.opacity = reduceMotion ? 0.3 : 0.28 + (Math.sin(elapsed * 0.7 + index) + 1) * 0.06;
       });
       const drift = reduceMotion ? 0 : Math.sin(elapsed * 0.12) * 0.025;
       networkGroup.rotation.y = drift;

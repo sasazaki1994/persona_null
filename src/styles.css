@@ -1,7 +1,18 @@
 :root {
-  color: #d7f7ff;
-  background: #03060c;
-  font-family: 'IBM Plex Sans JP', 'Yu Gothic', system-ui, sans-serif;
+  --background-dark: #03070b;
+  --background-deep: #010305;
+  --panel-background: rgba(6, 15, 20, 0.82);
+  --panel-background-strong: rgba(3, 9, 12, 0.94);
+  --accent-cyan: #63d5d2;
+  --accent-green: #78d6a6;
+  --warning-red: #ff5c72;
+  --text-primary: #d6e8e9;
+  --text-muted: #789397;
+  --border-soft: rgba(101, 183, 184, 0.24);
+  --glow-shadow: 0 0 24px rgba(72, 196, 194, 0.09), inset 0 0 22px rgba(72, 196, 194, 0.025);
+  color: var(--text-primary);
+  background: var(--background-dark);
+  font-family: 'Yu Gothic', 'Hiragino Kaku Gothic ProN', system-ui, sans-serif;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
 }
@@ -701,4 +712,229 @@ details > summary:focus-visible { color: #ffcfda; }
 
 @media (max-width: 520px) {
   .result-summary p { grid-template-columns: 1fr; gap: 0.15rem; }
+}
+
+/* Audit terminal visual system: restrained city-OS surfaces and semantic signal colors. */
+html { background: var(--background-deep); }
+body {
+  color: var(--text-primary);
+  background:
+    radial-gradient(circle at 52% -12%, rgba(51, 135, 139, 0.18), transparent 38%),
+    radial-gradient(circle at 8% 76%, rgba(18, 73, 78, 0.12), transparent 34%),
+    linear-gradient(145deg, #050b0f 0%, var(--background-dark) 52%, #010405 100%);
+}
+
+.app-shell {
+  isolation: isolate;
+  position: relative;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(72, 196, 194, 0.06), transparent 36%),
+    linear-gradient(rgba(4, 10, 13, 0.24), rgba(1, 4, 6, 0.54));
+}
+.app-shell::before,
+.app-shell::after {
+  content: '';
+  position: fixed;
+  z-index: 20;
+  inset: 0;
+  pointer-events: none;
+}
+.app-shell::before {
+  opacity: 0.16;
+  background: repeating-linear-gradient(to bottom, transparent 0 3px, rgba(118, 211, 209, 0.08) 4px);
+  mix-blend-mode: screen;
+}
+.app-shell::after {
+  opacity: 0.34;
+  background: linear-gradient(90deg, rgba(0, 0, 0, 0.22), transparent 16%, transparent 84%, rgba(0, 0, 0, 0.28));
+  box-shadow: inset 0 0 100px rgba(0, 0, 0, 0.72);
+}
+.app-shell > * { position: relative; z-index: 1; }
+
+.start-card,
+.document-card,
+.pane,
+.center-pane,
+.bottom-pane {
+  border: 1px solid var(--border-soft);
+  border-radius: 8px;
+  background: var(--panel-background);
+  box-shadow: var(--glow-shadow);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+.start-card,
+.document-card { border-top-color: rgba(99, 213, 210, 0.48); }
+.game-grid { background: transparent; gap: 0.7rem; padding: 0.7rem; }
+.pane { padding: 1rem; }
+.center-pane { background: rgba(2, 8, 11, 0.72); }
+.bottom-pane { background: rgba(2, 7, 9, 0.9); }
+
+.eyebrow,
+.pane-section h3,
+details > summary,
+.case-preview span { color: var(--accent-cyan); }
+.muted,
+.network-caption small,
+.issue-heading p,
+.guidance-panel small { color: var(--text-muted); }
+.warning-text { color: #ff9aaa; }
+
+button:not(.annotated-keyword):not(.typewriter-skip) {
+  border-color: rgba(99, 213, 210, 0.38);
+  border-radius: 5px;
+  background: rgba(10, 30, 34, 0.82);
+  color: #c9e6e6;
+  box-shadow: inset 0 0 0 1px rgba(99, 213, 210, 0.025);
+}
+button:hover:not(:disabled):not(.annotated-keyword):not(.typewriter-skip),
+button.active:not(.annotated-keyword) {
+  border-color: var(--accent-cyan);
+  background: rgba(20, 67, 69, 0.82);
+  color: #edffff;
+  box-shadow: 0 0 14px rgba(99, 213, 210, 0.16), inset 0 0 10px rgba(99, 213, 210, 0.07);
+}
+button:focus-visible,
+summary:focus-visible { outline: 1px solid var(--accent-cyan); outline-offset: 3px; }
+
+.compact-progress.status-chip-row,
+.status-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.42rem;
+}
+.status-chip,
+.compact-progress .status-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.55rem;
+  min-width: 0;
+  border: 1px solid rgba(120, 147, 151, 0.3);
+  border-radius: 999px;
+  background: rgba(11, 24, 28, 0.76);
+  padding: 0.3rem 0.58rem;
+  color: var(--text-muted);
+  font-size: 0.7rem;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.status-chip strong { color: #aec4c7; }
+.status-chip.valid { border-color: rgba(120, 214, 166, 0.42); color: var(--accent-green); }
+.status-chip.valid strong { color: #b9edcf; }
+.status-chip.warning { border-color: rgba(255, 92, 114, 0.38); color: #ef8b9a; }
+.status-chip.warning strong,
+.status-chip.critical strong { color: #ffc0c9; }
+.status-chip.critical {
+  border-color: rgba(255, 92, 114, 0.7);
+  color: var(--warning-red);
+  box-shadow: 0 0 12px rgba(255, 92, 114, 0.12);
+}
+
+.memory-node-item { border-radius: 4px; background: rgba(7, 22, 26, 0.62); }
+.memory-node-item.unvisited { border-color: rgba(99, 213, 210, 0.46); color: #c6e5e5; }
+.memory-node-item.visited { border-color: rgba(90, 113, 117, 0.25); background: rgba(8, 16, 18, 0.62); color: #70878a; filter: saturate(0.58); }
+.memory-node-item.selected {
+  border-color: rgba(99, 213, 210, 0.86);
+  background: rgba(17, 58, 61, 0.72);
+  color: #edffff;
+  box-shadow: 0 0 16px rgba(99, 213, 210, 0.14), inset 3px 0 0 var(--accent-cyan);
+  filter: none;
+}
+.node-state-badges i { border-radius: 999px; }
+
+.node-header { border-color: var(--border-soft); }
+.node-summary { color: #a9c0c2; }
+.node-core-facts,
+.inspector-note,
+.node-warning {
+  margin-top: 0.75rem;
+  border: 1px solid rgba(111, 146, 150, 0.18);
+  border-left-width: 3px;
+  border-radius: 5px;
+  background: rgba(7, 19, 23, 0.68);
+  padding: 0.8rem 0.85rem;
+}
+.node-core-facts { border-left-color: var(--accent-cyan); }
+.inspector-note {
+  border-left-color: var(--accent-green);
+  background: rgba(9, 29, 25, 0.62);
+}
+.node-warning {
+  border-color: rgba(255, 92, 114, 0.2);
+  border-left-color: var(--warning-red);
+  background: rgba(45, 10, 17, 0.5);
+  box-shadow: 0 0 18px rgba(255, 92, 114, 0.09), inset 0 0 15px rgba(255, 92, 114, 0.035);
+}
+.node-warning h3 { color: #ff9aaa; }
+.node-core-facts h3 { color: #9ce6e4; }
+.inspector-note h3 { color: #9ce4bd; }
+
+.network-caption,
+.network-node-label {
+  border-color: rgba(99, 213, 210, 0.28);
+  border-radius: 5px;
+  background: rgba(2, 9, 12, 0.78);
+  box-shadow: 0 0 18px rgba(99, 213, 210, 0.07);
+  backdrop-filter: blur(8px);
+}
+.network-scanlines { opacity: 0.16; }
+
+.bottom-pane { gap: 0.85rem; padding: 0.85rem; }
+.judgment-summary {
+  border: 1px solid rgba(99, 213, 210, 0.14);
+  border-radius: 5px;
+  background: rgba(5, 14, 17, 0.72);
+  padding: 0.7rem;
+}
+button.judge:disabled {
+  border-color: rgba(105, 129, 132, 0.2);
+  background: rgba(8, 14, 16, 0.86);
+  color: #576a6d;
+  opacity: 1;
+}
+button.judge:not(:disabled),
+button.judge:hover:not(:disabled) {
+  border-color: rgba(99, 213, 210, 0.86);
+  background: linear-gradient(135deg, rgba(23, 80, 80, 0.92), rgba(9, 40, 43, 0.92));
+  color: #e9ffff;
+  box-shadow: 0 0 22px rgba(99, 213, 210, 0.22), inset 0 0 18px rgba(99, 213, 210, 0.08);
+}
+.audit-log {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid rgba(99, 213, 210, 0.14);
+  border-radius: 5px;
+  background: rgba(0, 3, 5, 0.92);
+  padding: 0.65rem 0.8rem;
+  font-family: ui-monospace, SFMono-Regular, Consolas, 'Liberation Mono', monospace;
+}
+.audit-log-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; }
+.audit-log-heading strong { color: var(--accent-cyan); font-size: 0.72rem; letter-spacing: 0.2em; }
+.audit-log-heading span { color: #50686b; font-size: 0.62rem; letter-spacing: 0.08em; }
+.latest-log {
+  min-height: 1.5rem;
+  border-left: 2px solid var(--accent-cyan);
+  padding: 0.2rem 0 0.2rem 0.65rem;
+  color: #b9d4d5;
+}
+.log-list {
+  display: flex;
+  max-height: 6.5rem;
+  flex-direction: column;
+  gap: 0.28rem;
+  overflow-y: auto;
+  padding-right: 0.35rem;
+  scrollbar-width: thin;
+  scrollbar-color: #315d63 transparent;
+}
+.log-list p { display: grid; grid-template-columns: 1.7rem 1fr; gap: 0.45rem; margin: 0; color: #759093; font-size: 0.7rem; }
+.log-list p > span { color: #3f696c; }
+.audit-log .warning-log,
+.log-list .warning-log { color: #ff8092; }
+.audit-log .warning-log { border-left-color: var(--warning-red); text-shadow: 0 0 9px rgba(255, 92, 114, 0.2); }
+
+@media (prefers-reduced-motion: reduce) {
+  .app-shell::before { opacity: 0.08; }
+  button, .memory-node-item { transition: none; }
 }
