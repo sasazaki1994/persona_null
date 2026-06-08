@@ -47,7 +47,6 @@ function App() {
 
   const selectedNode = case000.nodes.find((node) => node.id === selectedNodeId) ?? null;
   const visitedCount = visitedNodeIds.length;
-  const progress = Math.round((visitedCount / case000.nodes.length) * 100);
   const requirements = getJudgmentRequirements({
     visitedNodeCount: visitedCount,
     requiredNodesToJudge: case000.requiredNodesToJudge,
@@ -164,7 +163,6 @@ function App() {
       resources={resources}
       executedActionIds={executedActionIds}
       systemLogs={systemLogs}
-      progress={progress}
       guidance={guidance}
       requirements={requirements}
       canJudge={canJudge}
@@ -280,7 +278,6 @@ type InvestigationProps = {
   resources: number;
   executedActionIds: string[];
   systemLogs: string[];
-  progress: number;
   guidance: CurrentGuidance;
   requirements: JudgmentRequirement[];
   canJudge: boolean;
@@ -299,23 +296,6 @@ function GuidancePanel({ guidance }: { guidance: CurrentGuidance }) {
       <p className="guidance-instruction">{guidance.instruction}</p>
       <p className="guidance-action"><span>実行</span>{guidance.action}</p>
       <small>{guidance.resourceNote}</small>
-    </section>
-  );
-}
-
-function NodeActionHint(props: { canJudge: boolean; eligibleForTags: boolean; isPinned: boolean; isTagged: boolean; isVisited: boolean }) {
-  const hints = props.canJudge
-    ? ['判断条件に必要な操作は完了しています']
-    : [
-        props.isVisited ? 'このノードは確認済みです' : 'このノードを選択すると確認済みになります',
-        props.isPinned ? 'このノードは根拠提出済です' : 'このノードは提出根拠に登録できます',
-        props.eligibleForTags && (props.isTagged ? 'このノードは矛盾分類済みです' : 'このノードは矛盾分類対象です'),
-      ].filter((hint): hint is string => Boolean(hint));
-
-  return (
-    <section className="node-action-hint" aria-label="選択ノード操作案内">
-      <strong>操作照合</strong>
-      {hints.map((hint) => <p key={hint}>› {hint}</p>)}
     </section>
   );
 }
@@ -386,27 +366,41 @@ function InvestigationScreen(props: InvestigationProps) {
         && action.reportText
       ))
     : [];
+  const hasExecutableAnalysis = case000.analysisActions.some((action) => (
+    !props.executedActionIds.includes(action.id)
+    && props.resources > 0
+    && isAnalysisActionUnlocked({
+      action,
+      visitedNodeIds: props.visitedNodeIds,
+      pinnedNodeIds: props.pinnedNodeIds,
+      taggedNodes: props.taggedNodes,
+    })
+  ));
+  const analysisStatus = hasExecutableAnalysis
+    ? '実行可能あり'
+    : props.executedActionIds.length > 0
+      ? '実行済'
+      : '未解放';
+  const nextRequirement = props.requirements.find((requirement) => !requirement.completed);
+  const requirementLabels: Record<JudgmentRequirement['id'], string> = {
+    nodes: '確認',
+    pins: '提出根拠',
+    tags: '矛盾分類',
+  };
+  const missingRequirement = nextRequirement
+    ? `${requirementLabels[nextRequirement.id]} ${nextRequirement.detail.split(' ')[0]}`
+    : 'なし';
 
   return (
     <main className="game-grid">
       <aside className="pane left-pane">
         <p className="eyebrow">{case000.organizationName} / {case000.id.toUpperCase()}</p>
         <h2>{case000.title}</h2>
-        <p className="case-subtitle">{case000.subtitle}</p>
-        <section className="pane-section">
-          <h3>事件概要</h3>
-          <p>{case000.overview}</p>
-        </section>
         <GuidancePanel guidance={props.guidance} />
-        <section className="pane-section">
-          <h3>進行度</h3>
-          <div className="meter"><span style={{ width: `${props.progress}%` }} /></div>
-          <div className="status-grid">
-            <span>確認済</span><strong>{props.visitedNodeIds.length}/{case000.nodes.length}</strong>
-            <span>判断条件</span><strong>{Math.min(props.visitedNodeIds.length, case000.requiredNodesToJudge)}/{case000.requiredNodesToJudge}</strong>
-            <span>提出根拠</span><strong>{props.pinnedNodeIds.length}/3</strong>
-            <span>矛盾分類</span><strong>{taggedNodeCount}</strong>
-          </div>
+        <section className="pane-section compact-progress" aria-label="監査進行">
+          <span>確認 <strong>{props.visitedNodeIds.length}/{case000.requiredNodesToJudge}</strong></span>
+          <span>提出根拠 <strong>{props.pinnedNodeIds.length}/1</strong></span>
+          <span>矛盾分類 <strong>{taggedNodeCount}/1</strong></span>
         </section>
         <section className="pane-section memory-node-index" aria-labelledby="memory-node-index-title">
           <div className="node-index-heading">
@@ -423,11 +417,14 @@ function InvestigationScreen(props: InvestigationProps) {
                   <div className="issue-heading">
                     <span>争点 {issue.id}</span>
                     <h4>{issue.title}</h4>
-                    <p>{issue.description}</p>
-                    <div className="issue-progress" aria-label={`${issue.title}の監査進捗`}>
-                      <span>確認 {reviewedCount} / {issue.relatedNodeIds.length}</span>
-                      <span>根拠 {submittedCount}</span>
-                    </div>
+                    <details className="inline-details">
+                      <summary>争点詳細を表示</summary>
+                      <p>{issue.description}</p>
+                      <div className="issue-progress" aria-label={`${issue.title}の監査進捗`}>
+                        <span>確認 {reviewedCount} / {issue.relatedNodeIds.length}</span>
+                        <span>根拠 {submittedCount}</span>
+                      </div>
+                    </details>
                   </div>
                   <div className="memory-node-list">
                     {issue.relatedNodeIds.map((nodeId) => {
@@ -462,16 +459,18 @@ function InvestigationScreen(props: InvestigationProps) {
             })}
           </div>
         </section>
-        <section className="pane-section resource-card">
+        <details className="pane-section disclosure-card">
+          <summary>事件・監査情報を表示</summary>
+          <h3>事件概要</h3>
+          <p className="case-subtitle">{case000.subtitle}</p>
+          <p>{case000.overview}</p>
           <h3>監査リソース</h3>
           <p className="resource-count">{props.resources} / {case000.auditResourceMax}</p>
           <small>追加解析1件につき1消費。最終判断は残数0でも可能。</small>
           {props.resources === 0 && <p className="warning-text">監査リソース不足：追加解析を実行できません。</p>}
-        </section>
-        <section className="pane-section compact-stats">
           <h3>初期都市ステータス</h3>
           <StatusBars stats={case000.initialStats} />
-        </section>
+        </details>
       </aside>
 
       <section className="center-pane">
@@ -496,115 +495,106 @@ function InvestigationScreen(props: InvestigationProps) {
       <aside className="pane right-pane">
         {!selectedNode ? (
           <section className="empty-node-detail" aria-live="polite">
-            <p className="eyebrow">選択ノード詳細</p>
+            <p className="eyebrow">選択ノード要約</p>
             <h2>記憶ノードを選択してください</h2>
             <p>左の争点別ノード一覧、または中央の Memory Network から記録を開けます</p>
-            <p>未確認ノードを確認すると、記録状態が「確認済」に変わります</p>
           </section>
         ) : <>
           <section className="node-header">
-          <p className="eyebrow">選択ノード詳細</p>
-          <h2>{selectedNode.title}</h2>
-          <div className="record-state">
-            <p><span>記録状態：</span><strong>{props.visitedNodeIds.includes(selectedNode.id) ? '確認済' : '未確認'}</strong></p>
-            <p><span>記録種別：</span>{selectedNode.type}</p>
-          </div>
-          <div className="node-badges">
-            <span className={`importance ${selectedNode.importance}`}>重要度：{importanceLabels[selectedNode.importance]}</span>
-          </div>
-        </section>
-        <NodeActionHint
-          canJudge={props.canJudge}
-          eligibleForTags={eligibleForTags}
-          isPinned={props.pinnedNodeIds.includes(selectedNode.id)}
-          isTagged={(props.taggedNodes[selectedNode.id]?.length ?? 0) > 0}
-          isVisited={props.visitedNodeIds.includes(selectedNode.id)}
-        />
-        <section className="pane-section">
-          <h3>監査記録</h3>
-          <p><TypewriterText text={selectedNode.summary} speed={14} animateKey={`summary-${selectedNode.id}`} /></p>
-          <code>{selectedNode.log}</code>
-          <p><strong>単純事実：</strong><AnnotatedText text={selectedNode.simpleFact} /></p>
-          <p><strong>監査官注：</strong><TypewriterText text={selectedNode.inspectorNote} speed={14} animateKey={`note-${selectedNode.id}`} /></p>
-          {selectedNode.auditHint && (
-            <div className="audit-hint">
-              <strong>監査官メモ</strong>
-              <p><AnnotatedText text={selectedNode.auditHint} /></p>
+            <p className="eyebrow">選択ノード要約</p>
+            <h2>{selectedNode.title}</h2>
+            <div className="record-state">
+              <p><span>記録状態：</span><strong>{props.visitedNodeIds.includes(selectedNode.id) ? '確認済' : '未確認'}</strong></p>
+              <p><span>記録種別：</span>{selectedNode.type}</p>
             </div>
-          )}
-          <p className="warning-text"><strong>警告：</strong><AnnotatedText text={selectedNode.warning} /></p>
-          <dl className="metrics">
-            {Object.entries(selectedNode.metrics).map(([key, value]) => <div key={key}><dt>{key}</dt><dd>{value}</dd></div>)}
-          </dl>
-          {analysisReports.length > 0 && (
-            <div className="analysis-report" aria-live="polite">
-              <strong>追加解析結果</strong>
-              {analysisReports.map((action) => <p key={action.id}><AnnotatedText text={action.reportText ?? ''} /></p>)}
+            <div className="node-badges">
+              <span className={`importance ${selectedNode.importance}`}>重要度：{importanceLabels[selectedNode.importance]}</span>
             </div>
-          )}
-        </section>
-        <section className="pane-section pin-box">
-          <h3>提出根拠</h3>
-          <button onClick={() => props.onTogglePin(selectedNode.id)} disabled={!props.pinnedNodeIds.includes(selectedNode.id) && props.pinnedNodeIds.length >= 3}>
-            {props.pinnedNodeIds.includes(selectedNode.id) ? '提出根拠から解除' : '提出根拠に登録'}
-          </button>
-          <div className="pinned-list">
-            {pinnedNodes.length ? pinnedNodes.map((node) => <span key={node.id}>{node.title}</span>) : <small>未提出。最低1件が必要。</small>}
-          </div>
-        </section>
-        <section className="pane-section tag-box">
-          <h3>矛盾分類</h3>
-          {!eligibleForTags && <small>この記録に分類可能な矛盾は検出されていません</small>}
-          {suggestedTags.map((tag) => (
-            <button className={props.taggedNodes[selectedNode.id]?.includes(tag) ? 'active' : ''} key={tag} onClick={() => props.onToggleTag(selectedNode, tag)}>
-              {contradictionTagLabels[tag]}
+          </section>
+          <section className="pane-section node-core-facts">
+            <p><strong>単純事実：</strong><AnnotatedText text={selectedNode.simpleFact} /></p>
+            <p className="warning-text"><strong>警告：</strong><AnnotatedText text={selectedNode.warning} /></p>
+          </section>
+          <section className="pane-section pin-box">
+            <h3>提出根拠</h3>
+            <button onClick={() => props.onTogglePin(selectedNode.id)} disabled={!props.pinnedNodeIds.includes(selectedNode.id) && props.pinnedNodeIds.length >= 3}>
+              {props.pinnedNodeIds.includes(selectedNode.id) ? '提出根拠から解除' : '提出根拠に登録'}
             </button>
-          ))}
-        </section>
-        <section className="pane-section actions">
-          <h3>解析アクション</h3>
-          {case000.analysisActions.map((action) => (
-            <AnalysisActionControl
-              action={action}
-              executed={props.executedActionIds.includes(action.id)}
-              key={action.id}
-              onExecute={props.onExecuteAction}
-              pinnedNodeIds={props.pinnedNodeIds}
-              resources={props.resources}
-              taggedNodes={props.taggedNodes}
-              visitedNodeIds={props.visitedNodeIds}
-            />
-          ))}
-        </section>
+            <details className="inline-details">
+              <summary>提出状況を表示</summary>
+              <div className="pinned-list">
+                {pinnedNodes.length ? pinnedNodes.map((node) => <span key={node.id}>{node.title}</span>) : <small>未提出。最低1件が必要。</small>}
+              </div>
+            </details>
+          </section>
+          {eligibleForTags && (
+            <section className="pane-section tag-box">
+              <h3>矛盾分類</h3>
+              {suggestedTags.map((tag) => (
+                <button className={props.taggedNodes[selectedNode.id]?.includes(tag) ? 'active' : ''} key={tag} onClick={() => props.onToggleTag(selectedNode, tag)}>
+                  {contradictionTagLabels[tag]}
+                </button>
+              ))}
+            </section>
+          )}
+          <details className="pane-section disclosure-card node-record-details">
+            <summary>詳細記録を表示</summary>
+            <p><TypewriterText text={selectedNode.summary} speed={14} animateKey={`summary-${selectedNode.id}`} /></p>
+            <code>{selectedNode.log}</code>
+            <p><strong>監査官注：</strong><TypewriterText text={selectedNode.inspectorNote} speed={14} animateKey={`note-${selectedNode.id}`} /></p>
+            {selectedNode.auditHint && (
+              <div className="audit-hint">
+                <strong>監査官メモ</strong>
+                <p><AnnotatedText text={selectedNode.auditHint} /></p>
+              </div>
+            )}
+            <dl className="metrics">
+              {Object.entries(selectedNode.metrics).map(([key, value]) => <div key={key}><dt>{key}</dt><dd>{value}</dd></div>)}
+            </dl>
+            {analysisReports.length > 0 && (
+              <div className="analysis-report" aria-live="polite">
+                <strong>追加解析結果</strong>
+                {analysisReports.map((action) => <p key={action.id}><AnnotatedText text={action.reportText ?? ''} /></p>)}
+              </div>
+            )}
+          </details>
+          <section className="pane-section analysis-summary">
+            <div><span>追加解析</span><strong>{analysisStatus}</strong></div>
+            <div><span>監査リソース残数</span><strong>{props.resources} / {case000.auditResourceMax}</strong></div>
+            <details className="inline-details actions">
+              <summary>解析メニューを表示</summary>
+              {case000.analysisActions.map((action) => (
+                <AnalysisActionControl
+                  action={action}
+                  executed={props.executedActionIds.includes(action.id)}
+                  key={action.id}
+                  onExecute={props.onExecuteAction}
+                  pinnedNodeIds={props.pinnedNodeIds}
+                  resources={props.resources}
+                  taggedNodes={props.taggedNodes}
+                  visitedNodeIds={props.visitedNodeIds}
+                />
+              ))}
+            </details>
+          </section>
         </>}
       </aside>
 
       <footer className="bottom-pane">
-        <button className="judge" disabled={!props.canJudge} onClick={props.onJudge}>{props.canJudge ? '最終判断へ進む' : '最終判断は未開放'}</button>
-        <section className="blocker-panel">
-          <strong>最終判断まで</strong>
-          <div className="requirement-list">
-            {props.requirements.map((requirement) => (
-              <div className={requirement.completed ? 'complete' : 'incomplete'} key={requirement.id}>
-                <span aria-label={requirement.completed ? '完了' : '未完了'}>{requirement.completed ? '✓' : '□'}</span>
-                <p>{requirement.label}</p>
-                <small>{requirement.detail}</small>
-              </div>
-            ))}
-          </div>
-          <p className={props.canJudge ? 'warning-text' : 'muted'}>{props.canJudge ? '条件充足。以後の判断は不可逆です。' : '未完了項目を上から順に照合してください。'}</p>
+        <section className="judgment-summary">
+          <button className="judge" disabled={!props.canJudge} onClick={props.onJudge}>{props.canJudge ? '最終判断へ進む' : '最終判断は未開放'}</button>
+          <p><strong>最終判断：{props.canJudge ? '開放済' : '未開放'}</strong></p>
+          <p>不足：{missingRequirement}</p>
         </section>
         <section className="logs">
-          <strong>システムログ</strong>
-          <div className="log-list">
-            {props.systemLogs.map((log, index) => (
-              <p key={`${index}-${log}`}>
-                {index === 0
-                  ? <TypewriterText text={log} speed={12} animateKey={`system-log-${props.systemLogs.length}-${log}`} />
-                  : log}
-              </p>
-            ))}
-          </div>
+          <strong>最新システムログ</strong>
+          <p className="latest-log"><TypewriterText text={props.systemLogs[0] ?? 'ログなし'} speed={12} animateKey={`system-log-${props.systemLogs.length}-${props.systemLogs[0] ?? ''}`} /></p>
+          <details className="inline-details">
+            <summary>ログを表示</summary>
+            <div className="log-list">
+              {props.systemLogs.map((log, index) => <p key={`${index}-${log}`}>{log}</p>)}
+            </div>
+          </details>
         </section>
       </footer>
     </main>
@@ -634,27 +624,9 @@ function DecisionScreen({ pinnedNodeIds, onBack, onDecide }: { pinnedNodeIds: st
                   <p className="eyebrow">裁定案</p>
                   <h3>{option.label}</h3>
                 </div>
-                <section>
-                  <div className="decision-section-heading">
-                    <h4>採用される根拠</h4>
-                    <span>提出根拠との一致 {submittedAcceptedCount} / {acceptedNodes.length}</span>
-                  </div>
-                  {acceptedNodes.map((node) => (
-                    <p className={pinnedNodeIds.includes(node.id) ? 'evidence-submitted' : 'evidence-unsubmitted'} key={node.id}>
-                      <span>{pinnedNodeIds.includes(node.id) ? '根拠提出済' : '未提出'}</span>{node.title}：{node.simpleFact}
-                    </p>
-                  ))}
-                  {acceptedNodes.length > 0 && submittedAcceptedCount === 0 && (
-                    <div className="decision-evidence-warning" role="alert">
-                      <strong>警告：</strong>
-                      <p>この裁定案は、現在の提出根拠と一致していません。</p>
-                      <p>未提出記録を採用根拠として裁定しようとしています。</p>
-                    </div>
-                  )}
-                </section>
-                <section>
-                  <h4>無視または保留される疑点</h4>
-                  {ignoredIssues.map((issue) => <p key={issue.id}><strong>{issue.title}</strong>：{issue.description}</p>)}
+                <section className="decision-values">
+                  <p><strong>優先される価値</strong>{option.prioritizedValue}</p>
+                  <p><strong>軽視される価値</strong>{option.disregardedValue}</p>
                 </section>
                 <section>
                   <h4>都市ステータスへの影響</h4>
@@ -662,6 +634,31 @@ function DecisionScreen({ pinnedNodeIds, onBack, onDecide }: { pinnedNodeIds: st
                     {cityStatKeys.map((key) => <span className={option.statDelta[key] >= 0 ? 'delta-plus' : 'delta-minus'} key={key}>{statLabels[key]} {option.statDelta[key] >= 0 ? '+' : ''}{option.statDelta[key]}</span>)}
                   </div>
                 </section>
+                <details className="decision-details">
+                  <summary>裁定詳細を表示</summary>
+                  <section>
+                    <div className="decision-section-heading">
+                      <h4>採用される根拠</h4>
+                      <span>提出根拠との一致 {submittedAcceptedCount} / {acceptedNodes.length}</span>
+                    </div>
+                    {acceptedNodes.map((node) => (
+                      <p className={pinnedNodeIds.includes(node.id) ? 'evidence-submitted' : 'evidence-unsubmitted'} key={node.id}>
+                        <span>{pinnedNodeIds.includes(node.id) ? '根拠提出済' : '未提出'}</span>{node.title}：{node.simpleFact}
+                      </p>
+                    ))}
+                    {acceptedNodes.length > 0 && submittedAcceptedCount === 0 && (
+                      <div className="decision-evidence-warning" role="alert">
+                        <strong>警告：</strong>
+                        <p>この裁定案は、現在の提出根拠と一致していません。</p>
+                        <p>未提出記録を採用根拠として裁定しようとしています。</p>
+                      </div>
+                    )}
+                  </section>
+                  <section>
+                    <h4>無視または保留される疑点</h4>
+                    {ignoredIssues.map((issue) => <p key={issue.id}><strong>{issue.title}</strong>：{issue.description}</p>)}
+                  </section>
+                </details>
                 <button onClick={() => onDecide(option)}>{option.label}を確定</button>
               </article>
             );
@@ -682,6 +679,11 @@ function ResultScreen({ decision, finalStats, payload, taggedNodes }: { decision
       <section className="document-card result wide admin-log">
         <p className="eyebrow">行政処理ログ / {case000.recordName} / 保存完了</p>
         <h2>Case000 処理記録</h2>
+        <section className="result-summary" aria-label="裁定結果要約">
+          <p><span>裁定</span><strong>{decision.finalRuling.split(':')[0]}</strong></p>
+          <p><span>優先</span><strong>{decision.prioritizedValue}</strong></p>
+          <p><span>影響</span><strong>{cityStatKeys.map((key) => `${statLabels[key]} ${decision.statDelta[key] >= 0 ? '+' : ''}${decision.statDelta[key]}`).join(' / ')}</strong></p>
+        </section>
         <div className={`ruling-stamp ruling-${decision.id}`} aria-label={`裁定印：${decision.finalRuling.split(':')[0]}`}>
           <span>都市OS監査室</span>
           <strong>{decision.finalRuling.split(':')[0]}</strong>

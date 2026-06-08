@@ -192,8 +192,9 @@ describe('case000 data', () => {
     const appSource = terminologyFiles['./App.tsx'];
 
     expect(appSource).toContain('setSystemLogs((logs) => [message, ...logs].slice(0, 8))');
-    expect(appSource).toContain('index === 0');
-    expect(appSource).not.toContain('index === props.systemLogs.length - 1');
+    expect(appSource).toContain('props.systemLogs[0]');
+    expect(appSource).toContain('最新システムログ');
+    expect(appSource).toContain('<summary>ログを表示</summary>');
   });
 
   it('connects 七瀬未織の媒体 to the Case001 preview without making it playable', () => {

@@ -36,6 +36,14 @@ describe('Case000 player flow', () => {
 
   const findButton = (label: string) => [...container.querySelectorAll('button')].find((candidate) => candidate.textContent?.includes(label));
 
+  const findSummary = (label: string) => [...container.querySelectorAll('summary')].find((candidate) => candidate.textContent?.includes(label));
+
+  const clickSummary = (label: string) => {
+    const summary = findSummary(label);
+    expect(summary, `summary containing ${label}`).toBeDefined();
+    act(() => summary?.click());
+  };
+
   const clickButton = (label: string) => {
     const button = findButton(label);
     expect(button, `button containing ${label}`).toBeDefined();
@@ -49,20 +57,24 @@ describe('Case000 player flow', () => {
     clickButton('調査を開始');
   };
 
-  it('progresses from title through the guided investigation to a result', () => {
+  it('progresses from the concise investigation view to a result', () => {
     enterInvestigation();
 
     expect(container.textContent).toContain('次の監査手順');
     expect(container.textContent).toContain('記憶ノードを4件以上確認してください');
     expect(container.textContent).toContain('記憶ノードを選択してください');
-    expect(container.textContent).toContain('左の争点別ノード一覧、または中央の Memory Network から記録を開けます');
-    expect(container.textContent).toContain('未確認ノードを確認すると、記録状態が「確認済」に変わります');
-    expect(container.textContent).not.toContain('公式記録上の発砲主体は明確');
+    expect(container.textContent).toContain('不足：確認 0/4');
+    expect((findSummary('事件・監査情報を表示')?.parentElement as HTMLDetailsElement).open).toBe(false);
 
     clickButton('ノード：発砲ログ');
-    expect(container.textContent).toContain('監査官メモ');
-    expect(container.textContent).toContain('公式記録上の発砲主体は明確');
-    expect(container.textContent).toContain('本人記憶との照合が必要');
+    const recordDetails = findSummary('詳細記録を表示')?.parentElement as HTMLDetailsElement;
+    expect(recordDetails.open).toBe(false);
+    expect(container.querySelector('.node-core-facts')?.textContent).toContain('単純事実');
+    expect(container.querySelector('.node-core-facts .warning-text')?.textContent).toContain(case000.nodes[0].warning);
+    expect(recordDetails.querySelector('code')?.textContent).toBe(case000.nodes[0].log);
+    expect(recordDetails.querySelector('.metrics')).not.toBeNull();
+    clickSummary('詳細記録を表示');
+    expect(recordDetails.open).toBe(true);
 
     case000.nodes.slice(0, case000.requiredNodesToJudge).forEach((node) => clickButton(`ノード：${node.title}`));
     expect(container.textContent).toContain('判断根拠の登録');
@@ -71,24 +83,26 @@ describe('Case000 player flow', () => {
     expect(container.textContent).toContain('矛盾記録の分類');
 
     clickButton('人格署名の矛盾');
-    expect(container.textContent).toContain('判断条件に必要な操作は完了しています');
-    expect(container.textContent).toContain('最終判断まで');
+    expect(container.textContent).toContain('最終判断：開放済');
+    expect(container.textContent).toContain('不足：なし');
 
     clickButton('最終判断へ進む');
-    expect(container.textContent).toContain('採用される根拠');
-    expect(container.textContent).toContain('無視または保留される疑点');
+    expect(container.textContent).toContain('優先される価値');
+    expect(container.textContent).toContain('軽視される価値');
     expect(container.textContent).toContain('都市ステータスへの影響');
-    expect(container.textContent).toContain('根拠提出済');
-    expect(container.textContent).toContain('未提出');
-    expect(container.textContent).toContain('提出根拠との一致 0 / 1');
-    expect(container.textContent).toContain('提出根拠との一致 1 / 4');
-    expect(container.textContent).toContain('この裁定案は、現在の提出根拠と一致していません。');
-    expect(container.textContent).toContain('未提出記録を採用根拠として裁定しようとしています。');
+    const decisionDetails = [...container.querySelectorAll<HTMLDetailsElement>('.decision-details')];
+    expect(decisionDetails).toHaveLength(case000.decisions.length);
+    expect(decisionDetails.every((details) => !details.open)).toBe(true);
+    clickSummary('裁定詳細を表示');
+    expect(decisionDetails[0].open).toBe(true);
+    expect(decisionDetails[0].textContent).toContain('採用される根拠');
+    expect(decisionDetails[0].textContent).toContain('提出根拠との一致 0 / 1');
+    expect(decisionDetails[0].textContent).toContain('この裁定案は、現在の提出根拠と一致していません。');
     expect(findButton(case000.decisions[0].label)?.disabled).toBe(false);
     clickButton(case000.decisions[0].label);
 
     expect(container.textContent).toContain('行政処理ログ');
-    expect(container.textContent).toContain('最終裁定');
+    expect(container.querySelector('[aria-label="裁定結果要約"]')).not.toBeNull();
     expect(container.textContent).toContain('暫定拘束');
     expect(container.querySelector('.ruling-stamp')).not.toBeNull();
     expect(localStorage.getItem('persona-null:case-results')).not.toBeNull();
@@ -102,7 +116,7 @@ describe('Case000 player flow', () => {
     expect(findButton('身体認証の矛盾')).toBeUndefined();
 
     clickButton('ノード：都市警備局の処理要求');
-    expect(container.textContent).toContain('この記録に分類可能な矛盾は検出されていません');
+    expect(container.querySelector('.tag-box')).toBeNull();
     expect(findButton('記憶由来の矛盾')).toBeUndefined();
   });
 
@@ -113,8 +127,12 @@ describe('Case000 player flow', () => {
     expect(container.textContent).toContain('発砲操作主体は誰か');
     expect(container.textContent).toContain(`未確認 ${case000.nodes.length}`);
     expect(findButton('発砲ログ')).toBeDefined();
-    expect(container.textContent).toContain('確認 0 / 4');
-    expect(container.textContent).toContain('根拠 0');
+    const issueDetails = findSummary('争点詳細を表示')?.parentElement as HTMLDetailsElement;
+    expect(issueDetails.open).toBe(false);
+    clickSummary('争点詳細を表示');
+    expect(issueDetails.open).toBe(true);
+    expect(issueDetails.textContent).toContain('確認 0 / 4');
+    expect(issueDetails.textContent).toContain('根拠 0');
 
     clickButton('発砲ログ');
     expect(container.textContent).toContain(`未確認 ${case000.nodes.length - 1}`);
@@ -136,6 +154,8 @@ describe('Case000 player flow', () => {
 
     clickButton('ノード：間宮の発砲記憶');
     clickButton('ノード：義体稼働履歴');
+    expect((findSummary('解析メニューを表示')?.parentElement as HTMLDetailsElement).open).toBe(false);
+    clickSummary('解析メニューを表示');
     clickButton('欠落8秒の復元');
 
     expect(container.textContent).toContain('追加解析結果');
@@ -148,6 +168,7 @@ describe('Case000 player flow', () => {
   it('keeps analysis actions disabled until their record conditions are met', () => {
     enterInvestigation();
     clickButton('ノード：発砲ログ');
+    clickSummary('解析メニューを表示');
 
     expect(findButton('欠落8秒の復元')?.disabled).toBe(true);
     expect(container.textContent).toContain('状態：未解放');

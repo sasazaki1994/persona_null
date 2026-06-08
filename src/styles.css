@@ -25,7 +25,7 @@ code { display: block; max-width: 100%; padding: 0.75rem; background: #06111d; b
 .case-preview span { color: #7eeaff; letter-spacing: 0.16em; }
 .case-preview.locked { opacity: 0.72; }
 
-.game-grid { height: 100dvh; min-height: 0; display: grid; grid-template-columns: minmax(260px, 0.8fr) minmax(360px, 1.45fr) minmax(390px, 1fr); grid-template-rows: minmax(0, 1fr) minmax(170px, 21vh); gap: 0.6rem; padding: 0.6rem; overflow: hidden; }
+.game-grid { height: 100dvh; min-height: 0; display: grid; grid-template-columns: minmax(260px, 0.8fr) minmax(360px, 1.45fr) minmax(390px, 1fr); grid-template-rows: minmax(0, 1fr) minmax(135px, 18vh); gap: 0.6rem; padding: 0.6rem; overflow: hidden; }
 .pane, .center-pane, .bottom-pane { border: 1px solid #245a72; background: rgba(3, 10, 18, 0.92); box-shadow: inset 0 0 24px rgba(71, 222, 255, 0.06); }
 .pane { min-height: 0; padding: 0.8rem; overflow: auto; scrollbar-width: thin; scrollbar-color: #315d73 transparent; }
 .left-pane h2, .right-pane h2 { margin: 0.25rem 0; }
@@ -613,3 +613,83 @@ button.judge:hover:not(:disabled) {
 .legend-ring.closed { border-width: 1px; opacity: 0.72; }
 .legend-frame { border: 1px solid currentColor; transform: rotate(45deg) scale(0.72); }
 .legend-halo { border: 1px solid #ff6685; border-radius: 50%; box-shadow: 0 0 6px rgba(255, 71, 111, 0.65); }
+
+/* Progressive disclosure keeps the investigation surface focused on the next action. */
+.compact-progress {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+.compact-progress span,
+.analysis-summary > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.55rem;
+  border: 1px solid rgba(126, 234, 255, 0.28);
+  background: rgba(8, 27, 43, 0.46);
+  padding: 0.35rem 0.5rem;
+  color: #9dbfca;
+  font-size: 0.75rem;
+}
+.compact-progress strong,
+.analysis-summary strong { color: #e6fbff; }
+
+details > summary {
+  cursor: pointer;
+  color: #7eeaff;
+  font-size: 0.76rem;
+  letter-spacing: 0.06em;
+  list-style-position: inside;
+}
+details > summary:hover,
+details > summary:focus-visible { color: #ffcfda; }
+.inline-details { margin-top: 0.45rem; }
+.disclosure-card > summary {
+  padding: 0.35rem 0;
+  font-weight: 700;
+}
+.disclosure-card[open] > summary,
+.inline-details[open] > summary,
+.decision-details[open] > summary { margin-bottom: 0.65rem; }
+.disclosure-card h3:not(:first-of-type) { margin-top: 1rem; }
+.node-core-facts p { margin: 0.35rem 0; }
+.analysis-summary { display: grid; gap: 0.45rem; }
+.analysis-summary .actions { display: block; }
+.analysis-summary .analysis-action + .analysis-action { margin-top: 0.45rem; }
+
+.bottom-pane {
+  grid-template-columns: minmax(250px, 0.75fr) minmax(0, 1.7fr);
+  align-items: stretch;
+}
+.judgment-summary { display: grid; align-content: start; gap: 0.3rem; }
+.judgment-summary .judge { min-height: 3.25rem; height: auto; }
+.latest-log { border-left: 2px solid #58dcff; padding-left: 0.65rem; }
+
+.decision-values { display: grid; gap: 0.45rem; }
+.decision-values p { display: grid; gap: 0.15rem; margin: 0; }
+.decision-values strong { color: #7eeaff; font-size: 0.68rem; letter-spacing: 0.08em; }
+.decision-details { border-top: 1px solid #244555; padding-top: 0.7rem; }
+.decision-details section + section { margin-top: 0.9rem; }
+.result-summary {
+  display: grid;
+  gap: 0.4rem;
+  margin: 0 0 1.5rem;
+  border: 1px solid rgba(88, 220, 255, 0.45);
+  background: rgba(8, 35, 49, 0.7);
+  padding: 0.85rem;
+}
+.result-summary p { display: grid; grid-template-columns: 4rem 1fr; gap: 0.7rem; margin: 0; }
+.result-summary span { color: #7eeaff; font-size: 0.72rem; letter-spacing: 0.12em; }
+.result-summary strong { color: #e6fbff; font-size: 0.86rem; }
+
+@media (max-width: 1180px) and (min-width: 900px) {
+  .bottom-pane { grid-template-columns: minmax(220px, 0.75fr) minmax(0, 1.5fr); }
+}
+
+@media (max-width: 899px) {
+  .bottom-pane { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (max-width: 520px) {
+  .result-summary p { grid-template-columns: 1fr; gap: 0.15rem; }
+}
