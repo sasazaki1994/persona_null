@@ -161,13 +161,15 @@ Feature: Persona Null Case000 playable audit slice
     Given the auditor opens the Case000 overview
     Then the person profile area shows 間宮怜司 and 七瀬未織
     And each profile with a portrait path shows a 16:9 audit image card with required alternative text
-    And 間宮怜司 uses the planned path "/assets/case000/mamiya-reiji-profile.png"
-    And 七瀬未織 uses the planned path "/assets/case000/nanase-miori-fragment.png"
-    When either planned PNG cannot be loaded
+    And the provided male portrait is displayed for 間宮怜司 from "/assets/case000/mamiya-reiji-profile.svg"
+    And the provided female portrait is displayed for 七瀬未織 from "/assets/case000/nanase-miori-fragment.svg"
+    When either production portrait cannot be loaded
     Then the broken image is replaced by that person's audit-terminal fallback
     And the two fallbacks use different record labels and status details
     And the existing Case000 nodes, judgment controls, and progression state remain unchanged
-    And production image prompts are documented without committing generated PNG files
+    And both production portraits are committed as text-based SVG assets at their configured public paths
+    And each SVG embeds the corresponding provided PNG without requiring a binary file in the review diff
+    And production image prompts remain documented for future replacement work
 
   Scenario: Jam submission readiness checklist
     Given the maintainer prepares the Case000 Jam submission build

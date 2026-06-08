@@ -65,13 +65,13 @@ describe('PersonProfile', () => {
   it('renders the configured portrait with required alt text and audit label', () => {
     const markup = renderToStaticMarkup(<PersonProfile person={case000.personLogs[0]} />);
 
-    expect(markup).toContain('src="/assets/case000/mamiya-reiji-profile.png"');
+    expect(markup).toContain('src="/assets/case000/mamiya-reiji-profile.svg"');
     expect(markup).toContain('alt="間宮怜司 監査記録ポートレート"');
     expect(markup).toContain('人物照合記録 / 操作主体未確定');
     expect(markup).toContain('置換範囲');
   });
 
-  it('defines different person-specific fallback records for missing planned PNG files', () => {
+  it('defines different person-specific fallback records for missing production portrait files', () => {
     expect(case000.personLogs[0].portraitFallback).toEqual({
       heading: '人物照合記録',
       lines: ['対象：間宮 怜司', '画像未登録', '義体分類：警備用部分義体', '操作主体：未確定'],

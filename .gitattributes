@@ -1,1 +1,2 @@
 *.md text eol=lf diff
+*.svg text eol=lf diff
