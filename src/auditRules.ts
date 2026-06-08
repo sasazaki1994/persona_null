@@ -52,7 +52,7 @@ export function getJudgmentRequirements(params: {
     },
     {
       id: 'pins',
-      label: '判断根拠ピン留め',
+      label: '提出根拠の登録',
       completed: params.pinnedNodeCount > 0,
       detail: `${params.pinnedNodeCount}/1 必須（最大3）`,
     },
@@ -108,8 +108,8 @@ export function getCurrentGuidance(params: {
     return {
       phase: 'pin',
       title: '判断根拠の登録',
-      instruction: '最終判断に使用する根拠を1件以上ピン留めしてください',
-      action: '選択ノードの「根拠としてピン留め」を実行',
+      instruction: '最終判断に使用する根拠を1件以上登録してください',
+      action: '選択ノードの「提出根拠に登録」を実行',
       resourceNote,
     };
   }

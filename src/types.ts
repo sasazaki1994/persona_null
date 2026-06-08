@@ -65,6 +65,7 @@ export type MemoryNode = {
   log: string;
   simpleFact: string;
   inspectorNote: string;
+  auditHint?: string;
   warning: string;
   metrics: Record<string, string | number>;
   hasContradiction: boolean;
@@ -72,6 +73,13 @@ export type MemoryNode = {
   suggestedTags?: ContradictionTag[];
   position: [number, number, number];
   links: string[];
+};
+
+export type CaseIssue = {
+  id: string;
+  title: string;
+  description: string;
+  relatedNodeIds: string[];
 };
 
 export type AnalysisUnlockCondition =
@@ -98,6 +106,8 @@ export type DecisionOption = {
   auditNote: string;
   endingText: string;
   statDelta: CityStats;
+  acceptedEvidenceNodeIds?: string[];
+  ignoredIssueIds?: string[];
 };
 
 export type CasePreview = {
@@ -125,6 +135,7 @@ export type CaseRecord = {
   processingRequest: StructuredCaseLog;
   operatorCandidates: OperatorCandidate[];
   mvpScope: MvpScope;
+  issues: CaseIssue[];
   nodes: MemoryNode[];
   analysisActions: AnalysisAction[];
   decisions: DecisionOption[];

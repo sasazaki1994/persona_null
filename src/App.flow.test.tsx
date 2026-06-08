@@ -54,11 +54,14 @@ describe('Case000 player flow', () => {
 
     expect(container.textContent).toContain('次の監査手順');
     expect(container.textContent).toContain('記憶ノードを4件以上確認してください');
+    expect(container.textContent).toContain('監査官メモ');
+    expect(container.textContent).toContain('公式記録上の発砲主体は明確');
+    expect(container.textContent).toContain('本人記憶との照合が必要');
 
     case000.nodes.slice(0, case000.requiredNodesToJudge).forEach((node) => clickButton(`ノード：${node.title}`));
     expect(container.textContent).toContain('判断根拠の登録');
 
-    clickButton('根拠としてピン留め');
+    clickButton('提出根拠に登録');
     expect(container.textContent).toContain('矛盾記録の分類');
 
     clickButton('人格署名の矛盾');
@@ -66,6 +69,11 @@ describe('Case000 player flow', () => {
     expect(container.textContent).toContain('最終判断まで');
 
     clickButton('最終判断へ進む');
+    expect(container.textContent).toContain('採用される根拠');
+    expect(container.textContent).toContain('無視または保留される疑点');
+    expect(container.textContent).toContain('都市ステータスへの影響');
+    expect(container.textContent).toContain('根拠提出済');
+    expect(container.textContent).toContain('未提出');
     clickButton(case000.decisions[0].label);
 
     expect(container.textContent).toContain('行政処理ログ');
@@ -88,18 +96,19 @@ describe('Case000 player flow', () => {
   it('selects nodes from the memory node index and distinguishes review states', () => {
     enterInvestigation();
 
-    expect(container.textContent).toContain('記憶ノード一覧');
+    expect(container.textContent).toContain('争点別 記憶ノード');
+    expect(container.textContent).toContain('発砲操作主体は誰か');
     expect(container.textContent).toContain(`未確認 ${case000.nodes.length}`);
-    expect(findButton('[選択中]発砲ログ')).toBeDefined();
+    expect(findButton('発砲ログ')).toBeDefined();
 
-    clickButton('[選択中]発砲ログ');
+    clickButton('発砲ログ');
     expect(container.textContent).toContain(`未確認 ${case000.nodes.length - 1}`);
     expect(container.textContent).toContain('記録状態：確認済');
     expect(container.textContent).toContain(`記録種別：${case000.nodes[0].type}`);
 
-    clickButton('[未確認]間宮の発砲記憶');
-    expect(findButton('[確認済]発砲ログ')).toBeDefined();
-    expect(findButton('[選択中]間宮の発砲記憶')).toBeDefined();
+    clickButton('間宮の発砲記憶');
+    expect(container.textContent).toContain('確認済');
+    expect(container.textContent).toContain('選択中');
   });
 
   it('keeps analysis actions disabled until their record conditions are met', () => {

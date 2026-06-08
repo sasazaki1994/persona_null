@@ -66,6 +66,14 @@ describe('case000 data', () => {
     expect(case000.analysisActions).toHaveLength(3);
   });
 
+  it('defines audit report issues, audit hints, and decision evidence mappings', () => {
+    expect(case000.issues.map((issue) => issue.id)).toEqual(['operation_subject', 'legal_persona', 'public_order']);
+    expect(case000.issues.every((issue) => issue.relatedNodeIds.length > 0)).toBe(true);
+    expect(case000.nodes.find((node) => node.id === 'shot-log')?.auditHint).toContain('公式記録上の発砲主体');
+    expect(case000.nodes.find((node) => node.id === 'victim-medium')?.auditHint).toContain('単なる録音とも断定できない');
+    expect(case000.decisions.every((decision) => decision.acceptedEvidenceNodeIds?.length && decision.ignoredIssueIds?.length)).toBe(true);
+  });
+
   it('defines judgment unlock conditions as node visits, pinned evidence, and contradiction tags', () => {
     const locked = getJudgmentRequirements({
       visitedNodeCount: case000.requiredNodesToJudge - 1,

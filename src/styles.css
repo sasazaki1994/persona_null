@@ -54,15 +54,22 @@ code { display: block; max-width: 100%; padding: 0.75rem; background: #06111d; b
 .status-grid strong { color: #e6fbff; }
 .node-index-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 0.75rem; }
 .node-index-heading small { color: #ffcfda; font-variant-numeric: tabular-nums; }
+.issue-list { display: grid; gap: 0.8rem; }
+.issue-group { border-left: 2px solid #315d73; padding-left: 0.55rem; }
+.issue-heading { margin-bottom: 0.45rem; }
+.issue-heading > span { color: #7eeaff; font-size: 0.66rem; letter-spacing: 0.08em; text-transform: uppercase; }
+.issue-heading h4 { margin: 0.15rem 0; color: #e6fbff; font-size: 0.86rem; }
+.issue-heading p { margin: 0; color: #86a9b7; font-size: 0.72rem; line-height: 1.45; }
 .memory-node-list { display: grid; gap: 0.35rem; }
-.memory-node-item { display: grid; grid-template-columns: 4.7rem minmax(0, 1fr); gap: 0.45rem; width: 100%; padding: 0.48rem 0.55rem; border-color: #315d73; background: rgba(8, 27, 43, 0.58); color: #badce4; font-size: 0.76rem; line-height: 1.35; text-align: left; }
-.memory-node-item span { color: #7fabb7; white-space: nowrap; }
+.memory-node-item { display: grid; gap: 0.35rem; width: 100%; padding: 0.48rem 0.55rem; border-color: #315d73; background: rgba(8, 27, 43, 0.58); color: #badce4; font-size: 0.76rem; line-height: 1.35; text-align: left; }
+.node-state-badges { display: flex; flex-wrap: wrap; gap: 0.25rem; }
+.node-state-badges i { border: 1px solid currentColor; padding: 0.08rem 0.28rem; color: #7fabb7; font-size: 0.62rem; font-style: normal; white-space: nowrap; }
 .memory-node-item strong { overflow-wrap: anywhere; color: inherit; }
 .memory-node-item.unvisited { border-color: rgba(126, 234, 255, 0.72); background: rgba(28, 92, 112, 0.42); color: #edfcff; box-shadow: inset 2px 0 0 #7eeaff, 0 0 10px rgba(88, 220, 255, 0.08); }
-.memory-node-item.unvisited span { color: #9ff4ff; }
+.memory-node-item.unvisited .node-state-badges i { color: #9ff4ff; }
 .memory-node-item.visited { opacity: 0.72; }
 .memory-node-item.selected { border-color: #ff9bb2; background: rgba(126, 36, 58, 0.72); color: #fff3f6; box-shadow: inset 3px 0 0 #ff9bb2, 0 0 15px rgba(255, 71, 111, 0.2); }
-.memory-node-item.selected span { color: #ffd2dc; }
+.memory-node-item.selected .node-state-badges i { color: #ffd2dc; }
 .record-state { display: grid; gap: 0.2rem; margin: 0.65rem 0; padding: 0.55rem 0.65rem; border-left: 2px solid #58dcff; background: rgba(8, 27, 43, 0.52); }
 .record-state p { margin: 0; color: #cceff5; font-size: 0.82rem; }
 .record-state span { color: #86a9b7; }
@@ -81,6 +88,9 @@ meter { width: 100%; accent-color: #58dcff; }
 .metrics div { display: grid; grid-template-columns: 7rem 1fr; border-bottom: 1px solid #163645; padding: 0.28rem 0; }
 .metrics dt { color: #7eeaff; }
 .metrics dd { margin: 0; }
+.audit-hint { margin: 0.85rem 0; border: 1px solid rgba(126, 234, 255, 0.35); border-left: 3px solid #7eeaff; background: rgba(16, 58, 75, 0.48); padding: 0.7rem; }
+.audit-hint strong { color: #7eeaff; letter-spacing: 0.06em; }
+.audit-hint p { margin: 0.35rem 0 0; color: #d9f6fb; }
 .tag-box, .actions, .pin-box { display: grid; gap: 0.45rem; }
 .tag-box button, .actions button { text-align: left; padding: 0.55rem; }
 .pinned-list { display: flex; flex-wrap: wrap; gap: 0.4rem; min-height: 1.8rem; align-items: center; }
@@ -95,7 +105,18 @@ meter { width: 100%; accent-color: #58dcff; }
 .log-list { display: grid; gap: 0.35rem; margin-top: 0.65rem; }
 .log-list p { border-left: 2px solid #315d73; padding-left: 0.6rem; }
 
-.decision-list { display: grid; gap: 1rem; margin: 2rem 0; }
+.decision-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; margin: 2rem 0; }
+.decision-card { display: flex; min-width: 0; flex-direction: column; gap: 0.85rem; border: 1px solid #315d73; background: rgba(6, 17, 29, 0.72); padding: 1rem; }
+.decision-card h3, .decision-card h4 { margin: 0; color: #e6fbff; }
+.decision-card h3 { font-size: 1rem; }
+.decision-card h4 { border-bottom: 1px solid #244555; padding-bottom: 0.3rem; color: #7eeaff; font-size: 0.82rem; }
+.decision-card p { color: #a9d3de; font-size: 0.78rem; line-height: 1.5; }
+.decision-card p > span { display: inline-block; margin-right: 0.4rem; border: 1px solid currentColor; padding: 0.08rem 0.3rem; font-size: 0.65rem; }
+.decision-card .evidence-submitted { color: #7dffbf; }
+.decision-card .evidence-unsubmitted { color: #ffcfda; }
+.decision-card > button { margin-top: auto; }
+.decision-stat-deltas { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+.decision-stat-deltas span { border: 1px solid currentColor; padding: 0.18rem 0.35rem; font-size: 0.7rem; }
 .secondary { border-color: #69808a; background: rgba(60, 74, 84, 0.55); }
 .result h3 { margin-top: 0; color: #7eeaff; }
 .admin-log { background: linear-gradient(180deg, rgba(4, 13, 24, 0.95), rgba(7, 14, 20, 0.94)); }
@@ -185,7 +206,8 @@ button.judge:disabled {
   }
 
   .overview-grid,
-  .result-grid {
+  .result-grid,
+  .decision-list {
     grid-template-columns: 1fr;
   }
 

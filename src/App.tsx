@@ -108,7 +108,7 @@ function App() {
         return ids.filter((id) => id !== nodeId);
       }
       if (ids.length >= 3) {
-        appendLog('判断根拠上限：3件を超えるピン留めは拒否。');
+        appendLog('提出根拠上限：3件を超える登録は拒否。');
         return ids;
       }
       appendLog(`判断根拠追加：${node?.title ?? nodeId}。`);
@@ -148,7 +148,7 @@ function App() {
   if (screen === 'caseSelect') return <CaseSelectScreen completed={completedCaseIds.includes(case000.id)} onNext={() => setScreen('caseOverview')} />;
   if (screen === 'caseOverview') return <CaseOverviewScreen onNext={() => setScreen('investigation')} />;
   if (screen === 'decision') {
-    return <DecisionScreen onBack={() => setScreen('investigation')} onDecide={submitDecision} />;
+    return <DecisionScreen pinnedNodeIds={pinnedNodeIds} onBack={() => setScreen('investigation')} onDecide={submitDecision} />;
   }
   if (screen === 'result' && decision && resultPayload) {
     return <ResultScreen decision={decision} finalStats={finalStats} payload={resultPayload} taggedNodes={taggedNodes} />;
@@ -308,7 +308,7 @@ function NodeActionHint(props: { canJudge: boolean; eligibleForTags: boolean; is
     ? ['判断条件に必要な操作は完了しています']
     : [
         props.isVisited ? 'このノードは確認済みです' : 'このノードを選択すると確認済みになります',
-        props.isPinned ? 'このノードは判断根拠として登録済みです' : 'このノードは根拠としてピン留めできます',
+        props.isPinned ? 'このノードは根拠提出済です' : 'このノードは提出根拠に登録できます',
         props.eligibleForTags && (props.isTagged ? 'このノードは矛盾分類済みです' : 'このノードは矛盾分類対象です'),
       ].filter((hint): hint is string => Boolean(hint));
 
@@ -330,7 +330,7 @@ function getAnalysisConditionItems(condition: AnalysisUnlockCondition, props: Pi
         label: case000.nodes.find((node) => node.id === nodeId)?.title ?? nodeId,
       }));
     case 'pinned_any':
-      return [{ completed: props.pinnedNodeIds.length >= condition.count, label: `任意の記録を${condition.count}件以上ピン留め` }];
+      return [{ completed: props.pinnedNodeIds.length >= condition.count, label: `任意の記録を${condition.count}件以上提出根拠に登録` }];
     case 'tagged_any':
       return [{ completed: taggedNodeIds.length >= condition.count, label: `任意の記録を${condition.count}件以上矛盾分類` }];
     case 'tagged_node':
@@ -396,34 +396,53 @@ function InvestigationScreen(props: InvestigationProps) {
           <div className="status-grid">
             <span>確認済</span><strong>{props.visitedNodeIds.length}/{case000.nodes.length}</strong>
             <span>判断条件</span><strong>{Math.min(props.visitedNodeIds.length, case000.requiredNodesToJudge)}/{case000.requiredNodesToJudge}</strong>
-            <span>根拠ピン</span><strong>{props.pinnedNodeIds.length}/3</strong>
+            <span>提出根拠</span><strong>{props.pinnedNodeIds.length}/3</strong>
             <span>矛盾分類</span><strong>{taggedNodeCount}</strong>
           </div>
         </section>
         <section className="pane-section memory-node-index" aria-labelledby="memory-node-index-title">
           <div className="node-index-heading">
-            <h3 id="memory-node-index-title">記憶ノード一覧</h3>
+            <h3 id="memory-node-index-title">争点別 記憶ノード</h3>
             <small>未確認 {case000.nodes.length - props.visitedNodeIds.length}</small>
           </div>
-          <div className="memory-node-list">
-            {case000.nodes.map((node) => {
-              const isSelected = node.id === props.selectedNodeId;
-              const isVisited = props.visitedNodeIds.includes(node.id);
-              const state = isSelected ? '選択中' : isVisited ? '確認済' : '未確認';
+          <div className="issue-list">
+            {case000.issues.map((issue) => (
+              <section className="issue-group" key={issue.id}>
+                <div className="issue-heading">
+                  <span>争点 {issue.id}</span>
+                  <h4>{issue.title}</h4>
+                  <p>{issue.description}</p>
+                </div>
+                <div className="memory-node-list">
+                  {issue.relatedNodeIds.map((nodeId) => {
+                    const node = case000.nodes.find((item) => item.id === nodeId);
+                    if (!node) return null;
+                    const isSelected = node.id === props.selectedNodeId;
+                    const isVisited = props.visitedNodeIds.includes(node.id);
+                    const isPinned = props.pinnedNodeIds.includes(node.id);
+                    const isTagged = (props.taggedNodes[node.id]?.length ?? 0) > 0;
 
-              return (
-                <button
-                  className={`memory-node-item ${isSelected ? 'selected' : isVisited ? 'visited' : 'unvisited'}`}
-                  type="button"
-                  aria-pressed={isSelected}
-                  onClick={() => props.onSelectNode(node.id)}
-                  key={node.id}
-                >
-                  <span>[{state}]</span>
-                  <strong>{node.title}</strong>
-                </button>
-              );
-            })}
+                    return (
+                      <button
+                        className={`memory-node-item ${isSelected ? 'selected' : isVisited ? 'visited' : 'unvisited'}`}
+                        type="button"
+                        aria-pressed={isSelected}
+                        onClick={() => props.onSelectNode(node.id)}
+                        key={`${issue.id}-${node.id}`}
+                      >
+                        <strong>{node.title}</strong>
+                        <span className="node-state-badges">
+                          <i>{isVisited ? '確認済' : '未確認'}</i>
+                          {isSelected && <i>選択中</i>}
+                          {isPinned && <i>根拠提出済</i>}
+                          {isTagged && <i>矛盾分類済</i>}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </section>
+            ))}
           </div>
         </section>
         <section className="pane-section resource-card">
@@ -476,15 +495,21 @@ function InvestigationScreen(props: InvestigationProps) {
           <code>{props.selectedNode.log}</code>
           <p><strong>単純事実：</strong><AnnotatedText text={props.selectedNode.simpleFact} /></p>
           <p><strong>監査官注：</strong><TypewriterText text={props.selectedNode.inspectorNote} speed={14} animateKey={`note-${props.selectedNode.id}`} /></p>
+          {props.selectedNode.auditHint && (
+            <div className="audit-hint">
+              <strong>監査官メモ</strong>
+              <p><AnnotatedText text={props.selectedNode.auditHint} /></p>
+            </div>
+          )}
           <p className="warning-text"><strong>警告：</strong><AnnotatedText text={props.selectedNode.warning} /></p>
           <dl className="metrics">
             {Object.entries(props.selectedNode.metrics).map(([key, value]) => <div key={key}><dt>{key}</dt><dd>{value}</dd></div>)}
           </dl>
         </section>
         <section className="pane-section pin-box">
-          <h3>ピン留め根拠</h3>
+          <h3>提出根拠</h3>
           <button onClick={() => props.onTogglePin(props.selectedNode.id)} disabled={!props.pinnedNodeIds.includes(props.selectedNode.id) && props.pinnedNodeIds.length >= 3}>
-            {props.pinnedNodeIds.includes(props.selectedNode.id) ? '根拠ピンを解除' : '根拠としてピン留め'}
+            {props.pinnedNodeIds.includes(props.selectedNode.id) ? '提出根拠から解除' : '提出根拠に登録'}
           </button>
           <div className="pinned-list">
             {pinnedNodes.length ? pinnedNodes.map((node) => <span key={node.id}>{node.title}</span>) : <small>未提出。最低1件が必要。</small>}
@@ -552,14 +577,46 @@ function StatusBars({ stats }: { stats: CityStats }) {
   return <div className="status-bars">{cityStatKeys.map((key) => <div key={key}><span>{statLabels[key]}</span><meter min="0" max="100" value={stats[key]} /></div>)}</div>;
 }
 
-function DecisionScreen({ onBack, onDecide }: { onBack: () => void; onDecide: (decision: DecisionOption) => void }) {
+function DecisionScreen({ pinnedNodeIds, onBack, onDecide }: { pinnedNodeIds: string[]; onBack: () => void; onDecide: (decision: DecisionOption) => void }) {
   return (
     <Shell>
       <section className="document-card wide">
         <p className="eyebrow">最終判断</p>
-        <h2>判断は不可逆です</h2>
+        <h2>監査報告書 / 裁定案照合</h2>
+        <p className="warning-text">各裁定案が採用する根拠、保留する疑点、都市ステータスへの影響を照合してください。判断は不可逆です。</p>
         <div className="decision-list">
-          {case000.decisions.map((option) => <button key={option.id} onClick={() => onDecide(option)}>{option.label}</button>)}
+          {case000.decisions.map((option) => {
+            const acceptedNodes = case000.nodes.filter((node) => option.acceptedEvidenceNodeIds?.includes(node.id));
+            const ignoredIssues = case000.issues.filter((issue) => option.ignoredIssueIds?.includes(issue.id));
+
+            return (
+              <article className="decision-card" key={option.id}>
+                <div>
+                  <p className="eyebrow">裁定案</p>
+                  <h3>{option.label}</h3>
+                </div>
+                <section>
+                  <h4>採用される根拠</h4>
+                  {acceptedNodes.map((node) => (
+                    <p className={pinnedNodeIds.includes(node.id) ? 'evidence-submitted' : 'evidence-unsubmitted'} key={node.id}>
+                      <span>{pinnedNodeIds.includes(node.id) ? '根拠提出済' : '未提出'}</span>{node.title}：{node.simpleFact}
+                    </p>
+                  ))}
+                </section>
+                <section>
+                  <h4>無視または保留される疑点</h4>
+                  {ignoredIssues.map((issue) => <p key={issue.id}><strong>{issue.title}</strong>：{issue.description}</p>)}
+                </section>
+                <section>
+                  <h4>都市ステータスへの影響</h4>
+                  <div className="decision-stat-deltas">
+                    {cityStatKeys.map((key) => <span className={option.statDelta[key] >= 0 ? 'delta-plus' : 'delta-minus'} key={key}>{statLabels[key]} {option.statDelta[key] >= 0 ? '+' : ''}{option.statDelta[key]}</span>)}
+                  </div>
+                </section>
+                <button onClick={() => onDecide(option)}>{option.label}を確定</button>
+              </article>
+            );
+          })}
         </div>
         <button className="secondary" onClick={onBack}>調査に戻る</button>
       </section>
