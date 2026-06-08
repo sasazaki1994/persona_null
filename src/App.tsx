@@ -1,11 +1,11 @@
 import { useMemo, useState, type ReactNode } from 'react';
-import { canUnlockJudgment, getCurrentGuidance, getJudgmentRequirements, type CurrentGuidance, type JudgmentRequirement } from './auditRules';
-import { case000, case001Preview, contradictionTagLabels, contradictionTags } from './case000';
+import { canUnlockJudgment, getCurrentGuidance, getJudgmentRequirements, isAnalysisActionUnlocked, type CurrentGuidance, type JudgmentRequirement } from './auditRules';
+import { case000, case001Preview, contradictionTagLabels } from './case000';
 import { AnnotatedText } from './components/AnnotatedText';
 import { TypewriterText } from './components/TypewriterText';
 import { MemoryNetwork } from './MemoryNetwork';
 import { loadCaseResults, loadReadFlags, markRead, saveCaseResult } from './storage';
-import type { CityStats, ContradictionTag, DecisionOption, MemoryNode, NodeImportance, SavedCaseResult, Screen, TaggedNodes } from './types';
+import type { AnalysisAction, AnalysisUnlockCondition, CityStats, ContradictionTag, DecisionOption, MemoryNode, NodeImportance, SavedCaseResult, Screen, TaggedNodes } from './types';
 import './styles.css';
 
 const clampStat = (value: number) => Math.max(0, Math.min(100, value));
@@ -117,7 +117,7 @@ function App() {
   };
 
   const toggleTag = (node: MemoryNode, tag: ContradictionTag) => {
-    if (!node.hasContradiction && node.importance !== 'critical') return;
+    if (!node.suggestedTags?.includes(tag)) return;
     setTaggedNodes((current) => {
       const currentTags = current[node.id] ?? [];
       const removing = currentTags.includes(tag);
@@ -130,6 +130,10 @@ function App() {
   const executeAction = (actionId: string) => {
     const action = case000.analysisActions.find((item) => item.id === actionId);
     if (!action || executedActionIds.includes(actionId)) return;
+    if (!isAnalysisActionUnlocked({ action, visitedNodeIds, pinnedNodeIds, taggedNodes })) {
+      appendLog(`解析権限未解放：${action.title}。必要記録を確認してください。`);
+      return;
+    }
     if (resources <= 0) {
       appendLog('監査リソース不足：追加解析を実行できません。既存記録のみで判断してください。');
       return;
@@ -316,8 +320,62 @@ function NodeActionHint(props: { canJudge: boolean; eligibleForTags: boolean; is
   );
 }
 
+function getAnalysisConditionItems(condition: AnalysisUnlockCondition, props: Pick<InvestigationProps, 'visitedNodeIds' | 'pinnedNodeIds' | 'taggedNodes'>) {
+  const taggedNodeIds = Object.entries(props.taggedNodes).filter(([, tags]) => tags.length > 0).map(([nodeId]) => nodeId);
+
+  switch (condition.type) {
+    case 'visited_nodes':
+      return condition.nodeIds.map((nodeId) => ({
+        completed: props.visitedNodeIds.includes(nodeId),
+        label: case000.nodes.find((node) => node.id === nodeId)?.title ?? nodeId,
+      }));
+    case 'pinned_any':
+      return [{ completed: props.pinnedNodeIds.length >= condition.count, label: `任意の記録を${condition.count}件以上ピン留め` }];
+    case 'tagged_any':
+      return [{ completed: taggedNodeIds.length >= condition.count, label: `任意の記録を${condition.count}件以上矛盾分類` }];
+    case 'tagged_node':
+      return [{
+        completed: taggedNodeIds.includes(condition.nodeId),
+        label: `${case000.nodes.find((node) => node.id === condition.nodeId)?.title ?? condition.nodeId}を矛盾分類`,
+      }];
+  }
+}
+
+function AnalysisActionControl(props: {
+  action: AnalysisAction;
+  executed: boolean;
+  onExecute: (actionId: string) => void;
+  pinnedNodeIds: string[];
+  resources: number;
+  taggedNodes: TaggedNodes;
+  visitedNodeIds: string[];
+}) {
+  const unlocked = isAnalysisActionUnlocked(props);
+  const requirements = (props.action.unlockConditions ?? []).flatMap((condition) => getAnalysisConditionItems(condition, props));
+
+  return (
+    <div className={`analysis-action ${unlocked ? 'unlocked' : 'locked'}`}>
+      <button onClick={() => props.onExecute(props.action.id)} disabled={props.executed || props.resources === 0 || !unlocked} title={props.action.description}>
+        {props.executed ? `実行済：${props.action.title}` : props.action.title}
+      </button>
+      {!props.executed && !unlocked && (
+        <div className="analysis-requirements">
+          <small>状態：未解放</small>
+          <strong>必要記録：</strong>
+          {requirements.map((requirement) => (
+            <span className={requirement.completed ? 'complete' : ''} key={requirement.label}>
+              {requirement.completed ? '✓' : '□'} {requirement.label}
+            </span>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function InvestigationScreen(props: InvestigationProps) {
-  const eligibleForTags = props.selectedNode.hasContradiction || props.selectedNode.importance === 'critical';
+  const suggestedTags = props.selectedNode.suggestedTags ?? [];
+  const eligibleForTags = suggestedTags.length > 0;
   const taggedNodeCount = Object.values(props.taggedNodes).filter((tags) => tags.length > 0).length;
   const pinnedNodes = case000.nodes.filter((node) => props.pinnedNodeIds.includes(node.id));
 
@@ -405,9 +463,9 @@ function InvestigationScreen(props: InvestigationProps) {
         </section>
         <section className="pane-section tag-box">
           <h3>矛盾分類</h3>
-          {!eligibleForTags && <small>このノードは矛盾タグ付け対象外です。</small>}
-          {contradictionTags.map((tag) => (
-            <button className={props.taggedNodes[props.selectedNode.id]?.includes(tag) ? 'active' : ''} disabled={!eligibleForTags} key={tag} onClick={() => props.onToggleTag(props.selectedNode, tag)}>
+          {!eligibleForTags && <small>この記録に分類可能な矛盾は検出されていません</small>}
+          {suggestedTags.map((tag) => (
+            <button className={props.taggedNodes[props.selectedNode.id]?.includes(tag) ? 'active' : ''} key={tag} onClick={() => props.onToggleTag(props.selectedNode, tag)}>
               {contradictionTagLabels[tag]}
             </button>
           ))}
@@ -415,9 +473,16 @@ function InvestigationScreen(props: InvestigationProps) {
         <section className="pane-section actions">
           <h3>解析アクション</h3>
           {case000.analysisActions.map((action) => (
-            <button key={action.id} onClick={() => props.onExecuteAction(action.id)} disabled={props.executedActionIds.includes(action.id) || props.resources === 0} title={action.description}>
-              {props.executedActionIds.includes(action.id) ? `実行済：${action.title}` : action.title}
-            </button>
+            <AnalysisActionControl
+              action={action}
+              executed={props.executedActionIds.includes(action.id)}
+              key={action.id}
+              onExecute={props.onExecuteAction}
+              pinnedNodeIds={props.pinnedNodeIds}
+              resources={props.resources}
+              taggedNodes={props.taggedNodes}
+              visitedNodeIds={props.visitedNodeIds}
+            />
           ))}
         </section>
       </aside>

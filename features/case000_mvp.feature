@@ -46,18 +46,27 @@ Feature: Persona Null Case000 playable audit slice
     And a fourth node cannot be pinned until one existing pin is removed
     And pinning or unpinning evidence appends a system log entry
 
-  Scenario: Classifying contradiction tags
-    Given the auditor selected a node with hasContradiction true or importance critical
-    When the auditor applies a contradiction tag
+  Scenario: Showing only node-specific contradiction candidates
+    Given the auditor selected a memory node with suggested contradiction tags
+    Then only that node's suggestedTags are shown as contradiction classification buttons
+    And tags not suggested for that node are not shown
+    When the auditor applies a shown contradiction tag
     Then the tag is recorded for that node
     And the classification action appends a system log entry
     And the contradiction tag count increases
-    And the available tag set is body_auth, persona_signature, memory_origin, operation_subject, legal_persona, and record_integrity
 
-  Scenario: Rejecting contradiction tags on ineligible nodes
-    Given the auditor selected a node with hasContradiction false and importance standard or high
-    Then contradiction tag buttons are disabled
-    And no contradiction tag is recorded for that node
+  Scenario: Hiding classification controls for a record without candidates
+    Given the auditor selected a memory node whose suggestedTags are empty or undefined
+    Then no contradiction classification button is shown
+    And the UI reports "この記録に分類可能な矛盾は検出されていません"
+
+  Scenario: Unlocking analysis actions through record review
+    Given the auditor is on the investigation screen
+    Then unmet analysis actions are disabled
+    And each unmet analysis action shows its required records or operations
+    When every unlock condition for an analysis action is satisfied
+    Then that analysis action becomes enabled
+    And other analysis actions remain disabled until their own conditions are satisfied
 
   Scenario: Spending audit resources
     Given the auditor has audit resources remaining
@@ -182,5 +191,5 @@ Feature: Persona Null Case000 playable audit slice
     Then unreviewed nodes use the normal glow
     And reviewed nodes are dimmed
     And the selected node is emphasized
-    And an unclassified contradiction node uses a slightly stronger halo
+    And a node requiring contradiction review uses a slightly stronger halo until classified
     And no flashing, jitter, or positional noise is added

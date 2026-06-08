@@ -399,3 +399,17 @@ button.annotated-keyword.active {
 .node-action-hint strong { color: #7eeaff; font-size: 0.78rem; letter-spacing: 0.12em; }
 .node-action-hint p { margin: 0.35rem 0 0; color: #d9f8ff; font-size: 0.86rem; }
 .requirement-list span { font-size: 1rem; font-weight: 700; }
+
+.analysis-action {
+  display: grid;
+  gap: 0.35rem;
+  padding: 0.5rem;
+  border: 1px solid rgba(49, 93, 115, 0.55);
+  background: rgba(6, 17, 29, 0.48);
+}
+.analysis-action button { width: 100%; }
+.analysis-requirements { display: grid; gap: 0.2rem; color: #b6ccd3; font-size: 0.78rem; }
+.analysis-requirements small { color: #ffb3c2; }
+.analysis-requirements strong { margin-top: 0.15rem; color: #7eeaff; font-size: 0.76rem; }
+.analysis-requirements span { padding-left: 0.25rem; }
+.analysis-requirements span.complete { color: #7dffbf; }
