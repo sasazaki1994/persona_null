@@ -385,6 +385,17 @@ Feature: Persona Null Case000 playable audit slice
     And 公開資料は事件説明から根拠構造の探索へ進む体験を説明する
     And 存在しない結果画面画像を必須画像として参照しない
 
+  Scenario: 公開ページでゲーム内容とプレイ可能範囲を正確に伝える
+    Given 初見の読者が README または itch.io 紹介文を読む
+    Then 短いゲーム説明は都市OSが確定できない事件と記憶ネットワークの探索と監査判断を示す
+    And itch.io 紹介文は作品のフック、プレイヤーの行動、Case000 の問い、操作方法、プレイ可能範囲、推奨環境、Production URL を区別して示す
+    And 公開文面は回答を読むだけでなく根拠、接続、矛盾、監査状態を探索する体験だと説明する
+    And タイトル画面、事件概要、調査画面の各スクリーンショットに公開用説明がある
+    And 調査画面の説明は Memory Network と7つの記憶ノードと根拠登録または矛盾分類を示す
+    And README と itch.io 紹介文は Case000 のみプレイ可能で Case001 は予告のみだと明記する
+    And 未実装の音演出、Case001 本編、完全なスマートフォン最適化を実装済みと誤認させない
+    And 公開コピーの変更は Case000 の進行条件、保存形式、データ構造、画面実装を変更しない
+
   Scenario: Showing red warnings only for critical memory nodes
     Given the auditor is on the Case000 investigation screen
     When a selected memory node has warning text but warningLevel is none or notice
