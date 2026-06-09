@@ -1174,3 +1174,59 @@ button.judge:not(:disabled) { position: relative; font-weight: 800; letter-spaci
 @media (prefers-reduced-motion: reduce) {
   .operation-toast { animation: none; }
 }
+
+/* Final UX pass: preserve evidence hierarchy and keep transient feedback off controls. */
+.game-grid {
+  grid-template-columns: minmax(290px, 0.9fr) minmax(390px, 1fr) minmax(410px, 1.02fr);
+}
+
+.network-caption {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 0.3rem 0.65rem;
+  padding-block: 0.4rem;
+}
+.network-caption small { font-size: 0.68rem; }
+.network-state-legend { grid-column: 1 / 3; }
+.importance-legend { grid-column: 3; grid-row: 1 / 3; align-self: center; justify-content: flex-end; max-width: 9rem; }
+
+.node-header { padding-bottom: 0.15rem; }
+.node-header h2 { margin-bottom: 0.45rem; }
+.record-status-bar { margin-bottom: 0.15rem; padding: 0.55rem 0.65rem; }
+.record-status-heading { margin-bottom: 0.4rem; }
+.record-status-chips { gap: 0.28rem; }
+.record-status-chips .status-chip { padding: 0.18rem 0.36rem; font-size: 0.59rem; }
+.analysis-report { margin-top: 0.65rem; }
+
+.operation-toast {
+  top: 0.75rem;
+  right: auto;
+  bottom: auto;
+  left: 50%;
+  max-width: min(28rem, calc(100vw - 2rem));
+  transform: translateX(-50%);
+  padding: 0.52rem 0.75rem;
+}
+@keyframes operation-toast-in {
+  from { opacity: 0; transform: translate(-50%, -5px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
+.sealed-record { color: #9bb8ba; }
+
+@media (max-width: 1180px) and (min-width: 900px) {
+  .game-grid { grid-template-columns: minmax(260px, 0.82fr) minmax(340px, 0.95fr) minmax(370px, 1fr); }
+  .network-caption { grid-template-columns: minmax(0, 1fr) auto; }
+  .network-caption > span { display: none; }
+  .network-caption small, .network-state-legend { grid-column: 1; }
+  .importance-legend { grid-column: 2; grid-row: 1 / 3; }
+}
+
+@media (max-width: 899px) {
+  .operation-toast { position: fixed; top: 0.55rem; }
+  .network-caption { grid-template-columns: 1fr; }
+  .network-caption > span { display: block; }
+  .network-caption small, .network-state-legend, .importance-legend { grid-column: 1; grid-row: auto; max-width: none; justify-content: flex-start; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .operation-toast { transform: translateX(-50%); }
+}

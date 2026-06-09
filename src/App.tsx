@@ -103,7 +103,7 @@ function App() {
 
   useEffect(() => {
     if (!feedback) return undefined;
-    const timer = window.setTimeout(() => setFeedback((current) => current?.id === feedback.id ? null : current), 1800);
+    const timer = window.setTimeout(() => setFeedback((current) => current?.id === feedback.id ? null : current), 1400);
     return () => window.clearTimeout(timer);
   }, [feedback]);
 
@@ -584,6 +584,11 @@ function InvestigationScreen(props: InvestigationProps) {
             <p>左の争点別ノード一覧、または中央の Memory Network から記録を開けます</p>
           </section>
         ) : <>
+          <section className="node-header">
+            <p className="evidence-id">EVIDENCE ID / {selectedNode.id}</p>
+            <p className="eyebrow">選択ノード要約</p>
+            <h2>{selectedNode.title}</h2>
+          </section>
           <section className="record-status-bar" aria-label="選択記録の状態">
             <div className="record-status-heading"><span>RECORD STATUS</span><small>{selectedNode.type}</small></div>
             <div className="record-status-chips">
@@ -593,13 +598,7 @@ function InvestigationScreen(props: InvestigationProps) {
               <span className={`status-chip ${(props.taggedNodes[selectedNode.id]?.length ?? 0) > 0 ? 'valid' : eligibleForTags ? 'warning' : 'muted'}`}>
                 {(props.taggedNodes[selectedNode.id]?.length ?? 0) > 0 ? '矛盾分類済' : eligibleForTags ? '矛盾未分類' : '分類対象外'}
               </span>
-              <span className={`status-chip ${analysisReports.length > 0 ? 'valid' : 'muted'}`}>{analysisReports.length > 0 ? '解析結果あり' : '解析結果なし'}</span>
             </div>
-          </section>
-          <section className="node-header">
-            <p className="evidence-id">EVIDENCE ID / {selectedNode.id}</p>
-            <p className="eyebrow">選択ノード要約</p>
-            <h2>{selectedNode.title}</h2>
           </section>
           <section className="pane-section node-summary">
             <p><AnnotatedText text={selectedNode.summary} /></p>
@@ -638,12 +637,6 @@ function InvestigationScreen(props: InvestigationProps) {
               <div className="audit-hint">
                 <strong>照合ヒント</strong>
                 <p><AnnotatedText text={selectedNode.auditHint} /></p>
-              </div>
-            )}
-            {analysisReports.length > 0 && (
-              <div className="analysis-report" aria-live="polite">
-                <strong>追加解析結果</strong>
-                {analysisReports.map((action) => <p key={action.id}><AnnotatedText text={action.reportText ?? ''} /></p>)}
               </div>
             )}
           </details>
@@ -687,6 +680,12 @@ function InvestigationScreen(props: InvestigationProps) {
                 />
               ))}
             </details>
+            {analysisReports.length > 0 && (
+              <div className="analysis-report" aria-live="polite">
+                <strong>追加解析結果</strong>
+                {analysisReports.map((action) => <p key={action.id}><AnnotatedText text={action.reportText ?? ''} /></p>)}
+              </div>
+            )}
           </section>
         </>}
       </aside>
@@ -866,7 +865,7 @@ function ResultScreen({ decision, finalStats, payload, taggedNodes }: { decision
             <p className="ending-text"><TypewriterText text={decision.endingText} speed={18} animateKey={decision.id} /></p>
           </ResultSection>
           <ResultSection title="次回記録">
-            <p className="warning-text">{case001Preview.id.toUpperCase()}「{case001Preview.title}」：{case001Preview.subtitle}。予告のみ表示。Jam提出版では未開放。</p>
+            <p className="sealed-record">{case001Preview.id.toUpperCase()}「{case001Preview.title}」：{case001Preview.subtitle}。アクセス権限未付与。記録は凍結されています。</p>
             {case001Preview.handoffSummary && <p><AnnotatedText text={case001Preview.handoffSummary} /></p>}
             {case001Preview.preservedFragment && <code><AnnotatedText text={case001Preview.preservedFragment} /></code>}
           </ResultSection>
