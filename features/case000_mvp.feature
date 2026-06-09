@@ -396,3 +396,42 @@ Feature: Persona Null Case000 playable audit slice
   Scenario: Keeping production meta language out of investigation records
     Given the auditor reads the player-facing Case000 investigation text
     Then the investigation text does not contain Case001, MVP, Jam, プレイヤー, 予告, or 本編
+
+  Scenario: Showing restrained operation feedback in the audit terminal
+    Given the auditor is on the Case000 investigation screen
+    When the auditor selects a node, pins or releases evidence, tags a contradiction, or consumes an analysis resource
+    Then a short non-blocking English operation toast is shown
+    And the toast does not alter the audit log or Case000 progression rules
+    When all existing judgment requirements become complete
+    Then "JUDGMENT READY" is shown as operation feedback
+
+  Scenario: Summarizing the selected record state before its evidence text
+    Given the auditor selected a Case000 memory node
+    Then the right pane shows "RECORD STATUS" above the selected record heading
+    And the status chips show review state, importance, evidence submission, contradiction classification eligibility, and analysis result availability
+    And the existing order remains summary, simple fact, inspector note, critical warning when applicable, and detailed record
+
+  Scenario: Displaying audit resources as a three-block gauge
+    Given Case000 starts with three audit resources
+    Then the investigation terminal shows three resource blocks and the numeric remaining count
+    When all resources are consumed
+    Then every block is empty and the resource gauge uses a muted or warning state
+
+  Scenario: Presenting final judgment as an irreversible audit ruling
+    Given the auditor has unlocked the final judgment screen
+    Then the screen header shows "AUDIT RULING" and "判断は不可逆です"
+    And each ruling card visibly identifies its ruling name, prioritized value, lost value, adopted evidence, and ignored issues
+    And the existing three decision records and their judgment logic are unchanged
+
+  Scenario: Archiving the selected ruling as a case record
+    Given the auditor confirms one of the existing Case000 decisions
+    Then the result header shows "AUDIT RULING ARCHIVED"
+    And the selected ruling has a stamp-style label
+    And CASE000, KASUMI-GATE-09, and 保存完了 are visible as archive metadata
+    And the ending text is presented with expanded readable spacing
+
+  Scenario: Presenting available and frozen cases as incident files
+    Given the auditor opens the case selection screen
+    Then Case000 is shown as an incident file with record name, summary, and status "監査可能"
+    And Case001 is shown as previewOnly with status "凍結中"
+    And Case001 cannot start a playable route
