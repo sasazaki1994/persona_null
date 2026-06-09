@@ -1,6 +1,6 @@
 # Persona Null — Jam提出直前チェック
 
-この文書は提出物を確定するための最終チェックリストです。ゲームの概要・遊び方・実装範囲・技術構成は [README](../README.md)、Vercel設定と詳しい Production 動作確認は [`docs/deploy.md`](deploy.md)、画像撮影は [`docs/screenshots.md`](screenshots.md) を正本とします。
+この文書は提出物を確定するための最終チェックリストです。ゲームの概要・遊び方・実装範囲・技術構成は [README](../README.md)、itch.io の紹介文・短い説明・画像キャプションは [`docs/itch-page.md`](itch-page.md)、Vercel設定と詳しい Production 動作確認は [`docs/deploy.md`](deploy.md)、画像撮影は [`docs/screenshots.md`](screenshots.md) を正本とします。
 
 ## 提出情報
 
@@ -20,6 +20,8 @@
 - [x] `docs/images/case000-overview.svg` を配置した。
 - [ ] GitHub 上の README でタイトル、事件概要、調査画面の3画像とキャプションが表示される。
 - [ ] 作品説明に「Case000のみプレイ可能」「Case001は予告のみ」を明記した。
+- [ ] `docs/itch-page.md` の Short description と紹介文を itch.io に転記した。
+- [ ] 3枚のスクリーンショットに、画面の役割と操作内容が分かる説明を設定した。
 
 ## 品質ゲート
 
