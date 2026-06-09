@@ -155,7 +155,7 @@ Feature: Persona Null Case000 playable audit slice
     And 操作主体, 操作経路, and 操作源 remain control-system terms
     And no deprecated urban-security investigator title remains in source, specs, or documentation
     And the scenario exposes exactly 3 operation subject candidates
-    And the Case001 preview is connected from the 未登録人格記録装置 node without creating a playable Case001 route
+    And the Case001 preview remains previewOnly without being referenced by memory-node or analysis text
     And MVP cut items are separated from expansion backlog items
 
   Scenario: Showing replaceable Case000 audit portraits
