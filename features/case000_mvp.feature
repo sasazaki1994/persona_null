@@ -373,3 +373,15 @@ Feature: Persona Null Case000 playable audit slice
     And README は Memory Network と争点別記憶ノードが見える実画面を表示する
     And 公開資料は事件説明から根拠構造の探索へ進む体験を説明する
     And 存在しない結果画面画像を必須画像として参照しない
+
+  Scenario: Showing red warnings only for critical memory nodes
+    Given the auditor is on the Case000 investigation screen
+    When a selected memory node has warning text but warningLevel is none or notice
+    Then the node warning panel is not shown
+    When a selected memory node has warningLevel critical and non-empty warning text
+    Then the node warning panel is shown
+    And ordinary nodes do not gain a red warning from warning text alone
+
+  Scenario: Keeping production meta language out of investigation records
+    Given the auditor reads the player-facing Case000 investigation text
+    Then the investigation text does not contain Case001, MVP, Jam, プレイヤー, 予告, or 本編

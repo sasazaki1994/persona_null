@@ -68,8 +68,14 @@ describe('case000 data', () => {
     expect(victimRecorder?.summary).toContain('発話ログ、記憶断片、人格署名の一部');
     expect(victimRecorder?.simpleFact).toContain('七瀬未織本人とは認証できない');
     expect(victimRecorder?.warning).toBe('削除処理に対する自己保存反応を検出。');
-    expect(case000.nodes.find((node) => node.id === 'last-comm')?.warning).toBe('');
-    expect(case000.nodes.find((node) => node.id === 'processing-request')?.warning).toBe('');
+    expect(case000.nodes.find((node) => node.id === 'last-comm')).toMatchObject({
+      warning: '送信者と受信者は未確定。',
+      warningLevel: 'none',
+    });
+    expect(case000.nodes.find((node) => node.id === 'processing-request')).toMatchObject({
+      warning: '行政処理期限による判断圧力。',
+      warningLevel: 'none',
+    });
     expect(victimRecorder?.metrics).toMatchObject({
       人格署名一致率: '49%',
       記憶連続性: '断片的',
@@ -99,6 +105,19 @@ describe('case000 data', () => {
     expect(case000.auditResourceMax).toBe(3);
     expect(case000.decisions).toHaveLength(3);
     expect(case000.analysisActions).toHaveLength(3);
+  });
+
+
+  it('assigns red warning panels only to critical evidence nodes', () => {
+    expect(Object.fromEntries(case000.nodes.map(({ id, warningLevel }) => [id, warningLevel]))).toEqual({
+      'shot-log': 'critical',
+      'missing-memory': 'critical',
+      'arm-history': 'critical',
+      'victim-medium': 'critical',
+      'last-comm': 'none',
+      'kasumi-key': 'critical',
+      'processing-request': 'none',
+    });
   });
 
   it('defines audit report issues, audit hints, and decision evidence mappings', () => {
