@@ -1140,3 +1140,88 @@ button.judge:not(:disabled) { position: relative; font-weight: 800; letter-spaci
 @media (prefers-reduced-motion: reduce) {
   .operation-toast { animation: none; transform: translateX(-50%); }
 }
+
+/* Public MVP clarity pass: keep the network secondary to readable evidence and judgment controls. */
+@media (min-width: 900px) {
+  .game-grid {
+    grid-template-columns: minmax(290px, 0.92fr) minmax(340px, 0.78fr) minmax(430px, 1.16fr);
+    grid-template-rows: minmax(0, 1fr) minmax(172px, 22vh);
+  }
+}
+
+.network-caption {
+  row-gap: 0.4rem;
+  background: rgba(2, 9, 12, 0.96);
+  backdrop-filter: none;
+}
+.network-state-legend { grid-column: 1 / 3; }
+.network-state-legend .legend-dot { width: 0.62rem; height: 0.62rem; border-radius: 50%; background: #7eeaff; box-shadow: 0 0 7px currentColor; }
+.network-state-legend .legend-dot.reviewed { color: #5d7377; background: currentColor; box-shadow: none; }
+.network-state-legend .legend-dot.unreviewed { color: #baf8ff; border: 1px solid currentColor; background: rgba(126, 234, 255, 0.18); }
+
+.memory-node-item { position: relative; }
+.memory-node-item.importance-high::before,
+.memory-node-item.importance-critical::before {
+  position: absolute;
+  top: 0.42rem;
+  right: 0.42rem;
+  width: 0.42rem;
+  height: 0.42rem;
+  border-radius: 50%;
+  background: #ffb84d;
+  box-shadow: 0 0 8px currentColor;
+  content: '';
+}
+.memory-node-item.importance-critical::before { color: #ff476f; background: currentColor; }
+.memory-node-item.has-contradiction { border-left: 3px solid #ff6c85; }
+.memory-node-item.visited.has-contradiction { border-left-color: #a85060; }
+
+.priority-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+  gap: 0.65rem;
+  border-top-color: rgba(99, 213, 210, 0.48);
+}
+.priority-actions > div { min-width: 0; }
+.priority-actions h3 { margin-bottom: 0.4rem; }
+.priority-actions small { display: block; margin-top: 0.35rem; color: var(--text-muted); }
+.priority-actions button { min-height: 2.25rem; padding: 0.42rem 0.55rem; font-size: 0.72rem; }
+.tag-actions { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+.tag-actions button.active { border-color: var(--accent-green); color: #a8ffd0; background: rgba(44, 132, 91, 0.22); }
+.right-city-status { padding-bottom: 0.15rem; }
+.right-city-status .status-chips { gap: 0.3rem; }
+.right-city-status .status-chip { padding: 0.2rem 0.38rem; font-size: 0.62rem; }
+.analysis-summary > .inline-details { margin-top: 0; }
+
+.judgment-summary { grid-template-columns: minmax(0, 1fr) minmax(10rem, 0.68fr); gap: 0.45rem 0.75rem; }
+.judgment-state { grid-column: 1 / -1; }
+.judgment-requirements { display: grid; gap: 0.28rem; }
+.judgment-requirements p {
+  display: grid;
+  grid-template-columns: minmax(7.5rem, 1fr) auto auto;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  border: 1px solid rgba(99, 213, 210, 0.2);
+  padding: 0.34rem 0.45rem;
+  font-size: 0.68rem;
+}
+.judgment-requirements p.incomplete { border-color: rgba(255, 184, 77, 0.35); }
+.judgment-requirements p.complete { border-color: rgba(113, 239, 178, 0.38); background: rgba(31, 94, 67, 0.13); }
+.judgment-requirements strong { color: #e6fbff; font-variant-numeric: tabular-nums; }
+.judgment-requirements em { color: #e8b96d; font-style: normal; }
+.judgment-requirements .complete em { color: var(--accent-green); }
+.judge.ready {
+  border-color: var(--accent-green);
+  background: linear-gradient(135deg, rgba(28, 103, 76, 0.92), rgba(13, 62, 53, 0.96));
+  color: #d9ffea;
+  box-shadow: 0 0 20px rgba(113, 239, 178, 0.2), inset 0 0 16px rgba(113, 239, 178, 0.08);
+}
+
+.result-summary { border-left: 3px solid var(--accent-cyan); }
+.result-section:has(.ending-text) { border-left: 3px solid var(--accent-cyan); }
+
+@media (max-width: 899px) {
+  .priority-actions, .judgment-summary { grid-template-columns: 1fr; }
+  .judgment-state { grid-column: 1; }
+}

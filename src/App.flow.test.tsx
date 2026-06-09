@@ -129,7 +129,9 @@ describe('Case000 player flow', () => {
     expect(container.textContent).toContain('次の監査手順');
     expect(container.textContent).toContain('記憶ノードを4件以上確認してください');
     expect(container.textContent).toContain('記憶ノードを選択してください');
-    expect(container.textContent).toContain('不足：確認 0/4');
+    expect(container.textContent).toContain('必要ノード確認0/4未達成');
+    expect(container.textContent).toContain('判断根拠0/1未達成');
+    expect(container.textContent).toContain('矛盾分類0/1未達成');
     expect((findSummary('事件・監査情報を表示')?.parentElement as HTMLDetailsElement).open).toBe(false);
 
     clickButton('ノード：発砲ログ');
@@ -170,9 +172,10 @@ describe('Case000 player flow', () => {
 
     clickButton('人格署名の矛盾');
     expect(container.querySelector('.operation-toast')?.textContent).toContain('JUDGMENT READY');
-    expect(container.textContent).toContain('最終判断：開放済');
     expect(container.querySelector('.judgment-state.ready')?.textContent).toContain('JUDGMENT READY');
-    expect(container.textContent).toContain('不足：なし');
+    expect(container.textContent).toContain('必要ノード確認4/4完了');
+    expect(container.textContent).toContain('判断根拠1/1完了');
+    expect(container.textContent).toContain('矛盾分類1/1完了');
 
     clickButton('最終判断へ進む');
     expect(container.textContent).toContain('AUDIT RULING');
@@ -202,6 +205,10 @@ describe('Case000 player flow', () => {
     expect(container.querySelector('[aria-label="裁定結果要約"]')).not.toBeNull();
     expect(container.textContent).toContain('最終裁定');
     expect(container.querySelector('[aria-label="裁定結果要約"]')?.textContent).toContain('間宮怜司を発砲責任者として拘束');
+    expect(container.querySelector('[aria-label="裁定結果要約"]')?.textContent).toContain('軽視');
+    expect(container.textContent).toContain('提出された判断根拠');
+    expect(container.textContent).toContain('分類された矛盾');
+    expect(container.textContent).toContain('都市ステータス変動');
     expect(container.textContent).not.toContain('選択肢A');
     expect(container.querySelector('.ruling-stamp')).not.toBeNull();
     expect(localStorage.getItem('persona-null:case-results')).not.toBeNull();

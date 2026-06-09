@@ -451,3 +451,19 @@ Feature: Persona Null Case000 playable audit slice
     Then Case000 is shown as an incident file with record name, summary, and status "監査可能"
     And Case001 is shown as previewOnly with status "凍結中"
     And Case001 cannot start a playable route
+
+  Scenario: Guiding a first-time auditor through the public MVP
+    Given the auditor is on the Case000 investigation screen
+    Then the judgment console always shows "必要ノード確認", "判断根拠", and "矛盾分類" with current and required counts
+    And every judgment requirement is labeled "完了" or "未達成"
+    And the Memory Network instructions and legends do not overlap its nodes
+    And unreviewed, reviewed, important, contradictory, selected, and submitted records are distinguishable without relying on color alone
+    And the right pane prioritizes the selected record, judgment grounds, contradiction classification, and city status
+    And detailed logs and optional analysis controls are progressively disclosed
+    And red warning panels are limited to critical records or important records with contradictions
+    When all judgment requirements are complete
+    Then the final judgment button becomes visually prominent and enabled
+    When the auditor submits a final decision
+    Then the result summary shows the final ruling, prioritized value, and disregarded value together
+    And the result records submitted judgment grounds, classified contradictions, and city status changes
+    And a short ending text is visually separated from administrative details
