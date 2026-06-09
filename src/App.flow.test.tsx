@@ -57,6 +57,37 @@ describe('Case000 player flow', () => {
     clickButton('調査を開始');
   };
 
+  it('presents cases as available and frozen incident files', () => {
+    clickButton('監査端末を起動');
+    clickButton('通知を確認');
+
+    expect(container.textContent).toContain('CASE ARCHIVE');
+    expect(container.textContent).toContain('監査可能');
+    expect(container.textContent).toContain('previewOnly');
+    expect(container.textContent).toContain('凍結中');
+    expect(findButton('Case001')).toBeUndefined();
+  });
+
+  it('shows record status, resource gauge, and restrained operation feedback', () => {
+    enterInvestigation();
+    expect(container.querySelectorAll('.resource-blocks i.filled')).toHaveLength(3);
+
+    clickButton('ノード：発砲ログ');
+    expect(container.querySelector('.operation-toast')?.textContent).toContain('SCAN COMPLETE');
+    expect(container.querySelector('.record-status-bar')?.textContent).toContain('RECORD STATUS');
+    expect(container.querySelector('.record-status-bar')?.textContent).toContain('確認済');
+    expect(container.querySelector('.record-status-bar')?.textContent).toContain('重大');
+    expect(container.querySelector('.record-status-bar')?.textContent).toContain('根拠未提出');
+    expect(container.querySelector('.record-status-bar')?.textContent).toContain('矛盾未分類');
+    expect(container.querySelector('.record-status-bar')?.textContent).toContain('解析結果なし');
+
+    clickButton('提出根拠に登録');
+    expect(container.querySelector('.operation-toast')?.textContent).toContain('EVIDENCE PINNED');
+    expect(container.querySelector('.record-status-bar')?.textContent).toContain('根拠提出済');
+    clickButton('提出根拠から解除');
+    expect(container.querySelector('.operation-toast')?.textContent).toContain('EVIDENCE RELEASED');
+  });
+
   it('progresses from the concise investigation view to a result', () => {
     expect(container.textContent).toContain('CITY OS AUDIT TERMINAL');
     expect(container.textContent).toContain('ACCESS: PROVISIONAL');
@@ -110,32 +141,36 @@ describe('Case000 player flow', () => {
     expect(container.textContent).toContain('矛盾記録の分類');
 
     clickButton('人格署名の矛盾');
+    expect(container.querySelector('.operation-toast')?.textContent).toContain('JUDGMENT READY');
     expect(container.textContent).toContain('最終判断：開放済');
     expect(container.querySelector('.judgment-state.ready')?.textContent).toContain('JUDGMENT READY');
     expect(container.textContent).toContain('不足：なし');
 
     clickButton('最終判断へ進む');
+    expect(container.textContent).toContain('AUDIT RULING');
+    expect(container.textContent).toContain('判断は不可逆です');
     expect(container.textContent).toContain('優先される価値');
-    expect(container.textContent).toContain('軽視される価値');
+    expect(container.textContent).toContain('失われる価値');
+    expect(container.textContent).toContain('採用される根拠');
+    expect(container.textContent).toContain('無視される争点');
     expect(container.textContent).toContain('都市ステータスへの影響');
     expect(container.querySelectorAll('.decision-processing')).toHaveLength(3);
     expect(container.textContent).toContain('記録整合性と治安維持を優先');
     expect(container.textContent).toContain('証拠保全と再照合を優先');
     expect(container.textContent).toContain('人格断片、または周辺の未登録反応');
-    const decisionDetails = [...container.querySelectorAll<HTMLDetailsElement>('.decision-details')];
-    expect(decisionDetails).toHaveLength(case000.decisions.length);
-    expect(decisionDetails.every((details) => !details.open)).toBe(true);
-    clickSummary('裁定詳細を表示');
-    expect(decisionDetails[0].open).toBe(true);
-    expect(decisionDetails[0].textContent).toContain('採用される根拠');
-    expect(decisionDetails[0].textContent).toContain('提出根拠との一致 0 / 2');
-    expect(decisionDetails[0].textContent).toContain('この裁定案は、現在の提出根拠と一致していません。');
+    const rulingOptions = [...container.querySelectorAll<HTMLElement>('.ruling-option')];
+    expect(rulingOptions).toHaveLength(case000.decisions.length);
+    expect(rulingOptions[0].textContent).toContain('採用される根拠');
+    expect(rulingOptions[0].textContent).toContain('提出一致 0 / 2');
+    expect(rulingOptions[0].textContent).toContain('この裁定案は未提出記録を採用根拠に含みます。');
     expect(findButton(case000.decisions[0].label)?.disabled).toBe(false);
     clickButton(case000.decisions[0].label);
 
     expect(container.textContent).toContain('AUDIT RULING');
+    expect(container.textContent).toContain('AUDIT RULING ARCHIVED');
     expect(container.textContent).toContain('裁定記録');
-    expect(container.textContent).toContain('行政処理ログ');
+    expect(container.textContent).toContain('KASUMI-GATE-09');
+    expect(container.textContent).toContain('保存完了');
     expect(container.querySelector('[aria-label="裁定結果要約"]')).not.toBeNull();
     expect(container.textContent).toContain('最終裁定');
     expect(container.querySelector('[aria-label="裁定結果要約"]')?.textContent).toContain('間宮怜司を発砲責任者として拘束');
@@ -260,6 +295,8 @@ describe('Case000 player flow', () => {
     clickSummary('解析メニューを表示');
     clickButton('欠落8秒の復元');
 
+    expect(container.querySelector('.operation-toast')?.textContent).toContain('AUDIT RESOURCE CONSUMED');
+    expect(container.querySelector('.resource-gauge')?.textContent).toContain('2 / 3');
     expect(container.textContent).toContain('追加解析結果');
     expect(container.textContent).toContain('欠損区間は断片のみ復元。外部命令断定ではなく境界曖昧化を示唆。');
 

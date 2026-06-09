@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { canUnlockJudgment, getCurrentGuidance, getJudgmentRequirements, isAnalysisActionUnlocked, type CurrentGuidance, type JudgmentRequirement } from './auditRules';
 import { case000, case001Preview, contradictionTagLabels } from './case000';
 import { AnnotatedText } from './components/AnnotatedText';
@@ -64,6 +64,8 @@ function App() {
   const [resultPayload, setResultPayload] = useState<SavedCaseResult | null>(null);
   const [completedCaseIds, setCompletedCaseIds] = useState<string[]>(() => loadCaseResults().map((result) => result.caseId));
   const [readFlags, setReadFlags] = useState<string[]>(() => loadReadFlags());
+  const [feedback, setFeedback] = useState<{ id: number; message: string } | null>(null);
+  const wasJudgmentReady = useRef(false);
 
   const selectedNode = case000.nodes.find((node) => node.id === selectedNodeId) ?? null;
   const visitedCount = visitedNodeIds.length;
@@ -89,6 +91,21 @@ function App() {
     canJudge,
   });
   const finalStats = useMemo(() => (decision ? addStats(case000.initialStats, decision.statDelta) : case000.initialStats), [decision]);
+
+  const showFeedback = (message: string) => {
+    setFeedback({ id: Date.now(), message });
+  };
+
+  useEffect(() => {
+    if (canJudge && !wasJudgmentReady.current) showFeedback('JUDGMENT READY');
+    wasJudgmentReady.current = canJudge;
+  }, [canJudge]);
+
+  useEffect(() => {
+    if (!feedback) return undefined;
+    const timer = window.setTimeout(() => setFeedback((current) => current?.id === feedback.id ? null : current), 1800);
+    return () => window.clearTimeout(timer);
+  }, [feedback]);
 
   const submitDecision = (nextDecision: DecisionOption) => {
     const nextFinalStats = addStats(case000.initialStats, nextDecision.statDelta);
@@ -117,33 +134,34 @@ function App() {
     setVisitedNodeIds((ids) => (ids.includes(nodeId) ? ids : [...ids, nodeId]));
     const node = case000.nodes.find((item) => item.id === nodeId);
     appendLog(`記憶ノード確認：${node?.title ?? nodeId}。公定値と監査記録を照合。`);
+    showFeedback('SCAN COMPLETE');
   };
 
   const togglePin = (nodeId: string) => {
     const node = case000.nodes.find((item) => item.id === nodeId);
-    setPinnedNodeIds((ids) => {
-      if (ids.includes(nodeId)) {
-        appendLog(`判断根拠解除：${node?.title ?? nodeId}。`);
-        return ids.filter((id) => id !== nodeId);
-      }
-      if (ids.length >= 3) {
-        appendLog('提出根拠上限：3件を超える登録は拒否。');
-        return ids;
-      }
-      appendLog(`判断根拠追加：${node?.title ?? nodeId}。`);
-      return [...ids, nodeId];
-    });
+    if (pinnedNodeIds.includes(nodeId)) {
+      setPinnedNodeIds((ids) => ids.filter((id) => id !== nodeId));
+      appendLog(`判断根拠解除：${node?.title ?? nodeId}。`);
+      showFeedback('EVIDENCE RELEASED');
+      return;
+    }
+    if (pinnedNodeIds.length >= 3) {
+      appendLog('提出根拠上限：3件を超える登録は拒否。');
+      return;
+    }
+    setPinnedNodeIds((ids) => [...ids, nodeId]);
+    appendLog(`判断根拠追加：${node?.title ?? nodeId}。`);
+    showFeedback('EVIDENCE PINNED');
   };
 
   const toggleTag = (node: MemoryNode, tag: ContradictionTag) => {
     if (!node.suggestedTags?.includes(tag)) return;
-    setTaggedNodes((current) => {
-      const currentTags = current[node.id] ?? [];
-      const removing = currentTags.includes(tag);
-      const nextTags = removing ? currentTags.filter((item) => item !== tag) : [...currentTags, tag];
-      appendLog(`${removing ? '矛盾分類解除' : '矛盾分類登録'}：${node.title} / ${contradictionTagLabels[tag]}。`);
-      return { ...current, [node.id]: nextTags };
-    });
+    const currentTags = taggedNodes[node.id] ?? [];
+    const removing = currentTags.includes(tag);
+    const nextTags = removing ? currentTags.filter((item) => item !== tag) : [...currentTags, tag];
+    setTaggedNodes({ ...taggedNodes, [node.id]: nextTags });
+    appendLog(`${removing ? '矛盾分類解除' : '矛盾分類登録'}：${node.title} / ${contradictionTagLabels[tag]}。`);
+    if (!removing) showFeedback('CONTRADICTION TAGGED');
   };
 
   const executeAction = (actionId: string) => {
@@ -160,6 +178,7 @@ function App() {
     setResources((value) => value - 1);
     setExecutedActionIds((ids) => [...ids, actionId]);
     appendLog(action.resultLog);
+    showFeedback('AUDIT RESOURCE CONSUMED');
   };
 
   if (screen === 'title') return <TitleScreen onNext={() => setScreen('briefing')} />;
@@ -191,6 +210,7 @@ function App() {
       onToggleTag={toggleTag}
       onExecuteAction={executeAction}
       onJudge={() => canJudge && setScreen('decision')}
+      feedback={feedback?.message ?? null}
     />
   );
 }
@@ -240,20 +260,33 @@ function AuthBriefingScreen({ onNext, read }: { onNext: () => void; read: boolea
 function CaseSelectScreen({ completed, onNext }: { completed: boolean; onNext: () => void }) {
   return (
     <Shell>
-      <section className="document-card">
-        <p className="eyebrow">事件選択</p>
-        <h2>Case000 / {case000.title}</h2>
-        <p>{case000.subtitle}</p>
-        <p>記録名：{case000.recordName}</p>
-        <p>管轄：{case000.organizationName}</p>
-        <p>場所：{case000.location}</p>
-        {completed && <p className="warning-text">処理済記録あり：localStorageから完了状態を検出。</p>}
-        <div className="case-preview locked">
-          <span>{case001Preview.id.toUpperCase()}</span>
-          <strong>{case001Preview.title}</strong>
-          <small>{case001Preview.subtitle} / 予告のみ</small>
+      <section className="document-card case-files-screen">
+        <div className="case-files-header">
+          <p className="eyebrow">CASE ARCHIVE / 事件ファイル選択</p>
+          <h2>監査対象記録</h2>
+          <p>都市OSが保留した事件記録から、監査可能なファイルを選択してください。</p>
         </div>
-        <button onClick={onNext}>Case000を開く</button>
+        <div className="case-file-list">
+          <article className="case-file available">
+            <div className="case-file-topline"><span>CASE000</span><strong>監査可能</strong></div>
+            <p className="case-file-record">RECORD / {case000.recordName}</p>
+            <h3>{case000.title}</h3>
+            <p>{case000.subtitle}</p>
+            <dl>
+              <div><dt>管轄</dt><dd>{case000.organizationName}</dd></div>
+              <div><dt>場所</dt><dd>{case000.location}</dd></div>
+              <div><dt>状態</dt><dd>{completed ? '処理済記録あり / 再監査可能' : '未処理 / 監査可能'}</dd></div>
+            </dl>
+            <button onClick={onNext}>Case000を開く</button>
+          </article>
+          <article className="case-file frozen" aria-disabled="true">
+            <div className="case-file-topline"><span>{case001Preview.id.toUpperCase()}</span><strong>凍結中</strong></div>
+            <p className="case-file-record">PREVIEW ONLY / previewOnly</p>
+            <h3>{case001Preview.title}</h3>
+            <p>{case001Preview.subtitle}</p>
+            <div className="case-file-lock"><span aria-hidden="true">×</span> 監査経路は未開放です</div>
+          </article>
+        </div>
       </section>
     </Shell>
   );
@@ -311,6 +344,7 @@ type InvestigationProps = {
   onToggleTag: (node: MemoryNode, tag: ContradictionTag) => void;
   onExecuteAction: (actionId: string) => void;
   onJudge: () => void;
+  feedback: string | null;
 };
 
 function GuidancePanel({ guidance }: { guidance: CurrentGuidance }) {
@@ -374,6 +408,27 @@ function AnalysisActionControl(props: {
           ))}
         </div>
       )}
+    </div>
+  );
+}
+
+function ResourceGauge({ resources }: { resources: number }) {
+  return (
+    <div className={`resource-gauge ${resources === 0 ? 'depleted' : resources === 1 ? 'low' : ''}`} aria-label={`監査リソース ${resources} / ${case000.auditResourceMax}`}>
+      <span className="resource-blocks" aria-hidden="true">
+        {Array.from({ length: case000.auditResourceMax }, (_, index) => <i className={index < resources ? 'filled' : ''} key={index} />)}
+      </span>
+      <strong>{resources} / {case000.auditResourceMax}</strong>
+    </div>
+  );
+}
+
+function OperationToast({ message }: { message: string | null }) {
+  if (!message) return null;
+  return (
+    <div className="operation-toast" role="status" aria-live="polite">
+      <span>SYS</span>
+      <strong>{message}</strong>
     </div>
   );
 }
@@ -492,7 +547,7 @@ function InvestigationScreen(props: InvestigationProps) {
           <p className="case-subtitle">{case000.subtitle}</p>
           <p>{case000.overview}</p>
           <h3>監査リソース</h3>
-          <p className="resource-count">{props.resources} / {case000.auditResourceMax}</p>
+          <ResourceGauge resources={props.resources} />
           <small>追加解析1件につき1消費。最終判断は残数0でも可能。</small>
           {props.resources === 0 && <p className="warning-text">監査リソース不足：追加解析を実行できません。</p>}
           <h3>初期都市ステータス</h3>
@@ -529,6 +584,18 @@ function InvestigationScreen(props: InvestigationProps) {
             <p>左の争点別ノード一覧、または中央の Memory Network から記録を開けます</p>
           </section>
         ) : <>
+          <section className="record-status-bar" aria-label="選択記録の状態">
+            <div className="record-status-heading"><span>RECORD STATUS</span><small>{selectedNode.type}</small></div>
+            <div className="record-status-chips">
+              <span className="status-chip valid">{props.visitedNodeIds.includes(selectedNode.id) ? '確認済' : '未確認'}</span>
+              <span className={`status-chip importance-${selectedNode.importance}`}>{importanceLabels[selectedNode.importance]}</span>
+              <span className={`status-chip ${props.pinnedNodeIds.includes(selectedNode.id) ? 'valid' : 'muted'}`}>{props.pinnedNodeIds.includes(selectedNode.id) ? '根拠提出済' : '根拠未提出'}</span>
+              <span className={`status-chip ${(props.taggedNodes[selectedNode.id]?.length ?? 0) > 0 ? 'valid' : eligibleForTags ? 'warning' : 'muted'}`}>
+                {(props.taggedNodes[selectedNode.id]?.length ?? 0) > 0 ? '矛盾分類済' : eligibleForTags ? '矛盾未分類' : '分類対象外'}
+              </span>
+              <span className={`status-chip ${analysisReports.length > 0 ? 'valid' : 'muted'}`}>{analysisReports.length > 0 ? '解析結果あり' : '解析結果なし'}</span>
+            </div>
+          </section>
           <section className="node-header">
             <p className="evidence-id">EVIDENCE ID / {selectedNode.id}</p>
             <p className="eyebrow">選択ノード要約</p>
@@ -604,7 +671,7 @@ function InvestigationScreen(props: InvestigationProps) {
           )}
           <section className="pane-section analysis-summary">
             <div><span>追加解析</span><strong>{analysisStatus}</strong></div>
-            <div><span>監査リソース残数</span><strong>{props.resources} / {case000.auditResourceMax}</strong></div>
+            <div className="analysis-resource-row"><span>監査リソース残数</span><ResourceGauge resources={props.resources} /></div>
             <details className="inline-details actions">
               <summary>解析メニューを表示</summary>
               {case000.analysisActions.map((action) => (
@@ -624,6 +691,7 @@ function InvestigationScreen(props: InvestigationProps) {
         </>}
       </aside>
 
+      <OperationToast message={props.feedback} />
       <footer className="bottom-pane">
         <div className="hud-panel-label bottom-panel-label"><span>04</span> JUDGMENT CONSOLE</div>
         <section className="judgment-summary">
@@ -665,29 +733,53 @@ function StatusBars({ stats }: { stats: CityStats }) {
 function DecisionScreen({ pinnedNodeIds, onBack, onDecide }: { pinnedNodeIds: string[]; onBack: () => void; onDecide: (decision: DecisionOption) => void }) {
   return (
     <Shell>
-      <section className="document-card wide">
-        <p className="eyebrow">最終判断</p>
-        <h2>監査報告書 / 裁定案照合</h2>
-        <p className="warning-text">各裁定案が採用する根拠、保留する疑点、都市ステータスへの影響を照合してください。判断は不可逆です。</p>
+      <section className="document-card wide ruling-sheet">
+        <header className="ruling-sheet-header">
+          <p className="eyebrow">AUDIT RULING / FINAL AUTHORIZATION</p>
+          <h2>監査裁定書</h2>
+          <p className="irreversible-notice"><span aria-hidden="true">!</span> 判断は不可逆です</p>
+          <p>提出根拠と各裁定案が採用する記録、保留する争点、都市ステータスへの影響を照合してください。</p>
+        </header>
         <div className="decision-list">
-          {case000.decisions.map((option) => {
+          {case000.decisions.map((option, index) => {
             const acceptedNodes = case000.nodes.filter((node) => option.acceptedEvidenceNodeIds?.includes(node.id));
             const ignoredIssues = case000.issues.filter((issue) => option.ignoredIssueIds?.includes(issue.id));
             const submittedAcceptedCount = acceptedNodes.filter((node) => pinnedNodeIds.includes(node.id)).length;
 
             return (
-              <article className="decision-card" key={option.id}>
-                <div>
-                  <p className="eyebrow">裁定案</p>
-                  <h3>{option.label}</h3>
+              <article className="decision-card ruling-option" key={option.id}>
+                <div className="ruling-option-heading">
+                  <span className="ruling-option-index">{String.fromCharCode(65 + index)}</span>
+                  <div><p className="eyebrow">裁定名 / RULING</p><h3>{option.label}</h3></div>
                 </div>
                 <section className="decision-processing">
-                  <h4>判断内容</h4>
+                  <h4>裁定内容</h4>
                   <p><AnnotatedText text={option.processing} /></p>
                 </section>
                 <section className="decision-values">
                   <p><strong>優先される価値</strong>{option.prioritizedValue}</p>
-                  <p><strong>軽視される価値</strong>{option.disregardedValue}</p>
+                  <p><strong>失われる価値</strong>{option.disregardedValue}</p>
+                </section>
+                <section className="ruling-evidence-section">
+                  <div className="decision-section-heading">
+                    <h4>採用される根拠</h4>
+                    <span>提出一致 {submittedAcceptedCount} / {acceptedNodes.length}</span>
+                  </div>
+                  {acceptedNodes.map((node) => (
+                    <p className={pinnedNodeIds.includes(node.id) ? 'evidence-submitted' : 'evidence-unsubmitted'} key={node.id}>
+                      <span>{pinnedNodeIds.includes(node.id) ? '提出済' : '未提出'}</span>{node.title}：{node.simpleFact}
+                    </p>
+                  ))}
+                  {acceptedNodes.length > 0 && submittedAcceptedCount === 0 && (
+                    <div className="decision-evidence-warning" role="alert">
+                      <strong>提出根拠との不一致</strong>
+                      <p>この裁定案は未提出記録を採用根拠に含みます。</p>
+                    </div>
+                  )}
+                </section>
+                <section className="ruling-ignored-section">
+                  <h4>無視される争点</h4>
+                  {ignoredIssues.map((issue) => <p key={issue.id}><strong>{issue.title}</strong>：{issue.description}</p>)}
                 </section>
                 <section>
                   <h4>都市ステータスへの影響</h4>
@@ -695,31 +787,6 @@ function DecisionScreen({ pinnedNodeIds, onBack, onDecide }: { pinnedNodeIds: st
                     {cityStatKeys.map((key) => <span className={option.statDelta[key] >= 0 ? 'delta-plus' : 'delta-minus'} key={key}>{statLabels[key]} {option.statDelta[key] >= 0 ? '+' : ''}{option.statDelta[key]}</span>)}
                   </div>
                 </section>
-                <details className="decision-details">
-                  <summary>裁定詳細を表示</summary>
-                  <section>
-                    <div className="decision-section-heading">
-                      <h4>採用される根拠</h4>
-                      <span>提出根拠との一致 {submittedAcceptedCount} / {acceptedNodes.length}</span>
-                    </div>
-                    {acceptedNodes.map((node) => (
-                      <p className={pinnedNodeIds.includes(node.id) ? 'evidence-submitted' : 'evidence-unsubmitted'} key={node.id}>
-                        <span>{pinnedNodeIds.includes(node.id) ? '根拠提出済' : '未提出'}</span>{node.title}：{node.simpleFact}
-                      </p>
-                    ))}
-                    {acceptedNodes.length > 0 && submittedAcceptedCount === 0 && (
-                      <div className="decision-evidence-warning" role="alert">
-                        <strong>警告：</strong>
-                        <p>この裁定案は、現在の提出根拠と一致していません。</p>
-                        <p>未提出記録を採用根拠として裁定しようとしています。</p>
-                      </div>
-                    )}
-                  </section>
-                  <section>
-                    <h4>無視または保留される疑点</h4>
-                    {ignoredIssues.map((issue) => <p key={issue.id}><strong>{issue.title}</strong>：{issue.description}</p>)}
-                  </section>
-                </details>
                 <button onClick={() => onDecide(option)}>{option.label}を確定</button>
               </article>
             );
@@ -738,8 +805,11 @@ function ResultScreen({ decision, finalStats, payload, taggedNodes }: { decision
   return (
     <Shell>
       <section className="document-card result wide admin-log">
-        <p className="eyebrow">AUDIT RULING / 行政処理ログ / {case000.recordName} / 保存完了</p>
-        <h2 className="ruling-title"><span>裁定記録</span><small>Case000 処理記録</small></h2>
+        <p className="eyebrow archive-eyebrow">AUDIT RULING ARCHIVED</p>
+        <h2 className="ruling-title"><span>裁定記録</span><small>IRREVERSIBLE AUDIT RECORD</small></h2>
+        <div className="archive-metadata" aria-label="保存記録情報">
+          <span>CASE000</span><span>KASUMI-GATE-09</span><span>{case000.recordName}</span><strong>保存完了</strong>
+        </div>
         <section className="result-summary" aria-label="裁定結果要約">
           <p><span>裁定</span><strong>{decision.finalRuling}</strong></p>
           <p><span>優先</span><strong>{decision.prioritizedValue}</strong></p>
