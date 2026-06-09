@@ -30,7 +30,7 @@ describe('case000 data', () => {
       '都市警備局の処理要求',
     ]);
     expect(case000.requiredNodesToJudge).toBeLessThanOrEqual(case000.nodes.length);
-    expect(case000.nodes.every((node) => node.title && node.summary && node.log && node.simpleFact && node.inspectorNote && node.warning && Object.keys(node.metrics).length > 0)).toBe(true);
+    expect(case000.nodes.every((node) => node.title && node.summary && node.log && node.simpleFact && node.inspectorNote && typeof node.warning === 'string' && Object.keys(node.metrics).length > 0)).toBe(true);
   });
 
   it('contains strengthened scenario scaffolding for implementation', () => {
@@ -68,6 +68,8 @@ describe('case000 data', () => {
     expect(victimRecorder?.summary).toContain('発話ログ、記憶断片、人格署名の一部');
     expect(victimRecorder?.simpleFact).toContain('七瀬未織本人とは認証できない');
     expect(victimRecorder?.warning).toBe('削除処理に対する自己保存反応を検出。');
+    expect(case000.nodes.find((node) => node.id === 'last-comm')?.warning).toBe('');
+    expect(case000.nodes.find((node) => node.id === 'processing-request')?.warning).toBe('');
     expect(victimRecorder?.metrics).toMatchObject({
       人格署名一致率: '49%',
       記憶連続性: '断片的',
@@ -164,9 +166,20 @@ describe('case000 data', () => {
       {
         id: 'match-key-medium',
         targetNodeIds: ['kasumi-key', 'victim-medium', 'last-comm'],
-        reportText: '七瀬未織の記録装置側に同鍵形式の応答痕。記録装置を操作源と断定するには不足。未焼却音声断片をCase001保全候補へ追加。',
+        reportText: '七瀬未織の記録装置側に同鍵形式の応答痕。記録装置を操作源と断定するには不足。未焼却音声断片を保全候補へ追加。',
       },
     ]);
+  });
+
+  it('keeps investigation node details and analysis output free of production metadata', () => {
+    const playerFacingInvestigationText = [
+      ...case000.nodes.flatMap((node) => [node.summary, node.log, node.simpleFact, node.inspectorNote, node.warning, ...Object.keys(node.metrics), ...Object.values(node.metrics).map(String)]),
+      ...case000.analysisActions.flatMap((action) => [action.resultLog, action.reportText ?? '']),
+    ].join(' ');
+
+    for (const metaTerm of ['Case001', '後続事件', 'MVP', 'Jam', 'プレイヤー', 'シナリオ', '本編', '予告']) {
+      expect(playerFacingInvestigationText).not.toContain(metaTerm);
+    }
   });
 
   it('unlocks analysis actions only after all configured conditions are met', () => {
@@ -246,7 +259,7 @@ describe('case000 data', () => {
     expect(targetNodes).toHaveLength(7);
     expect(targetNodes.every((node) => sentenceCount(node.simpleFact) >= 2 && sentenceCount(node.simpleFact) <= 3)).toBe(true);
     expect(targetNodes.every((node) => sentenceCount(node.inspectorNote) >= 2 && sentenceCount(node.inspectorNote) <= 4)).toBe(true);
-    expect(case000.nodes.find((node) => node.id === 'victim-medium')?.inspectorNote).toContain('Case001');
+    expect(case000.nodes.find((node) => node.id === 'victim-medium')?.inspectorNote).toContain('再照合不能');
     expect(case000.nodes.find((node) => node.id === 'last-comm')?.inspectorNote).toContain('未焼却');
     expect(targetNodes.every((node) => /[一-龠ぁ-んァ-ヶ]/.test(node.log))).toBe(true);
     expect(case000.nodes.find((node) => node.id === 'shot-log')?.simpleFact).toContain('記録した印');
@@ -285,7 +298,7 @@ describe('case000 data', () => {
     const victimMedium = case000.nodes.find((node) => node.id === 'victim-medium');
     expect(victimMedium).toBeDefined();
     expect(victimMedium?.simpleFact).toContain('七瀬未織');
-    expect(victimMedium?.metrics.Case001接続).toBe('反復発話');
+    expect(victimMedium?.metrics.発話状態).toBe('反復');
     expect(case001Preview.linkedFromNodeId).toBe('victim-medium');
     expect(case001Preview.previewOnly).toBe(true);
   });
