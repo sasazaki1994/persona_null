@@ -156,14 +156,12 @@ function App() {
 
   const toggleTag = (node: MemoryNode, tag: ContradictionTag) => {
     if (!node.suggestedTags?.includes(tag)) return;
-    setTaggedNodes((current) => {
-      const currentTags = current[node.id] ?? [];
-      const removing = currentTags.includes(tag);
-      const nextTags = removing ? currentTags.filter((item) => item !== tag) : [...currentTags, tag];
-      appendLog(`${removing ? '矛盾分類解除' : '矛盾分類登録'}：${node.title} / ${contradictionTagLabels[tag]}。`);
-      if (!removing) showFeedback('CONTRADICTION TAGGED');
-      return { ...current, [node.id]: nextTags };
-    });
+    const currentTags = taggedNodes[node.id] ?? [];
+    const removing = currentTags.includes(tag);
+    const nextTags = removing ? currentTags.filter((item) => item !== tag) : [...currentTags, tag];
+    setTaggedNodes({ ...taggedNodes, [node.id]: nextTags });
+    appendLog(`${removing ? '矛盾分類解除' : '矛盾分類登録'}：${node.title} / ${contradictionTagLabels[tag]}。`);
+    if (!removing) showFeedback('CONTRADICTION TAGGED');
   };
 
   const executeAction = (actionId: string) => {
