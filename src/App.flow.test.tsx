@@ -150,6 +150,27 @@ describe('Case000 player flow', () => {
     expect(logItems.at(-1)?.textContent).toContain('記憶ノード確認');
   });
 
+  it('shows warnings only for nodes with important warning text', () => {
+    enterInvestigation();
+
+    const normalNode = case000.nodes.find((node) => node.id === 'last-comm');
+    const administrativeNode = case000.nodes.find((node) => node.id === 'processing-request');
+    const evidenceLossNode = case000.nodes.find((node) => node.id === 'victim-medium');
+    expect(normalNode).toBeDefined();
+    expect(administrativeNode).toBeDefined();
+    expect(evidenceLossNode).toBeDefined();
+
+    clickButton(`ノード：${normalNode?.title}`);
+    expect(container.querySelector('.node-warning')).toBeNull();
+
+    clickButton(`ノード：${administrativeNode?.title}`);
+    expect(container.querySelector('.node-warning')).toBeNull();
+
+    clickButton(`ノード：${evidenceLossNode?.title}`);
+    expect(container.querySelector('.node-warning .warning-text')?.textContent).toContain(evidenceLossNode?.warning);
+    expect(container.querySelector('.right-pane')?.textContent).not.toContain('Case001');
+  });
+
   it('omits the inspector note section when the selected node has no inspector note', () => {
     const node = case000.nodes[0];
     const originalInspectorNote = node.inspectorNote;

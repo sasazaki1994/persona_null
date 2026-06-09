@@ -148,7 +148,8 @@ Feature: Persona Null Case000 playable audit slice
     Given the auditor opens Case000
     Then Case000 has exactly 7 memory nodes
     And the nodes include "未登録人格記録装置" and "都市警備局の処理要求"
-    And every memory node contains summary, log, simpleFact, warning, and metrics
+    And every memory node contains summary, log, simpleFact, and metrics
+    And warning is empty unless the node records a major contradiction, irreversible process, or evidence-loss risk
     And the scenario exposes person profiles for 間宮怜司 and 七瀬未織
     And 間宮怜司 is identified as a 都市警備局 捜査官
     And 操作主体, 操作経路, and 操作源 remain control-system terms
@@ -301,15 +302,18 @@ Feature: Persona Null Case000 playable audit slice
     And simpleFact は当該記録から確実に確認できる事実だけを示す
     And inspectorNote は2文から4文で構成される
     And inspectorNote は監査上の注意点と次に疑うべき矛盾軸と裁定上の含意を示す
-    And summary と log と warning の情報量は従来の表示密度を維持する
-    And 七瀬未織の記録装置と最後の通信は未焼却音声を Case001 へ保全する含意を示す
+    And summary と log は従来の表示密度を維持する
+    And inspectorNote と解析結果は後続コンテンツ名や制作上のメタ文言を含まない
+    And 七瀬未織の記録装置と最後の通信は未焼却音声を事件内の証拠として保全する含意を示す
 
   Scenario: 監査端末テーマで状態とログを判別する
     Given プレイヤーが Case000 の調査画面を開いている
     Then 左右ペインと下部バーは半透明の暗い監査カードとして表示される
     And 治安、倫理、監視レベル、自我安定度、監査リソース、既読数は状態チップで表示される
-    And 単純事実、監査官メモ、警告は青緑、緑、赤の左線を持つカードとして表示される
-    And 警告だけが赤い発光で強調される
+    And 単純事実と監査官メモは青緑と緑の左線を持つカードとして表示される
+    And 重大な矛盾、不可逆処理、証拠消失リスクがあるノードだけ警告カードを表示する
+    And warning が空文字の通常ノードと行政圧力ノードでは警告カードを表示しない
+    And 表示された警告だけが赤い左線と発光で強調される
     And 下部に「AUDIT LOG」と表示される
     And 監査ログは古い記録から新しい記録の順で下方向へ蓄積する
     And warning 系ログは赤で表示される

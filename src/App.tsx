@@ -538,10 +538,12 @@ function InvestigationScreen(props: InvestigationProps) {
               <TypewriterText text={selectedNode.inspectorNote} speed={14} animateKey={`note-${selectedNode.id}`} />
             </section>
           )}
-          <section className="pane-section node-warning">
-            <h3>警告</h3>
-            <p className="warning-text"><AnnotatedText text={selectedNode.warning} /></p>
-          </section>
+          {selectedNode.warning.trim() !== '' && (
+            <section className="pane-section node-warning">
+              <h3>警告</h3>
+              <p className="warning-text"><AnnotatedText text={selectedNode.warning} /></p>
+            </section>
+          )}
           <details className="pane-section disclosure-card node-record-details">
             <summary>詳細記録を表示</summary>
             <h3>詳細ログ</h3>
