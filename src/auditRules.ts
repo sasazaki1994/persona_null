@@ -132,3 +132,6 @@ export function getCurrentGuidance(params: {
     resourceNote,
   };
 }
+const blockingLogPrefixes = ['提出根拠上限：', '解析権限未解放：', '監査リソース不足：'];
+
+export const isWarningLog = (message: string) => blockingLogPrefixes.some((prefix) => message.startsWith(prefix));

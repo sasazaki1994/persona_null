@@ -205,7 +205,8 @@ describe('Case000 player flow', () => {
     expect(container.querySelector('[aria-label="裁定結果要約"]')).not.toBeNull();
     expect(container.textContent).toContain('最終裁定');
     expect(container.querySelector('[aria-label="裁定結果要約"]')?.textContent).toContain('間宮怜司を発砲責任者として拘束');
-    expect(container.querySelector('[aria-label="裁定結果要約"]')?.textContent).toContain('軽視');
+    expect(container.querySelector('[aria-label="裁定結果要約"]')?.textContent).toContain('救った価値（優先）');
+    expect(container.querySelector('[aria-label="裁定結果要約"]')?.textContent).toContain('犠牲にした価値（軽視）');
     expect(container.textContent).toContain('提出された判断根拠');
     expect(container.textContent).toContain('分類された矛盾');
     expect(container.textContent).toContain('都市ステータス変動');
@@ -219,7 +220,7 @@ describe('Case000 player flow', () => {
     expect(container.querySelector('.app-shell.game-grid')).not.toBeNull();
     expect(container.textContent).toContain('AUDIT LOG');
     expect(container.querySelectorAll('.status-chip').length).toBeGreaterThanOrEqual(4);
-    expect(container.textContent).toContain('既読数');
+    expect(container.textContent).toContain('必要ノード確認');
     expect(container.textContent).toContain('監査リソース');
 
     clickButton('ノード：発砲ログ');
