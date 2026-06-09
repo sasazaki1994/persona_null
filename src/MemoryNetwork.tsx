@@ -343,7 +343,7 @@ export function MemoryNetwork({
       <div className="network-scanlines" aria-hidden="true" />
       {labelNode && (
         <aside className="network-node-label" aria-live="polite">
-          <p>{hoveredNodeId ? 'HOVER RECORD' : 'SELECTED RECORD'} / {labelNode.id}</p>
+          <p>{hoveredNodeId ? 'HOVER RECORD' : 'SELECTED RECORD'} / {labelNode.id}<span>{labelNode.id === selectedNodeId ? 'SCAN LOCKED' : 'SIGNAL TRACE'}</span></p>
           <h3>{labelNode.title}</h3>
           <dl>
             <div><dt>記録種別</dt><dd>{labelNode.type}</dd></div>
