@@ -25,7 +25,7 @@ describe('Case000 player flow', () => {
 
     expect(mamiya?.simpleFact).toContain('間宮怜司は発砲義体の登録者');
     expect(nanase?.summary).toContain('所持品の未登録人格記録装置');
-    expect(itchPage).toContain('間宮怜司に登録された警備用右腕義体');
+    expect(itchPage).toContain('都市警備局所属の間宮怜司に登録された警備用右腕義体');
     expect(itchPage).toContain('被害者の七瀬未織');
     expect(itchPage).not.toContain('七瀬未織の所有物');
   });
