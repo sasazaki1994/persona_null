@@ -31,6 +31,8 @@ export type CityStats = {
   egoStability: number;
 };
 
+// TODO: Split non-node audit annotations into caution/note before they receive dedicated UI.
+// PersonLog, OperatorCandidate, and ProcessingRequest warnings are not red Memory Network alerts.
 export type StructuredCaseLog = {
   id: string;
   title: string;
@@ -56,6 +58,8 @@ export type PersonLog = StructuredCaseLog & {
   portraitFallback?: PortraitFallback;
 };
 
+export type ProcessingRequest = StructuredCaseLog;
+
 export type OperatorCandidate = StructuredCaseLog & {
   candidate: string;
   supportingNodes: string[];
@@ -77,6 +81,7 @@ export type MemoryNode = {
   inspectorNote: string;
   auditHint?: string;
   warning: string;
+  warningLevel?: 'none' | 'notice' | 'critical';
   metrics: Record<string, string | number>;
   hasContradiction: boolean;
   requiresContradictionReview?: boolean;
@@ -144,7 +149,7 @@ export type CaseRecord = {
   requiredNodesToJudge: number;
   initialStats: CityStats;
   personLogs: PersonLog[];
-  processingRequest: StructuredCaseLog;
+  processingRequest: ProcessingRequest;
   operatorCandidates: OperatorCandidate[];
   mvpScope: MvpScope;
   issues: CaseIssue[];

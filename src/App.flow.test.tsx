@@ -150,7 +150,7 @@ describe('Case000 player flow', () => {
     expect(logItems.at(-1)?.textContent).toContain('記憶ノード確認');
   });
 
-  it('shows warnings only for nodes with important warning text', () => {
+  it('shows warning panels only for critical nodes, even when other nodes have warning text', () => {
     enterInvestigation();
 
     const normalNode = case000.nodes.find((node) => node.id === 'last-comm');
@@ -159,6 +159,11 @@ describe('Case000 player flow', () => {
     expect(normalNode).toBeDefined();
     expect(administrativeNode).toBeDefined();
     expect(evidenceLossNode).toBeDefined();
+    expect(normalNode).toMatchObject({ warningLevel: 'none' });
+    expect(normalNode?.warning.trim()).not.toBe('');
+    expect(administrativeNode).toMatchObject({ warningLevel: 'none' });
+    expect(administrativeNode?.warning.trim()).not.toBe('');
+    expect(evidenceLossNode).toMatchObject({ warningLevel: 'critical' });
 
     clickButton(`ノード：${normalNode?.title}`);
     expect(container.querySelector('.node-warning')).toBeNull();
@@ -168,7 +173,10 @@ describe('Case000 player flow', () => {
 
     clickButton(`ノード：${evidenceLossNode?.title}`);
     expect(container.querySelector('.node-warning .warning-text')?.textContent).toContain(evidenceLossNode?.warning);
-    expect(container.querySelector('.right-pane')?.textContent).not.toContain('Case001');
+    const investigationText = container.querySelector('.game-grid')?.textContent ?? '';
+    for (const metaTerm of ['Case001', 'MVP', 'Jam', 'プレイヤー', '予告', '本編']) {
+      expect(investigationText).not.toContain(metaTerm);
+    }
   });
 
   it('omits the inspector note section when the selected node has no inspector note', () => {

@@ -538,7 +538,7 @@ function InvestigationScreen(props: InvestigationProps) {
               <TypewriterText text={selectedNode.inspectorNote} speed={14} animateKey={`note-${selectedNode.id}`} />
             </section>
           )}
-          {selectedNode.warning.trim() !== '' && (
+          {selectedNode.warningLevel === 'critical' && selectedNode.warning.trim() !== '' && (
             <section className="pane-section node-warning">
               <h3>警告</h3>
               <p className="warning-text"><AnnotatedText text={selectedNode.warning} /></p>
