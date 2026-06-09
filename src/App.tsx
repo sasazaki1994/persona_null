@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { canUnlockJudgment, getCurrentGuidance, getJudgmentRequirements, isAnalysisActionUnlocked, type CurrentGuidance, type JudgmentRequirement } from './auditRules';
+import { canUnlockJudgment, getCurrentGuidance, getJudgmentRequirements, isAnalysisActionUnlocked, isWarningLog, type CurrentGuidance, type JudgmentRequirement } from './auditRules';
 import { case000, case001Preview, contradictionTagLabels } from './case000';
 import { AnnotatedText } from './components/AnnotatedText';
 import { TypewriterText } from './components/TypewriterText';
@@ -25,8 +25,6 @@ const statLabels: Record<keyof CityStats, string> = {
 };
 
 const cityStatKeys = Object.keys(statLabels) as (keyof CityStats)[];
-
-const warningLogPattern = /警告|不足|拒否|未解放|矛盾|不可逆/;
 
 const rulingStampLabels: Record<string, string> = {
   'detain-mamiya': '発砲責任拘束',
@@ -475,7 +473,7 @@ function InvestigationScreen(props: InvestigationProps) {
         <h2>{case000.title}</h2>
         <GuidancePanel guidance={props.guidance} />
         <section className="pane-section compact-progress status-chip-row" aria-label="監査進行">
-          <span className={props.visitedNodeIds.length >= case000.requiredNodesToJudge ? 'status-chip valid' : 'status-chip muted'}>既読数 <strong>{props.visitedNodeIds.length}/{case000.requiredNodesToJudge}</strong></span>
+          <span className={props.visitedNodeIds.length >= case000.requiredNodesToJudge ? 'status-chip valid' : 'status-chip muted'}>必要ノード確認 <strong>{props.visitedNodeIds.length}/{case000.requiredNodesToJudge}</strong></span>
           <span className={props.pinnedNodeIds.length >= 1 ? 'status-chip valid' : 'status-chip muted'}>提出根拠 <strong>{props.pinnedNodeIds.length}/1</strong></span>
           <span className={taggedNodeCount >= 1 ? 'status-chip valid' : 'status-chip warning'}>矛盾分類 <strong>{taggedNodeCount}/1</strong></span>
           <span className={props.resources === 0 ? 'status-chip critical' : props.resources <= 1 ? 'status-chip warning' : 'status-chip muted'}>監査リソース <strong>{props.resources}/{case000.auditResourceMax}</strong></span>
@@ -557,7 +555,7 @@ function InvestigationScreen(props: InvestigationProps) {
         <div className="hud-panel-label network-panel-label"><span>02</span> MEMORY NETWORK</div>
         <div className="network-caption">
           <span>Memory Network</span>
-          <small>クリックで選択 / 色で重要度を表示・外周で監査状態を表示</small>
+          <small className="network-action-cue"><span aria-hidden="true">◎</span> ノードをクリックして記録を開く / 色で重要度を表示</small>
           <div className="network-state-legend" aria-label="ノード監査状態">
             <span><i className="legend-dot unreviewed" />未読</span>
             <span><i className="legend-dot reviewed" />既読</span>
@@ -713,12 +711,12 @@ function InvestigationScreen(props: InvestigationProps) {
           <div className="audit-log-heading"><strong>AUDIT LOG</strong><span>監査ログ / {String(props.systemLogs.length).padStart(2, '0')}</span></div>
           {(() => {
             const latestLog = props.systemLogs.at(-1) ?? 'ログなし';
-            return <p className={`latest-log ${warningLogPattern.test(latestLog) ? 'warning-log' : ''}`}><TypewriterText text={latestLog} speed={12} animateKey={`system-log-${props.systemLogs.length}-${latestLog}`} /></p>;
+            return <p className={`latest-log ${isWarningLog(latestLog) ? 'warning-log' : ''}`}><TypewriterText text={latestLog} speed={12} animateKey={`system-log-${props.systemLogs.length}-${latestLog}`} /></p>;
           })()}
           <details className="inline-details">
             <summary>ログを表示</summary>
             <div className="log-list">
-              {props.systemLogs.map((log, index) => <p className={warningLogPattern.test(log) ? 'warning-log' : ''} key={`${index}-${log}`}><span>{String(index + 1).padStart(2, '0')}</span>{log}</p>)}
+              {props.systemLogs.map((log, index) => <p className={isWarningLog(log) ? 'warning-log' : ''} key={`${index}-${log}`}><span>{String(index + 1).padStart(2, '0')}</span>{log}</p>)}
             </div>
           </details>
         </section>
@@ -821,8 +819,8 @@ function ResultScreen({ decision, finalStats, payload, taggedNodes }: { decision
         </div>
         <section className="result-summary" aria-label="裁定結果要約">
           <p><span>裁定</span><strong>{decision.finalRuling}</strong></p>
-          <p><span>優先</span><strong>{decision.prioritizedValue}</strong></p>
-          <p><span>軽視</span><strong>{decision.disregardedValue}</strong></p>
+          <p className="saved-value"><span>救った価値（優先）</span><strong>{decision.prioritizedValue}</strong></p>
+          <p className="sacrificed-value"><span>犠牲にした価値（軽視）</span><strong>{decision.disregardedValue}</strong></p>
           <p><span>影響</span><strong>{cityStatKeys.map((key) => `${statLabels[key]} ${decision.statDelta[key] >= 0 ? '+' : ''}${decision.statDelta[key]}`).join(' / ')}</strong></p>
         </section>
         <div className={`ruling-stamp ruling-${decision.id}`} aria-label={`裁定印：${rulingStampLabels[decision.id] ?? decision.finalRuling}`}>

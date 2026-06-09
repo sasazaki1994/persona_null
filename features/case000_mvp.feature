@@ -411,6 +411,14 @@ Feature: Persona Null Case000 playable audit slice
     Given the auditor reads the player-facing Case000 investigation text
     Then the investigation text does not contain Case001, MVP, Jam, プレイヤー, 予告, or 本編
 
+  Scenario: Reserving warning log styling for blocking audit events
+    Given the auditor is on the Case000 investigation screen
+    When a normal node review, evidence submission, contradiction classification, or analysis completion log is appended
+    Then the audit log uses its normal information styling
+    And words such as "矛盾" or "不足" inside an evidence finding do not make the log a warning
+    When evidence registration is rejected, analysis is locked, or audit resources are exhausted
+    Then that blocking event uses the warning log styling
+
   Scenario: Showing restrained operation feedback in the audit terminal
     Given the auditor is on the Case000 investigation screen
     When the auditor selects a node, pins or releases evidence, tags a contradiction, or consumes an analysis resource
@@ -464,6 +472,6 @@ Feature: Persona Null Case000 playable audit slice
     When all judgment requirements are complete
     Then the final judgment button becomes visually prominent and enabled
     When the auditor submits a final decision
-    Then the result summary shows the final ruling, prioritized value, and disregarded value together
+    Then the result summary shows the final ruling, the value saved by prioritization, and the value sacrificed by disregard together
     And the result records submitted judgment grounds, classified contradictions, and city status changes
     And a short ending text is visually separated from administrative details

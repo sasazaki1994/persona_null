@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { canUnlockJudgment, getCurrentGuidance, getJudgmentRequirements, isAnalysisActionUnlocked } from './auditRules';
+import { canUnlockJudgment, getCurrentGuidance, getJudgmentRequirements, isAnalysisActionUnlocked, isWarningLog } from './auditRules';
 import { case000, case001Preview, contradictionTags } from './data/cases';
 import type { DecisionOption } from './types';
 
@@ -16,6 +16,16 @@ const resultScreenFields: (keyof DecisionOption)[] = [
   'auditNote',
   'endingText',
 ];
+
+describe('audit log severity', () => {
+  it('reserves warning styling for blocking operations instead of matching incidental words', () => {
+    expect(isWarningLog('矛盾分類登録：義体稼働履歴 / 身体認証の矛盾。')).toBe(false);
+    expect(isWarningLog('解析完了：署名一致率は改善せず。責任確定には不足。')).toBe(false);
+    expect(isWarningLog('提出根拠上限：3件を超える登録は拒否。')).toBe(true);
+    expect(isWarningLog('解析権限未解放：人格署名を再照合。必要記録を確認してください。')).toBe(true);
+    expect(isWarningLog('監査リソース不足：追加解析を実行できません。')).toBe(true);
+  });
+});
 
 describe('case000 data', () => {
   it('contains exactly seven playable MVP memory nodes', () => {
