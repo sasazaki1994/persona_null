@@ -461,15 +461,11 @@ function InvestigationScreen(props: InvestigationProps) {
     : props.executedActionIds.length > 0
       ? '実行済'
       : '未解放';
-  const nextRequirement = props.requirements.find((requirement) => !requirement.completed);
   const requirementLabels: Record<JudgmentRequirement['id'], string> = {
-    nodes: '確認',
-    pins: '提出根拠',
+    nodes: '必要ノード確認',
+    pins: '判断根拠',
     tags: '矛盾分類',
   };
-  const missingRequirement = nextRequirement
-    ? `${requirementLabels[nextRequirement.id]} ${nextRequirement.detail.split(' ')[0]}`
-    : 'なし';
 
   return (
     <main className="app-shell game-grid">
@@ -519,7 +515,7 @@ function InvestigationScreen(props: InvestigationProps) {
 
                       return (
                         <button
-                          className={`memory-node-item ${isSelected ? 'selected' : isVisited ? 'visited' : 'unvisited'}`}
+                          className={`memory-node-item ${isSelected ? 'selected' : isVisited ? 'visited' : 'unvisited'} importance-${node.importance} ${node.hasContradiction ? 'has-contradiction' : ''}`}
                           type="button"
                           aria-pressed={isSelected}
                           onClick={() => props.onSelectNode(node.id)}
@@ -528,6 +524,8 @@ function InvestigationScreen(props: InvestigationProps) {
                           <strong>{node.title}</strong>
                           <span className="node-state-badges">
                             <i>{isVisited ? '確認済' : '未確認'}</i>
+                            {node.importance !== 'standard' && <i>{importanceLabels[node.importance]}重要</i>}
+                            {node.hasContradiction && <i>矛盾あり</i>}
                             {isSelected && <i>選択中</i>}
                             {isPinned && <i>根拠提出済</i>}
                             {isTagged && <i>矛盾分類済</i>}
@@ -561,6 +559,8 @@ function InvestigationScreen(props: InvestigationProps) {
           <span>Memory Network</span>
           <small>クリックで選択 / 色で重要度を表示・外周で監査状態を表示</small>
           <div className="network-state-legend" aria-label="ノード監査状態">
+            <span><i className="legend-dot unreviewed" />未読</span>
+            <span><i className="legend-dot reviewed" />既読</span>
             <span><i className="legend-ring double" />選択中</span>
             <span><i className="legend-frame" />根拠提出済</span>
             <span><i className="legend-ring closed" />矛盾分類済</span>
@@ -603,6 +603,31 @@ function InvestigationScreen(props: InvestigationProps) {
           <section className="pane-section node-summary">
             <p><AnnotatedText text={selectedNode.summary} /></p>
           </section>
+          <section className="pane-section priority-actions" aria-label="判断根拠と矛盾分類">
+            <div className="pin-box">
+              <h3>判断根拠</h3>
+              <button onClick={() => props.onTogglePin(selectedNode.id)} disabled={!props.pinnedNodeIds.includes(selectedNode.id) && props.pinnedNodeIds.length >= 3}>
+                {props.pinnedNodeIds.includes(selectedNode.id) ? '提出根拠から解除' : '提出根拠に登録'}
+              </button>
+              <small>{pinnedNodes.length ? `提出済み ${pinnedNodes.length} / 3` : '最低1件を提出'}</small>
+            </div>
+            {eligibleForTags ? (
+              <div className="tag-box">
+                <h3>矛盾分類</h3>
+                <div className="tag-actions">
+                  {suggestedTags.map((tag) => (
+                    <button className={props.taggedNodes[selectedNode.id]?.includes(tag) ? 'active' : ''} key={tag} onClick={() => props.onToggleTag(selectedNode, tag)}>
+                      {contradictionTagLabels[tag]}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : <small>この記録に分類可能な矛盾は検出されていません</small>}
+          </section>
+          <section className="pane-section right-city-status">
+            <h3>都市ステータス</h3>
+            <StatusBars stats={case000.initialStats} />
+          </section>
           <section className="pane-section node-core-facts">
             <h3>単純事実</h3>
             <p><AnnotatedText text={selectedNode.simpleFact} /></p>
@@ -613,7 +638,7 @@ function InvestigationScreen(props: InvestigationProps) {
               <TypewriterText text={selectedNode.inspectorNote} speed={14} animateKey={`note-${selectedNode.id}`} />
             </section>
           )}
-          {selectedNode.warningLevel === 'critical' && selectedNode.warning.trim() !== '' && (
+          {(selectedNode.warningLevel === 'critical' || (selectedNode.hasContradiction && selectedNode.importance !== 'standard')) && selectedNode.warning.trim() !== '' && (
             <section className="pane-section node-warning">
               <h3>警告</h3>
               <p className="warning-text"><AnnotatedText text={selectedNode.warning} /></p>
@@ -640,28 +665,6 @@ function InvestigationScreen(props: InvestigationProps) {
               </div>
             )}
           </details>
-          <section className="pane-section pin-box">
-            <h3>提出根拠</h3>
-            <button onClick={() => props.onTogglePin(selectedNode.id)} disabled={!props.pinnedNodeIds.includes(selectedNode.id) && props.pinnedNodeIds.length >= 3}>
-              {props.pinnedNodeIds.includes(selectedNode.id) ? '提出根拠から解除' : '提出根拠に登録'}
-            </button>
-            <details className="inline-details">
-              <summary>提出状況を表示</summary>
-              <div className="pinned-list">
-                {pinnedNodes.length ? pinnedNodes.map((node) => <span key={node.id}>{node.title}</span>) : <small>未提出。最低1件が必要。</small>}
-              </div>
-            </details>
-          </section>
-          {eligibleForTags && (
-            <section className="pane-section tag-box">
-              <h3>矛盾分類</h3>
-              {suggestedTags.map((tag) => (
-                <button className={props.taggedNodes[selectedNode.id]?.includes(tag) ? 'active' : ''} key={tag} onClick={() => props.onToggleTag(selectedNode, tag)}>
-                  {contradictionTagLabels[tag]}
-                </button>
-              ))}
-            </section>
-          )}
           <section className="pane-section analysis-summary">
             <div><span>追加解析</span><strong>{analysisStatus}</strong></div>
             <div className="analysis-resource-row"><span>監査リソース残数</span><ResourceGauge resources={props.resources} /></div>
@@ -695,9 +698,16 @@ function InvestigationScreen(props: InvestigationProps) {
         <div className="hud-panel-label bottom-panel-label"><span>04</span> JUDGMENT CONSOLE</div>
         <section className="judgment-summary">
           <p className={`judgment-state ${props.canJudge ? 'ready' : 'locked'}`}><span aria-hidden="true" />{props.canJudge ? 'JUDGMENT READY' : 'LOCKED'}</p>
-          <button className="judge" disabled={!props.canJudge} onClick={props.onJudge}>{props.canJudge ? '最終判断へ進む' : '最終判断は未開放'}</button>
-          <p><strong>最終判断：{props.canJudge ? '開放済' : '未開放'}</strong></p>
-          <p>不足：{missingRequirement}</p>
+          <div className="judgment-requirements" aria-label="最終判断の開放条件">
+            {props.requirements.map((requirement) => (
+              <p className={requirement.completed ? 'complete' : 'incomplete'} key={requirement.id}>
+                <span>{requirementLabels[requirement.id]}</span>
+                <strong>{requirement.detail.split(' ')[0]}</strong>
+                <em>{requirement.completed ? '完了' : '未達成'}</em>
+              </p>
+            ))}
+          </div>
+          <button className={`judge ${props.canJudge ? 'ready' : ''}`} disabled={!props.canJudge} onClick={props.onJudge}>{props.canJudge ? '最終判断へ進む' : '条件を満たすと判断可能'}</button>
         </section>
         <section className="logs audit-log">
           <div className="audit-log-heading"><strong>AUDIT LOG</strong><span>監査ログ / {String(props.systemLogs.length).padStart(2, '0')}</span></div>
@@ -812,6 +822,7 @@ function ResultScreen({ decision, finalStats, payload, taggedNodes }: { decision
         <section className="result-summary" aria-label="裁定結果要約">
           <p><span>裁定</span><strong>{decision.finalRuling}</strong></p>
           <p><span>優先</span><strong>{decision.prioritizedValue}</strong></p>
+          <p><span>軽視</span><strong>{decision.disregardedValue}</strong></p>
           <p><span>影響</span><strong>{cityStatKeys.map((key) => `${statLabels[key]} ${decision.statDelta[key] >= 0 ? '+' : ''}${decision.statDelta[key]}`).join(' / ')}</strong></p>
         </section>
         <div className={`ruling-stamp ruling-${decision.id}`} aria-label={`裁定印：${rulingStampLabels[decision.id] ?? decision.finalRuling}`}>
