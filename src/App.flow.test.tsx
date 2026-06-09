@@ -3,6 +3,7 @@
 import { act } from 'react';
 import { createRoot } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import itchPage from '../docs/itch-page.md?raw';
 import { case000 } from './case000';
 
 vi.mock('./MemoryNetwork', () => ({
@@ -18,6 +19,17 @@ import App from './App';
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
 describe('Case000 player flow', () => {
+  it('keeps the public incident description aligned with the Case000 records', () => {
+    const mamiya = case000.personLogs.find((person) => person.id === 'person-mamiya-reiji');
+    const nanase = case000.personLogs.find((person) => person.id === 'person-nanase-miori');
+
+    expect(mamiya?.simpleFact).toContain('間宮怜司は発砲義体の登録者');
+    expect(nanase?.summary).toContain('所持品の未登録人格記録装置');
+    expect(itchPage).toContain('間宮怜司に登録された警備用右腕義体');
+    expect(itchPage).toContain('被害者の七瀬未織');
+    expect(itchPage).not.toContain('七瀬未織の所有物');
+  });
+
   let container: HTMLDivElement;
   let root: ReturnType<typeof createRoot>;
 
