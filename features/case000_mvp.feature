@@ -266,6 +266,17 @@ Feature: Persona Null Case000 playable audit slice
     Then the result screen shows a translucent ruling stamp matching 発砲責任拘束, 証拠保全, or 操作干渉源隔離
     And the ruling stamp remains visually prominent without obscuring the administrative log
 
+  Scenario: Identifying the investigation HUD as a city audit terminal
+    Given the auditor opens the Persona Null title screen
+    Then the title screen shows CITY OS AUDIT TERMINAL, ACCESS: PROVISIONAL, and KASUMI-GATE-09 / CASE000 identifiers
+    When the auditor reaches the investigation screen
+    Then the left, center, right, and bottom regions are labeled CASE INDEX, MEMORY NETWORK, EVIDENCE DETAIL, and JUDGMENT CONSOLE
+    And the judgment console shows LOCKED before requirements are met and JUDGMENT READY after they are met
+    And a selected network record shows SELECTED RECORD and SCAN LOCKED without overlapping the network caption
+    When the auditor confirms a final judgment
+    Then the result screen is headed AUDIT RULING and 裁定記録
+    And city status changes remain grouped as an administrative record card
+
   Scenario: 調査画面の右ペインは監査情報を固定順で表示する
     Given プレイヤーが Case000 の調査画面を開いている
     When inspectorNote を持つ記憶ノードを1件選択する

@@ -58,7 +58,16 @@ describe('Case000 player flow', () => {
   };
 
   it('progresses from the concise investigation view to a result', () => {
+    expect(container.textContent).toContain('CITY OS AUDIT TERMINAL');
+    expect(container.textContent).toContain('ACCESS: PROVISIONAL');
+    expect(container.textContent).toContain('KASUMI-GATE-09 / CASE000');
     enterInvestigation();
+
+    expect(container.textContent).toContain('CASE INDEX');
+    expect(container.textContent).toContain('MEMORY NETWORK');
+    expect(container.textContent).toContain('EVIDENCE DETAIL');
+    expect(container.textContent).toContain('JUDGMENT CONSOLE');
+    expect(container.querySelector('.judgment-state.locked')?.textContent).toContain('LOCKED');
 
     expect(container.textContent).toContain('次の監査手順');
     expect(container.textContent).toContain('記憶ノードを4件以上確認してください');
@@ -102,6 +111,7 @@ describe('Case000 player flow', () => {
 
     clickButton('人格署名の矛盾');
     expect(container.textContent).toContain('最終判断：開放済');
+    expect(container.querySelector('.judgment-state.ready')?.textContent).toContain('JUDGMENT READY');
     expect(container.textContent).toContain('不足：なし');
 
     clickButton('最終判断へ進む');
@@ -123,6 +133,8 @@ describe('Case000 player flow', () => {
     expect(findButton(case000.decisions[0].label)?.disabled).toBe(false);
     clickButton(case000.decisions[0].label);
 
+    expect(container.textContent).toContain('AUDIT RULING');
+    expect(container.textContent).toContain('裁定記録');
     expect(container.textContent).toContain('行政処理ログ');
     expect(container.querySelector('[aria-label="裁定結果要約"]')).not.toBeNull();
     expect(container.textContent).toContain('最終裁定');

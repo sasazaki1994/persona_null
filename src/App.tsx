@@ -202,12 +202,17 @@ function Shell({ children }: { children: ReactNode }) {
 function TitleScreen({ onNext }: { onNext: () => void }) {
   return (
     <Shell>
-      <section className="start-card">
+      <section className="start-card terminal-boot">
+        <div className="boot-header" aria-label="端末識別情報">
+          <span>CITY OS AUDIT TERMINAL</span>
+          <span>ACCESS: PROVISIONAL</span>
+        </div>
         <p className="eyebrow">{case000.organizationName}記録 {case000.recordName}</p>
         <h1>Persona Null</h1>
         <p>北霞市 都市OS 判断不能案件処理端末</p>
         <p className="muted">公定値は手続き上の事実であり、真実そのものではありません。</p>
-        <button onClick={onNext}>監査端末を起動</button>
+        <button className="terminal-boot-button" onClick={onNext}><span>監査端末を起動</span><small>INITIALIZE AUDIT SESSION</small></button>
+        <p className="boot-case-id">KASUMI-GATE-09 / CASE000</p>
       </section>
     </Shell>
   );
@@ -414,6 +419,7 @@ function InvestigationScreen(props: InvestigationProps) {
   return (
     <main className="app-shell game-grid">
       <aside className="pane left-pane">
+        <div className="hud-panel-label"><span>01</span> CASE INDEX</div>
         <p className="eyebrow">{case000.organizationName} / {case000.id.toUpperCase()}</p>
         <h2>{case000.title}</h2>
         <GuidancePanel guidance={props.guidance} />
@@ -495,6 +501,7 @@ function InvestigationScreen(props: InvestigationProps) {
       </aside>
 
       <section className="center-pane">
+        <div className="hud-panel-label network-panel-label"><span>02</span> MEMORY NETWORK</div>
         <div className="network-caption">
           <span>Memory Network</span>
           <small>クリックで選択 / 色で重要度を表示・外周で監査状態を表示</small>
@@ -514,6 +521,7 @@ function InvestigationScreen(props: InvestigationProps) {
       </section>
 
       <aside className="pane right-pane">
+        <div className="hud-panel-label"><span>03</span> EVIDENCE DETAIL</div>
         {!selectedNode ? (
           <section className="empty-node-detail" aria-live="polite">
             <p className="eyebrow">選択ノード要約</p>
@@ -522,6 +530,7 @@ function InvestigationScreen(props: InvestigationProps) {
           </section>
         ) : <>
           <section className="node-header">
+            <p className="evidence-id">EVIDENCE ID / {selectedNode.id}</p>
             <p className="eyebrow">選択ノード要約</p>
             <h2>{selectedNode.title}</h2>
           </section>
@@ -616,7 +625,9 @@ function InvestigationScreen(props: InvestigationProps) {
       </aside>
 
       <footer className="bottom-pane">
+        <div className="hud-panel-label bottom-panel-label"><span>04</span> JUDGMENT CONSOLE</div>
         <section className="judgment-summary">
+          <p className={`judgment-state ${props.canJudge ? 'ready' : 'locked'}`}><span aria-hidden="true" />{props.canJudge ? 'JUDGMENT READY' : 'LOCKED'}</p>
           <button className="judge" disabled={!props.canJudge} onClick={props.onJudge}>{props.canJudge ? '最終判断へ進む' : '最終判断は未開放'}</button>
           <p><strong>最終判断：{props.canJudge ? '開放済' : '未開放'}</strong></p>
           <p>不足：{missingRequirement}</p>
@@ -727,8 +738,8 @@ function ResultScreen({ decision, finalStats, payload, taggedNodes }: { decision
   return (
     <Shell>
       <section className="document-card result wide admin-log">
-        <p className="eyebrow">行政処理ログ / {case000.recordName} / 保存完了</p>
-        <h2>Case000 処理記録</h2>
+        <p className="eyebrow">AUDIT RULING / 行政処理ログ / {case000.recordName} / 保存完了</p>
+        <h2 className="ruling-title"><span>裁定記録</span><small>Case000 処理記録</small></h2>
         <section className="result-summary" aria-label="裁定結果要約">
           <p><span>裁定</span><strong>{decision.finalRuling}</strong></p>
           <p><span>優先</span><strong>{decision.prioritizedValue}</strong></p>
