@@ -6,19 +6,19 @@
 
 - **作品名:** Persona Null
 - **提出版:** Case000「誰が撃ったのか」プレイアブルMVP
-- **Demo / Play URL:** Production URL 確定後に記載
+- **Demo / Play URL:** [https://persona-null.vercel.app](https://persona-null.vercel.app)
 - **推奨環境:** PCブラウザ
 - **狭幅表示:** テキスト確認用の最低限対応。完全なスマートフォン最適化は未実装
 - **Case001:** `previewOnly` の予告のみ。プレイ可能導線なし
 
 ## 提出物チェック
 
-- [ ] README 上部の **Demo / Play URL** を確定した Vercel Production URL に置き換えた。
+- [x] README 上部の **Demo / Play URL** を確定した Vercel Production URL に置き換えた。
 - [ ] Jam 提出ページにも同じ Production URL を登録した。
-- [ ] `docs/images/title.png` を配置した。
-- [ ] `docs/images/case000-investigation.png` を配置した。
-- [ ] `docs/images/case000-result.png` を配置した。
-- [ ] GitHub 上の README で3画像とキャプションが表示される。
+- [x] `docs/images/title.svg` を配置した。
+- [x] `docs/images/case000-investigation.svg` を配置した。
+- [x] `docs/images/case000-overview.svg` を配置した。
+- [ ] GitHub 上の README でタイトル、事件概要、調査画面の3画像とキャプションが表示される。
 - [ ] 作品説明に「Case000のみプレイ可能」「Case001は予告のみ」を明記した。
 
 ## 品質ゲート
@@ -64,7 +64,6 @@
 
 ## 未解決事項の扱い
 
-- Production URL が未確定なら README と本書のURL欄を更新するまで提出しない。
 - 必須スクリーンショット3枚が未配置なら提出しない。
 - Case000 の進行、保存、または Case001 の preview-only 制約に回帰があれば提出しない。
 - 狭幅表示は読み取り可能性を合格条件とし、Memory Network をPCと同等に操作できることまでは求めない。

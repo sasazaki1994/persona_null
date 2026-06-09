@@ -32,7 +32,7 @@ npm run build
 
 ## Production動作確認
 
-確定した Production URL をPCブラウザで開き、次を順番に確認します。
+確定した Production URL [https://persona-null.vercel.app](https://persona-null.vercel.app) をPCブラウザで開き、次を順番に確認します。
 
 1. タイトル画面が表示され、**監査端末を起動** を選択できる。
 2. 都市OS 基礎公定通知を確認し、事件選択へ進める。
@@ -48,12 +48,12 @@ npm run build
 
 不具合がある場合は Production URL を提出せず、対象コミットを修正して CI と Deployment を再実行します。
 
-## URL確定後
+## 確定 Production URL
 
-- README 上部の **Demo / Play URL** を確定URLへ置き換える。
-- Jam 提出ページへ同じURLを登録する。
-- `docs/jam-submission.md` の最終チェックを完了する。
-- Production URL または同一コミットのローカル表示から提出用スクリーンショットを撮影する。
+- **Demo / Play URL:** [https://persona-null.vercel.app](https://persona-null.vercel.app)
+- README と `docs/jam-submission.md` では同じURLを正本として扱う。
+- Jam 提出ページにも同じURLを登録する。
+- 提出用スクリーンショットはこの Production URL の実画面から撮影する。
 
 ## 更新公開
 

@@ -181,11 +181,13 @@ Feature: Persona Null Case000 playable audit slice
     And GitHub Actions CI runs npm ci, npm run lint, npm run test, and npm run build on push and pull_request using Node.js 20
     And the README links to Vercel deployment instructions that use the Vite preset, npm run build, and the dist output directory
     And the deployment documentation states that no environment variables are required
-    And the README has a Demo / Play URL field near the top even before the Production URL is finalized
-    And the README screenshot section references docs/images/title.png, docs/images/case000-investigation.png, and docs/images/case000-result.png with short captions
-    And the screenshot capture plan explains how to replace those three files before submission
+    And the README has a Demo / Play URL field near the top that links to https://persona-null.vercel.app
+    And the README screenshot section references docs/images/title.svg, docs/images/case000-overview.svg, and docs/images/case000-investigation.svg with short captions
+    And each screenshot is a text-based SVG that embeds the corresponding Production PNG data
+    And no required README screenshot is committed as a binary PNG file
+    And the screenshot capture plan explains how to refresh those three Production images
     And Production verification details are authoritative in docs/deploy.md instead of being duplicated across README and the Jam checklist
-    And the submission checklist requires title, investigation, and result screenshots before the final Jam submission
+    And the submission checklist requires title, overview, and investigation screenshots before the final Jam submission
     And npm run build succeeds
     And npm run lint succeeds
     And npm run test succeeds
@@ -358,3 +360,12 @@ Feature: Persona Null Case000 playable audit slice
     And the preview repeats "私は、見ていました"
     And player-facing labels do not use the standalone term "媒体" for the recorder
     And Case001 remains previewOnly without a playable route
+
+  Scenario: Production URL と実画面で探索体験を案内する
+    Given Case000 MVP が Vercel Production に公開されている
+    Then README の Demo / Play URL は "https://persona-null.vercel.app" を示す
+    And README は Production 版のタイトル画面を表示する
+    And README は事件概要と人物プロフィールと処理要求が読める実画面を表示する
+    And README は Memory Network と争点別記憶ノードが見える実画面を表示する
+    And 公開資料は事件説明から根拠構造の探索へ進む体験を説明する
+    And 存在しない結果画面画像を必須画像として参照しない

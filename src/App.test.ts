@@ -4,7 +4,7 @@ import { case000, case001Preview, contradictionTags } from './data/cases';
 import type { DecisionOption } from './types';
 
 const terminologyFiles = import.meta.glob(
-  ['../README.md', '../docs/**/*.md', '../features/**/*.feature', './**/*.{ts,tsx}'],
+  ['../README.md', '../docs/**/*.md', '../docs/images/*.svg', '../features/**/*.feature', './**/*.{ts,tsx}'],
   { eager: true, query: '?raw', import: 'default' },
 ) as Record<string, string>;
 
@@ -305,12 +305,22 @@ describe('case000 data', () => {
     const readme = terminologyFiles['../README.md'];
     const deploy = terminologyFiles['../docs/deploy.md'];
     const screenshots = terminologyFiles['../docs/screenshots.md'];
-    expect(readme).toContain('Demo / Play URL');
-    expect(readme).toContain('docs/images/title.png');
-    expect(readme).toContain('docs/images/case000-investigation.png');
-    expect(readme).toContain('docs/images/case000-result.png');
+    expect(readme).toContain('[https://persona-null.vercel.app](https://persona-null.vercel.app)');
+    expect(readme).toContain('docs/images/title.svg');
+    expect(readme).toContain('docs/images/case000-overview.svg');
+    expect(readme).toContain('docs/images/case000-investigation.svg');
+    expect(readme).not.toMatch(/docs\/images\/[^)\s]+\.png/);
     expect(deploy).toContain('Production動作確認');
-    expect(screenshots).toContain('README は上記パスをすでに参照しています');
+    expect(screenshots).toContain('Vercel Production 版から撮影した実画像');
+
+    [
+      '../docs/images/title.svg',
+      '../docs/images/case000-overview.svg',
+      '../docs/images/case000-investigation.svg',
+    ].forEach((path) => {
+      expect(terminologyFiles[path]).toMatch(/^<\?xml[\s\S]*<svg/);
+      expect(terminologyFiles[path]).toContain('data:image/png;base64,');
+    });
   });
 
   it('warns only when a decision has adopted evidence with no submitted match', () => {
