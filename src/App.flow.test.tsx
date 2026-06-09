@@ -79,13 +79,27 @@ describe('Case000 player flow', () => {
     expect(container.querySelector('.record-status-bar')?.textContent).toContain('重大');
     expect(container.querySelector('.record-status-bar')?.textContent).toContain('根拠未提出');
     expect(container.querySelector('.record-status-bar')?.textContent).toContain('矛盾未分類');
-    expect(container.querySelector('.record-status-bar')?.textContent).toContain('解析結果なし');
 
     clickButton('提出根拠に登録');
     expect(container.querySelector('.operation-toast')?.textContent).toContain('EVIDENCE PINNED');
     expect(container.querySelector('.record-status-bar')?.textContent).toContain('根拠提出済');
     clickButton('提出根拠から解除');
     expect(container.querySelector('.operation-toast')?.textContent).toContain('EVIDENCE RELEASED');
+  });
+
+  it('clears operation feedback quickly without requiring another action', () => {
+    enterInvestigation();
+    vi.useFakeTimers();
+
+    try {
+      clickButton('ノード：発砲ログ');
+      expect(container.querySelector('.operation-toast')?.textContent).toContain('SCAN COMPLETE');
+
+      act(() => vi.advanceTimersByTime(1400));
+      expect(container.querySelector('.operation-toast')).toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('progresses from the concise investigation view to a result', () => {
@@ -125,7 +139,9 @@ describe('Case000 player flow', () => {
     expect(recordDetails.querySelector('h3')?.textContent).toBe('詳細ログ');
     expect(recordDetails.querySelector('code')?.textContent).toBe(selectedNode.log);
     expect(metrics).not.toBeNull();
-    expect(appearsBefore(title, summary)).toBe(true);
+    const statusBar = container.querySelector('.record-status-bar');
+    expect(appearsBefore(title, statusBar)).toBe(true);
+    expect(appearsBefore(statusBar, summary)).toBe(true);
     expect(appearsBefore(summary, simpleFact)).toBe(true);
     expect(appearsBefore(simpleFact, inspectorNote)).toBe(true);
     expect(appearsBefore(inspectorNote, warning)).toBe(true);
@@ -299,6 +315,8 @@ describe('Case000 player flow', () => {
     expect(container.querySelector('.resource-gauge')?.textContent).toContain('2 / 3');
     expect(container.textContent).toContain('追加解析結果');
     expect(container.textContent).toContain('欠損区間は断片のみ復元。外部命令断定ではなく境界曖昧化を示唆。');
+    expect(container.querySelector('.node-record-details .analysis-report')).toBeNull();
+    expect(container.querySelector('.analysis-summary > .analysis-report')).not.toBeNull();
 
     clickButton('ノード：発砲ログ');
     expect(container.querySelector('.analysis-report')).toBeNull();

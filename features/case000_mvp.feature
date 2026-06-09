@@ -401,15 +401,17 @@ Feature: Persona Null Case000 playable audit slice
     Given the auditor is on the Case000 investigation screen
     When the auditor selects a node, pins or releases evidence, tags a contradiction, or consumes an analysis resource
     Then a short non-blocking English operation toast is shown
+    And the toast disappears within 1.5 seconds without covering the Memory Network, evidence detail, or judgment controls
     And the toast does not alter the audit log or Case000 progression rules
     When all existing judgment requirements become complete
     Then "JUDGMENT READY" is shown as operation feedback
 
-  Scenario: Summarizing the selected record state before its evidence text
+  Scenario: Summarizing the selected record without obscuring its evidence hierarchy
     Given the auditor selected a Case000 memory node
-    Then the right pane shows "RECORD STATUS" above the selected record heading
-    And the status chips show review state, importance, evidence submission, contradiction classification eligibility, and analysis result availability
-    And the existing order remains summary, simple fact, inspector note, critical warning when applicable, and detailed record
+    Then the right pane shows the selected record heading before "RECORD STATUS"
+    And the status chips show only review state, importance, evidence submission, and contradiction classification eligibility
+    And the order remains heading, status bar, summary, simple fact, inspector note, critical warning when applicable, detailed record, submitted grounds, contradiction classification, and additional analysis
+    And analysis results are shown at the end of the additional analysis section instead of inside the detailed record
 
   Scenario: Displaying audit resources as a three-block gauge
     Given Case000 starts with three audit resources
