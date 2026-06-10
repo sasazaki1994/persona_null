@@ -399,6 +399,7 @@ describe('Persona Null player flow', () => {
     expect(container.textContent).toContain('偽装処理された瞬間');
 
     clickButton('ノード：断片記憶');
+    expect(container.textContent).toContain('外部制御命令を受理して発砲動作に入った');
     expect(container.textContent).toContain('表情・視線・生体反応に発砲意図は記録されていない');
     expect(container.textContent).toContain('発砲命令は');
     expect(container.textContent).toContain('で処理されている');

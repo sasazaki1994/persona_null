@@ -446,11 +446,11 @@ export const cases: CaseRecord[] = [
       },
       {
         id: 'fragment-memory', title: '断片記憶', type: '映像断片', importance: 'high',
-        summary: '発砲直前、間宮の右腕義体の制御表示が通常認証から旧式認証痕 KASUMI-GATE-09 へ切り替わる映像が残る。',
-        log: 'memory_fragment:pre-fire-0.8s / arm_auth:NORMAL>KASUMI-GATE-09 / command_signature:MAMIYA-REIJI / facial_intent:none / gaze_intent:none / biometric_trigger:none / command_origin:unresolved / continuity:31%',
-        simpleFact: '右腕義体は発砲動作に入ったが、直前の間宮本人の表情・視線・生体反応に発砲意図は記録されていない。一方、発砲命令は間宮怜司の人格署名で処理されている。',
+        summary: '発砲直前、間宮の右腕義体へ外部制御命令が入力され、制御表示が通常認証から旧式認証痕 KASUMI-GATE-09 へ切り替わる映像が残る。',
+        log: 'memory_fragment:pre-fire-0.8s / external_command:received / arm_auth:NORMAL>KASUMI-GATE-09 / command_signature:MAMIYA-REIJI / facial_intent:none / gaze_intent:none / biometric_trigger:none / command_origin:unresolved / continuity:31%',
+        simpleFact: '右腕義体は外部制御命令を受理して発砲動作に入ったが、直前の間宮本人の表情・視線・生体反応に発砲意図は記録されていない。一方、発砲命令は間宮怜司の人格署名で処理されている。',
         inspectorNote: '断片は、間宮の右腕義体が発砲した事実と、間宮本人が発砲しようとしていなかった兆候を同時に保持する。人格署名と操作意図の不一致は、発砲命令の偽装処理を示す。', auditHint: '「私は、見ていました」を、犯人の目撃ではなく認証経路が切り替わった瞬間の記録として照合する。',
-        warning: '外部制御命令の発行元と実行主体は断片内に記録されていない。', warningLevel: 'notice', metrics: { 映像連続性: '31%', 制御表示: '通常認証 → KASUMI-GATE-09', 発砲意図反応: '検出なし', 命令署名: '間宮怜司', 命令元: '未確定' },
+        warning: '外部制御命令の発行元と実行主体は断片内に記録されていない。', warningLevel: 'notice', metrics: { 映像連続性: '31%', 外部制御命令: '受理', 制御表示: '通常認証 → KASUMI-GATE-09', 発砲意図反応: '検出なし', 命令署名: '間宮怜司', 命令元: '未確定' },
         hasContradiction: true, suggestedTags: ['memory_origin', 'record_integrity'], position: [0.8, 1.3, -0.2], links: ['repeated-voice', 'kasumi-resonance'],
       },
       {
@@ -499,8 +499,8 @@ export const cases: CaseRecord[] = [
       },
       {
         id: 'reconstruct-fragment', title: '断片記憶の時系列復元', description: 'Case000記録と断片映像の時系列を比較する。',
-        resultLog: '解析完了：発砲直前0.8秒、制御表示は通常認証からKASUMI-GATE-09へ切替。間宮の発砲意図反応は検出されないが、命令処理署名は間宮怜司。命令元は未確定。',
-        targetNodeIds: ['fragment-memory', 'kasumi-resonance'], reportText: '発砲直前0.8秒、制御表示は通常認証からKASUMI-GATE-09へ切替。間宮の発砲意図反応は検出されないが、命令処理署名は間宮怜司。命令元は未確定。',
+        resultLog: '解析完了：発砲直前0.8秒、右腕義体は外部制御命令を受理し、制御表示は通常認証からKASUMI-GATE-09へ切替。間宮の発砲意図反応は検出されないが、命令処理署名は間宮怜司。命令元は未確定。',
+        targetNodeIds: ['fragment-memory', 'kasumi-resonance'], reportText: '発砲直前0.8秒、右腕義体は外部制御命令を受理し、制御表示は通常認証からKASUMI-GATE-09へ切替。間宮の発砲意図反応は検出されないが、命令処理署名は間宮怜司。命令元は未確定。',
         unlockConditions: [{ type: 'visited_nodes', nodeIds: ['fragment-memory', 'kasumi-resonance'] }],
       },
       {

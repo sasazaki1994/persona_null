@@ -42,19 +42,21 @@ describe('case001 playable data', () => {
     expect(voice?.simpleFact).toContain('犯人の顔ではなく');
     expect(voice?.simpleFact).toContain('通常認証から KASUMI-GATE-09 へ切り替わり');
     expect(voice?.simpleFact).toContain('人格署名として偽装処理された瞬間');
-    expect(fragment?.simpleFact).toContain('右腕義体は発砲動作に入った');
+    expect(fragment?.simpleFact).toContain('右腕義体は外部制御命令を受理して発砲動作に入った');
     expect(fragment?.simpleFact).toContain('表情・視線・生体反応に発砲意図は記録されていない');
     expect(fragment?.simpleFact).toContain('発砲命令は間宮怜司の人格署名で処理');
     expect(fragment?.inspectorNote).toContain('間宮の右腕義体が発砲した事実');
     expect(fragment?.inspectorNote).toContain('間宮本人が発砲しようとしていなかった兆候');
     expect(fragment?.inspectorNote).toContain('発砲命令の偽装処理');
     expect(fragment?.metrics).toMatchObject({
+      外部制御命令: '受理',
       制御表示: '通常認証 → KASUMI-GATE-09',
       発砲意図反応: '検出なし',
       命令署名: '間宮怜司',
       命令元: '未確定',
     });
     expect(fragment?.warning).toContain('発行元と実行主体は断片内に記録されていない');
+    expect(reconstruction?.reportText).toContain('右腕義体は外部制御命令を受理');
     expect(reconstruction?.reportText).toContain('命令元は未確定');
   });
 });
