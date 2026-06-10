@@ -18,7 +18,7 @@ import App from './App';
 
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
-describe('Case000 player flow', () => {
+describe('Persona Null player flow', () => {
   it('keeps the public incident description aligned with the Case000 records', () => {
     const mamiya = case000.personLogs.find((person) => person.id === 'person-mamiya-reiji');
     const nanase = case000.personLogs.find((person) => person.id === 'person-nanase-miori');
@@ -69,15 +69,37 @@ describe('Case000 player flow', () => {
     clickButton('調査を開始');
   };
 
-  it('presents cases as available and frozen incident files', () => {
+  it('presents Case000 and Case001 as available incident files', () => {
     clickButton('監査端末を起動');
     clickButton('通知を確認');
 
     expect(container.textContent).toContain('CASE ARCHIVE');
     expect(container.textContent).toContain('監査可能');
-    expect(container.textContent).toContain('previewOnly');
-    expect(container.textContent).toContain('凍結中');
-    expect(findButton('Case001')).toBeUndefined();
+    expect(container.textContent).toContain('焼却されなかった声');
+    expect(container.textContent).not.toContain('previewOnly');
+    expect(container.textContent).not.toContain('凍結中');
+    expect(findButton('Case001を開く')).toBeDefined();
+  });
+
+  it('shows a saved Case001 result as processed in the case archive', () => {
+    act(() => root.unmount());
+    localStorage.setItem('persona-null:case-results', JSON.stringify([{
+      caseId: 'case001',
+      decisionId: 'preserve-fragment',
+      pinnedNodeIds: ['repeated-voice'],
+      taggedNodes: { 'repeated-voice': ['persona_signature'] },
+      executedActionIds: [],
+      finalStats: { security: 56, ethics: 60, surveillance: 75, egoStability: 47 },
+      completedAt: '2026-06-10T00:00:00.000Z',
+    }]));
+    root = createRoot(container);
+    act(() => root.render(<App />));
+
+    clickButton('監査端末を起動');
+    clickButton('通知を確認');
+    const case001Button = findButton('Case001を開く');
+    const case001Card = case001Button?.closest('.case-file');
+    expect(case001Card?.textContent).toContain('処理済記録あり / 再監査可能');
   });
 
   it('shows record status, resource gauge, and restrained operation feedback', () => {
@@ -357,6 +379,49 @@ describe('Case000 player flow', () => {
     clickButton('ノード：義体稼働履歴');
     expect(findButton('欠落8秒の復元')?.disabled).toBe(false);
     expect(findButton('認証鍵と記録装置の照合')?.disabled).toBe(true);
+  });
+
+
+  it('plays Case001 through judgment and saves its result', () => {
+    clickButton('監査端末を起動');
+    clickButton('通知を確認');
+    clickButton('Case001を開く');
+    expect(container.textContent).toContain('焼却されなかった声');
+    clickButton('調査を開始');
+
+    ['焼却処理キュー', '反復発話ログ', '断片記憶', '自己保存反応'].forEach((title) => clickButton(`ノード：${title}`));
+    expect(container.textContent).toContain('必要ノード確認 4/4');
+    clickButton('ノード：反復発話ログ');
+    expect(container.textContent).toContain('私は、見ていました');
+    expect(container.textContent).toContain('犯人の顔ではなく');
+    expect(container.textContent).toContain('通常認証から');
+    expect(container.textContent).toContain('へ切り替わり');
+    expect(container.textContent).toContain('偽装処理された瞬間');
+
+    clickButton('ノード：断片記憶');
+    expect(container.textContent).toContain('表情・視線・生体反応に発砲意図は記録されていない');
+    expect(container.textContent).toContain('発砲命令は');
+    expect(container.textContent).toContain('で処理されている');
+    expect(container.textContent).toContain('命令元');
+    expect(container.textContent).toContain('未確定');
+    expect(container.textContent).toContain('監査官メモ');
+    expect(container.textContent).toContain('詳細ログ');
+
+    clickButton('提出根拠に登録');
+    clickButton('記憶由来の矛盾');
+    expect(findButton('最終判断へ進む')?.disabled).toBe(false);
+    clickButton('最終判断へ進む');
+
+    expect(container.textContent).toContain('証言能力なしとして焼却処理を承認');
+    expect(container.textContent).toContain('人格断片として証拠保全');
+    expect(container.textContent).toContain('証言ではなく異常記録として隔離');
+    clickButton('B. 人格断片として証拠保全を確定');
+
+    expect(container.textContent).toContain('救った価値（優先）');
+    expect(container.textContent).toContain('犠牲にした価値（軽視）');
+    expect(container.textContent).toContain('人格断片保全');
+    const saved = JSON.parse(localStorage.getItem('persona-null:case-results') ?? '[]');
+    expect(saved).toEqual([expect.objectContaining({ caseId: 'case001', decisionId: 'preserve-fragment' })]);
   });
 
 });

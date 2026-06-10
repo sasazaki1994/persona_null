@@ -123,6 +123,7 @@ export type DecisionOption = {
   auditNote: string;
   endingText: string;
   statDelta: CityStats;
+  resultStampLabel?: string;
   acceptedEvidenceNodeIds?: string[];
   ignoredIssueIds?: string[];
 };

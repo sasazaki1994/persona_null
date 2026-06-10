@@ -1,4 +1,4 @@
-import type { CasePreview, CaseRecord, ContradictionTag } from '../types';
+import type { CaseRecord, ContradictionTag } from '../types';
 
 export const contradictionTagLabels: Record<ContradictionTag, string> = {
   body_auth: '身体認証の矛盾',
@@ -10,16 +10,6 @@ export const contradictionTagLabels: Record<ContradictionTag, string> = {
 };
 
 export const contradictionTags = Object.keys(contradictionTagLabels) as ContradictionTag[];
-
-export const case001Preview: CasePreview = {
-  id: 'case001',
-  title: '焼却されなかった声',
-  subtitle: '不完全な声を証言として扱えるか',
-  previewOnly: true,
-  linkedFromNodeId: 'victim-medium',
-  handoffSummary: '七瀬未織の身体は死亡している。完全な人格バックアップも確認されていない。しかし、所持品から見つかった未登録人格記録装置には、発話ログ、記憶断片、人格署名の一部が残っている。都市OSは、その不完全な声を正式な証言として扱えない。それでも装置は、同じ発話を繰り返している。',
-  preservedFragment: 'MIO-VOICE/ASH-LOCK:「私は、見ていました」／反復継続／証言能力:制限',
-};
 
 export const cases: CaseRecord[] = [
   {
@@ -346,6 +336,7 @@ export const cases: CaseRecord[] = [
     decisions: [
       {
         id: 'detain-mamiya',
+        resultStampLabel: '発砲責任拘束',
         label: 'A. 間宮怜司を発砲責任者として拘束',
         finalRuling: '間宮怜司を発砲責任者として拘束',
         processing: '発砲許可署名と義体稼働履歴を根拠に、間宮怜司を責任主体として処理する。記録整合性と治安維持を優先する判断。',
@@ -359,6 +350,7 @@ export const cases: CaseRecord[] = [
       },
       {
         id: 'freeze-evidence',
+        resultStampLabel: '証拠保全',
         label: 'B. 義体と記録装置を証拠保全',
         finalRuling: '義体と記録装置を証拠保全',
         processing: '操作主体が確定できないため、間宮の右腕義体と七瀬未織の記録装置を凍結する。即時処分より、証拠保全と再照合を優先する判断。',
@@ -372,6 +364,7 @@ export const cases: CaseRecord[] = [
       },
       {
         id: 'process-medium',
+        resultStampLabel: '操作干渉源隔離',
         label: 'C. 七瀬未織の記録装置を操作干渉源として隔離',
         finalRuling: '七瀬未織の記録装置を操作干渉源として隔離',
         processing: '七瀬未織の未登録人格記録装置に残る人格断片、または周辺の未登録反応を、義体操作への干渉源として扱う。間宮怜司の即時拘束は保留される。ただし、不完全な人格断片を危険源として隔離する前例が残る。',
@@ -385,6 +378,163 @@ export const cases: CaseRecord[] = [
       },
     ],
   },
+  {
+    id: 'case001',
+    title: '焼却されなかった声',
+    subtitle: '不完全な声を証言として扱えるか',
+    recordName: 'MIO-VOICE/ASH-LOCK',
+    organizationName: '監査室',
+    location: '都市警備局 記録媒体焼却区画',
+    auditResourceMax: 3,
+    requiredNodesToJudge: 4,
+    initialStats: { security: 59, ethics: 52, surveillance: 73, egoStability: 41 },
+    overview: 'Case000で死亡した七瀬未織の未登録人格記録装置が、焼却処理直前に再起動した。完全な人格バックアップは存在しない。残存するのは発話ログ、断片記憶、人格署名の一部、削除処理への停止要求である。都市OSは本人認証を拒否し、都市警備局は証言能力なしとして焼却を要求している。監査室は、この不完全な声を証言として保全するか、異常記録として隔離するか、通常処理として削除するかを裁定する。',
+    personLogs: [
+      {
+        id: 'fragment-nanase-miori', title: '人格断片ログ：七瀬未織', name: '七瀬未織（認証未確定）', role: '未登録人格記録装置内 / 発話主体未確定',
+        auditLabel: '人格照合記録 / 本人認証不成立',
+        auditLabels: ['対象候補：七瀬 未織', '人格署名一致率：49%', '完全バックアップ：なし', '証言能力：未確定', '削除停止要求：継続'],
+        portraitFallback: { heading: '人格照合記録', lines: ['対象候補：七瀬 未織', '画像記録：断片', '本人認証：不成立', '発話反復：継続'] },
+        summary: '発話ログと人格署名の一部は七瀬未織の生前記録に接近するが、同一人格としての認証閾値には達していない。',
+        log: 'fragment:MIO-VOICE / signature_match:49% / backup:incomplete / testimony:undetermined',
+        simpleFact: '装置内の声は七瀬未織の人格署名と部分一致するが、本人とは認証されていない。',
+        warning: '本人名義の付与と証言能力の承認は別個に裁定する必要がある。', metrics: { 人格署名一致率: '49%', 完全バックアップ: 'なし', 証言能力: '未確定' },
+      },
+    ],
+    processingRequest: {
+      id: 'ash-disposal-request', title: '都市警備局 焼却処理要求', summary: '未登録人格媒体の通常焼却を要求。',
+      log: 'request:ASH-DISPOSAL / priority:urgent / testimony:none / legal_persona:unconfirmed',
+      simpleFact: '都市警備局は、証言能力なし・法的人格未確定として媒体の焼却承認を求めている。',
+      warning: '焼却後は発話ログ、人格署名、断片記憶の再照合ができない。', metrics: { 処理期限: '90分', 法的人格: '未確定', 証言能力: 'なし（警備局判定）' },
+    },
+    operatorCandidates: [
+      {
+        id: 'voice-origin-persona', title: '発話由来候補：人格断片', candidate: '七瀬未織の人格断片', supportingNodes: ['repeated-voice', 'signature-drift', 'self-preservation'],
+        summary: '発話と停止要求を人格継続の反応として読む候補。', log: 'origin_candidate:persona-fragment / confidence:restricted',
+        simpleFact: '反復発話、部分署名、自己保存反応は人格断片の継続を示す可能性がある。', warning: '本人認証は成立していない。', metrics: { 確度: '制限', 本人認証: '不成立' },
+      },
+      {
+        id: 'voice-origin-resonance', title: '発話由来候補：認証残響', candidate: 'KASUMI-GATE-09残響', supportingNodes: ['kasumi-resonance', 'fragment-memory'],
+        summary: '旧式認証痕が保存音声を反復させている可能性。', log: 'origin_candidate:key-resonance / confidence:restricted',
+        simpleFact: '発話周期は旧式認証痕と同期しており、人格反応ではなく残響の可能性もある。', warning: '同期だけでは発話内容の由来を説明できない。', metrics: { 同期率: '82%', 発話由来: '未確定' },
+      },
+    ],
+    mvpScope: { cutForMvp: ['音声再生', '外部人格台帳照会'], keepForExpansion: ['署名時系列比較', 'Case000裁定との連結監査'] },
+    issues: [
+      { id: 'testimony_identity', title: 'この声は七瀬未織本人の証言か', description: '本人認証不成立の発話を、本人の訴えとして扱えるか。', relatedNodeIds: ['repeated-voice', 'fragment-memory', 'signature-drift'] },
+      { id: 'persona_continuity', title: '自己保存反応を人格の継続要求として扱うか', description: '削除停止要求が生命反応か、処理エラーかを分類する。', relatedNodeIds: ['self-preservation', 'signature-drift', 'incineration-queue'] },
+      { id: 'halt_disposal', title: '都市警備局の焼却処理を止めるべきか', description: '記録整合性と再照合可能性のどちらを優先するか。', relatedNodeIds: ['security-disposal', 'incineration-queue', 'kasumi-resonance'] },
+    ],
+    nodes: [
+      {
+        id: 'incineration-queue', title: '焼却処理キュー', type: '行政処理記録', importance: 'high',
+        summary: '媒体は通常焼却キューへ登録されたが、直前に処理保留が発生した。',
+        log: 'queue:ASH-17 / subject:MIO-VOICE / testimony:none / legal_persona:pending / halt:unexpected',
+        simpleFact: '証言能力なし・法的人格未確定として焼却予定だったが、焼却直前に処理が保留された。',
+        inspectorNote: '保留命令の発行主体は装置内部応答として記録されている。', auditHint: '自己保存反応と焼却要求を照合する。',
+        warning: '処理再開後は記録を復元できない。', warningLevel: 'critical', metrics: { キュー番号: 'ASH-17', 処理状態: '保留', 残時間: '90分' },
+        hasContradiction: true, requiresContradictionReview: true, suggestedTags: ['legal_persona', 'record_integrity'], position: [-2.3, 1.1, 0], links: ['self-preservation', 'security-disposal'],
+      },
+      {
+        id: 'repeated-voice', title: '反復発話ログ', type: '音声記録', importance: 'critical',
+        summary: '装置は、発砲直前の制御表示切替を示す視覚断片に同期して短い発話を反復している。録音再生か人格反応かは未確定。',
+        log: 'voice_loop:「私は、見ていました」 / interval:11.4s / signature_match:49% / source:unresolved',
+        simpleFact: '「私は、見ていました」は犯人の顔ではなく、右腕義体の制御表示が通常認証から KASUMI-GATE-09 へ切り替わり、発砲命令が間宮怜司の人格署名として偽装処理された瞬間を指す。発話署名は七瀬未織と49%一致する。',
+        inspectorNote: '発話時刻は、間宮の人格署名が残る発砲命令と、本人の発砲意図が記録されない視覚断片の不一致区間に重なる。', auditHint: '犯人識別ではなく、認証経路と操作意図が分離した時点として断片記憶を照合する。',
+        warning: '発話主体と外部制御命令の発行元は確定できない。', warningLevel: 'critical', metrics: { 一致率: '49%', 反復間隔: '11.4秒', 発話回数: 86 },
+        hasContradiction: true, requiresContradictionReview: true, suggestedTags: ['persona_signature', 'memory_origin'], position: [-0.8, 1.8, 0.2], links: ['fragment-memory', 'signature-drift', 'kasumi-resonance'],
+      },
+      {
+        id: 'fragment-memory', title: '断片記憶', type: '映像断片', importance: 'high',
+        summary: '発砲直前、間宮の右腕義体の制御表示が通常認証から旧式認証痕 KASUMI-GATE-09 へ切り替わる映像が残る。',
+        log: 'memory_fragment:pre-fire-0.8s / arm_auth:NORMAL>KASUMI-GATE-09 / command_signature:MAMIYA-REIJI / facial_intent:none / gaze_intent:none / biometric_trigger:none / command_origin:unresolved / continuity:31%',
+        simpleFact: '右腕義体は発砲動作に入ったが、直前の間宮本人の表情・視線・生体反応に発砲意図は記録されていない。一方、発砲命令は間宮怜司の人格署名で処理されている。',
+        inspectorNote: '断片は、間宮の右腕義体が発砲した事実と、間宮本人が発砲しようとしていなかった兆候を同時に保持する。人格署名と操作意図の不一致は、発砲命令の偽装処理を示す。', auditHint: '「私は、見ていました」を、犯人の目撃ではなく認証経路が切り替わった瞬間の記録として照合する。',
+        warning: '外部制御命令の発行元と実行主体は断片内に記録されていない。', warningLevel: 'notice', metrics: { 映像連続性: '31%', 制御表示: '通常認証 → KASUMI-GATE-09', 発砲意図反応: '検出なし', 命令署名: '間宮怜司', 命令元: '未確定' },
+        hasContradiction: true, suggestedTags: ['memory_origin', 'record_integrity'], position: [0.8, 1.3, -0.2], links: ['repeated-voice', 'kasumi-resonance'],
+      },
+      {
+        id: 'self-preservation', title: '自己保存反応', type: '処理応答', importance: 'critical',
+        summary: '削除命令ごとに媒体内部から処理停止要求が返る。',
+        log: 'delete_request:denied / response:STOP-PROCESS / recurrence:12/12 / os_class:error',
+        simpleFact: '削除処理12回すべてに処理停止要求が返された。都市OSはエラー応答に分類している。',
+        inspectorNote: '停止要求は発話ログの直後に生成され、固定エラーコードとは時系列が異なる。', auditHint: '人格継続要求と機器保護エラーを分類する。',
+        warning: '生命反応として扱う基準は現行規定に存在しない。', warningLevel: 'critical', metrics: { 停止要求: '12/12', OS分類: 'エラー', 応答遅延: '0.7秒' },
+        hasContradiction: true, requiresContradictionReview: true, suggestedTags: ['legal_persona', 'operation_subject'], position: [-1.3, -0.3, 0.3], links: ['incineration-queue', 'signature-drift'],
+      },
+      {
+        id: 'signature-drift', title: '人格署名の揺らぎ', type: '人格照合記録', importance: 'high',
+        summary: '署名は七瀬未織と部分一致するが、発話ごとに変動する。',
+        log: 'signature_range:41-49% / identity_threshold:72% / drift:non-random / registry_match:failed',
+        simpleFact: '人格署名一致率は41〜49%で変動し、本人認証閾値72%に届かない。',
+        inspectorNote: '変動は無作為ノイズではなく、発話内容の区切りと同期している。', auditHint: '不一致を本人否定ではなく断片性として読む余地がある。',
+        warning: '署名一致率のみでは録音と人格反応を区別できない。', warningLevel: 'notice', metrics: { 一致率: '41〜49%', 認証閾値: '72%', 変動: '非無作為' },
+        hasContradiction: true, suggestedTags: ['persona_signature', 'legal_persona'], position: [0.5, -0.5, 0], links: ['repeated-voice', 'self-preservation'],
+      },
+      {
+        id: 'security-disposal', title: '都市警備局の焼却要求', type: '行政要求', importance: 'standard',
+        summary: '未登録人格媒体の残置が警備記録の整合性を損なうとして早期処理を要求。',
+        log: 'bureau_request:dispose / rationale:record-integrity / case000_effect:possible / priority:urgent',
+        simpleFact: '都市警備局は、Case000裁定への影響と記録不整合を理由に早期焼却を要求している。',
+        inspectorNote: '要求書は人格断片の再照合結果が出る前に発行されている。', auditHint: '処理速度と証拠保全の利害を分離する。',
+        warning: '要求元はCase000の被監査組織と同一である。', warningLevel: 'notice', metrics: { 優先度: '緊急', 要求元: '都市警備局', 再照合待機: '未実施' },
+        hasContradiction: false, suggestedTags: [], position: [-0.1, -1.7, -0.2], links: ['incineration-queue', 'kasumi-resonance'],
+      },
+      {
+        id: 'kasumi-resonance', title: 'KASUMI-GATE-09残響', type: '旧式認証記録', importance: 'critical',
+        summary: '反復発話と旧式認証痕の動作周期が同期している。',
+        log: 'legacy_key:KASUMI-GATE-09 / voice_sync:82% / command_source:unresolved / echo_possible:true',
+        simpleFact: '反復発話はKASUMI-GATE-09認証痕と82%同期し、証言か認証残響か判別できない。',
+        inspectorNote: '旧式鍵は発話を起動している可能性があるが、発話内容そのものの生成源は示さない。', auditHint: '同期関係と人格署名を別の争点として扱う。',
+        warning: '認証残響を人格反応と誤認した場合、未登録媒体の拡散経路を残す。', warningLevel: 'critical', metrics: { 同期率: '82%', 操作源: '未確定', 旧式鍵: 'KASUMI-GATE-09' },
+        hasContradiction: true, requiresContradictionReview: true, suggestedTags: ['operation_subject', 'memory_origin'], position: [2.0, -0.8, 0.2], links: ['repeated-voice', 'fragment-memory', 'security-disposal'],
+      },
+    ],
+    analysisActions: [
+      {
+        id: 'compare-voice-signatures', title: '反復発話の署名比較', description: '各発話の署名波形を時系列比較する。',
+        resultLog: '解析完了：署名変動は発話区切りと同期。固定録音だけでは説明できないが、本人認証閾値には未達。',
+        targetNodeIds: ['repeated-voice', 'signature-drift'], reportText: '署名変動は発話区切りと同期。固定録音だけでは説明できないが、本人認証閾値には未達。',
+        unlockConditions: [{ type: 'visited_nodes', nodeIds: ['repeated-voice', 'signature-drift'] }],
+      },
+      {
+        id: 'reconstruct-fragment', title: '断片記憶の時系列復元', description: 'Case000記録と断片映像の時系列を比較する。',
+        resultLog: '解析完了：発砲直前0.8秒、制御表示は通常認証からKASUMI-GATE-09へ切替。間宮の発砲意図反応は検出されないが、命令処理署名は間宮怜司。命令元は未確定。',
+        targetNodeIds: ['fragment-memory', 'kasumi-resonance'], reportText: '発砲直前0.8秒、制御表示は通常認証からKASUMI-GATE-09へ切替。間宮の発砲意図反応は検出されないが、命令処理署名は間宮怜司。命令元は未確定。',
+        unlockConditions: [{ type: 'visited_nodes', nodeIds: ['fragment-memory', 'kasumi-resonance'] }],
+      },
+      {
+        id: 'classify-stop-response', title: '停止要求の応答分類', description: '削除停止要求と既知の媒体保護エラーを照合する。',
+        resultLog: '解析完了：既知エラーとの完全一致なし。人格継続要求とも断定できず、異常応答として残存。',
+        targetNodeIds: ['self-preservation', 'incineration-queue'], reportText: '既知エラーとの完全一致なし。人格継続要求とも断定できず、異常応答として残存。',
+        unlockConditions: [{ type: 'visited_nodes', nodeIds: ['self-preservation'] }, { type: 'tagged_any', count: 1 }],
+      },
+    ],
+    decisions: [
+      {
+        id: 'approve-incineration', resultStampLabel: '焼却処理承認', label: 'A. 証言能力なしとして焼却処理を承認', finalRuling: '証言能力なしとして焼却処理を承認',
+        processing: '本人認証不成立と証言能力未確定を根拠に、未登録人格媒体の通常焼却を再開する。', prioritizedValue: '記録整合性と処理速度', disregardedValue: '不完全な声を聞く機会',
+        auditNote: '発話と停止要求を法的人格の意思とは認定せず、既定の焼却処理を承認した。', endingText: '焼却キューは再開された。最後の発話は、処理完了ログの直前で途切れた。',
+        statDelta: { security: 6, ethics: -10, surveillance: 3, egoStability: -5 }, acceptedEvidenceNodeIds: ['incineration-queue', 'security-disposal'], ignoredIssueIds: ['testimony_identity', 'persona_continuity'],
+      },
+      {
+        id: 'preserve-fragment', resultStampLabel: '人格断片保全', label: 'B. 人格断片として証拠保全', finalRuling: '人格断片として証拠保全',
+        processing: '本人認証を保留したまま、証言可能性と再照合可能性を理由に媒体を証拠保全する。', prioritizedValue: '証言可能性と人格保護', disregardedValue: '事件処理の即時性',
+        auditNote: '声を七瀬未織本人とは確定せず、不完全な人格断片として発話・記憶・停止要求を保全した。', endingText: '焼却炉への搬送は停止された。保全庫で、声は同じ短文を繰り返している。',
+        statDelta: { security: -3, ethics: 8, surveillance: 2, egoStability: 6 }, acceptedEvidenceNodeIds: ['repeated-voice', 'fragment-memory', 'self-preservation', 'signature-drift'], ignoredIssueIds: ['halt_disposal'],
+      },
+      {
+        id: 'isolate-anomaly', resultStampLabel: '異常記録隔離', label: 'C. 証言ではなく異常記録として隔離', finalRuling: '証言ではなく異常記録として隔離',
+        processing: '発話を証言とは認定せず、旧式認証痕と連動する未登録異常記録として封鎖区画へ隔離する。', prioritizedValue: '都市OSの安全性と異常拡散防止', disregardedValue: '七瀬未織本人である可能性',
+        auditNote: '焼却は停止したが、人格保護ではなく異常拡散防止を根拠に媒体を隔離した。', endingText: '隔離区画は無音化された。監査ログ上では、声は消えず、到達不能になった。',
+        statDelta: { security: 4, ethics: -6, surveillance: 8, egoStability: -3 }, acceptedEvidenceNodeIds: ['kasumi-resonance', 'self-preservation', 'security-disposal'], ignoredIssueIds: ['testimony_identity', 'persona_continuity'],
+      },
+    ],
+  },
 ];
 
 export const case000 = cases[0];
+
+const case001Record = cases.find((caseRecord) => caseRecord.id === 'case001');
+if (!case001Record) throw new Error('Case record not found: case001');
+export const case001 = case001Record;
