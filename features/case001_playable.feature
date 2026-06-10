@@ -1,0 +1,38 @@
+Feature: Case001 焼却されなかった声を監査する
+  Case000 の監査フローと保存互換性を維持しながら、監査官は Case001 を選択して最終裁定まで進められる。
+
+  Background:
+    Given 監査端末を起動して都市OS通知を確認した
+
+  Scenario: Case000 と Case001 が事件選択に表示される
+    When 事件ファイル選択を開く
+    Then Case000「誰が撃ったのか」は監査可能である
+    And Case001「焼却されなかった声」も監査可能である
+    And Case001 に previewOnly または凍結中の表示はない
+
+  Scenario: Case001 の調査記録を確認する
+    Given Case001 を開いて調査を開始した
+    Then Memory Network に Case001 の7記憶ノードが表示される
+    And 3つの争点が表示される
+    When 記憶ノードを選択する
+    Then 単純事実と監査官メモと重要警告と詳細ログが表示される
+    And 解放条件を満たした追加解析を実行できる
+
+  Scenario: Case001 の最終判断を解放する
+    Given Case001 の必要ノードを確認した
+    And 判断根拠を1件以上登録した
+    And 矛盾分類を1件以上登録した
+    When 最終判断へ進む
+    Then 焼却承認と証拠保全と異常記録隔離の3裁定が表示される
+
+  Scenario: Case001 の結果を保存する
+    Given Case001 の最終判断画面を開いている
+    When いずれかの裁定を確定する
+    Then 結果画面に「救った価値（優先）」と「犠牲にした価値（軽視）」が表示される
+    And persona-null:case-results に caseId "case001" の結果が保存される
+    And 事件選択では Case001 が処理済みとして判定される
+
+  Scenario: Case000 の互換性を維持する
+    When Case000 を選択して既存の判断条件を満たす
+    Then Case000 の既存3裁定から最終判断できる
+    And 既存形式の Case000 保存結果を読み込める
