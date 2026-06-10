@@ -393,11 +393,22 @@ describe('Persona Null player flow', () => {
     expect(container.textContent).toContain('必要ノード確認 4/4');
     clickButton('ノード：反復発話ログ');
     expect(container.textContent).toContain('私は、見ていました');
+    expect(container.textContent).toContain('犯人の顔ではなく');
+    expect(container.textContent).toContain('通常認証から');
+    expect(container.textContent).toContain('へ切り替わり');
+    expect(container.textContent).toContain('偽装処理された瞬間');
+
+    clickButton('ノード：断片記憶');
+    expect(container.textContent).toContain('表情・視線・生体反応に発砲意図は記録されていない');
+    expect(container.textContent).toContain('発砲命令は');
+    expect(container.textContent).toContain('で処理されている');
+    expect(container.textContent).toContain('命令元');
+    expect(container.textContent).toContain('未確定');
     expect(container.textContent).toContain('監査官メモ');
     expect(container.textContent).toContain('詳細ログ');
 
     clickButton('提出根拠に登録');
-    clickButton('人格署名の矛盾');
+    clickButton('記憶由来の矛盾');
     expect(findButton('最終判断へ進む')?.disabled).toBe(false);
     clickButton('最終判断へ進む');
 
