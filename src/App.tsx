@@ -1,12 +1,12 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { canUnlockJudgment, getCurrentGuidance, getJudgmentRequirements, isAnalysisActionUnlocked, isWarningLog, type CurrentGuidance, type JudgmentRequirement } from './auditRules';
-import { case000, case001Preview, contradictionTagLabels } from './case000';
+import { case000, cases, contradictionTagLabels } from './data/cases';
 import { AnnotatedText } from './components/AnnotatedText';
 import { TypewriterText } from './components/TypewriterText';
 import { PersonProfile } from './components/PersonProfile';
 import { MemoryNetwork } from './MemoryNetwork';
 import { loadCaseResults, loadReadFlags, markRead, saveCaseResult } from './storage';
-import type { AnalysisAction, AnalysisUnlockCondition, CityStats, ContradictionTag, DecisionOption, MemoryNode, NodeImportance, SavedCaseResult, Screen, TaggedNodes } from './types';
+import type { AnalysisAction, AnalysisUnlockCondition, CaseRecord, CityStats, ContradictionTag, DecisionOption, MemoryNode, NodeImportance, SavedCaseResult, Screen, TaggedNodes } from './types';
 import './styles.css';
 
 const clampStat = (value: number) => Math.max(0, Math.min(100, value));
@@ -25,12 +25,6 @@ const statLabels: Record<keyof CityStats, string> = {
 };
 
 const cityStatKeys = Object.keys(statLabels) as (keyof CityStats)[];
-
-const rulingStampLabels: Record<string, string> = {
-  'detain-mamiya': '発砲責任拘束',
-  'freeze-evidence': '証拠保全',
-  'process-medium': '操作干渉源隔離',
-};
 
 function getStatTone(key: keyof CityStats, value: number) {
   if (key === 'surveillance') {
@@ -51,11 +45,13 @@ const importanceLabels: Record<NodeImportance, string> = {
 
 function App() {
   const [screen, setScreen] = useState<Screen>('title');
+  const [selectedCaseId, setSelectedCaseId] = useState(case000.id);
+  const caseRecord = cases.find((item) => item.id === selectedCaseId) ?? case000;
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [visitedNodeIds, setVisitedNodeIds] = useState<string[]>([]);
   const [pinnedNodeIds, setPinnedNodeIds] = useState<string[]>([]);
   const [taggedNodes, setTaggedNodes] = useState<TaggedNodes>({});
-  const [resources, setResources] = useState(case000.auditResourceMax);
+  const [resources, setResources] = useState(caseRecord.auditResourceMax);
   const [executedActionIds, setExecutedActionIds] = useState<string[]>([]);
   const [systemLogs, setSystemLogs] = useState<string[]>(['監査室端末を起動。都市OS 基礎公定通知を待機。']);
   const [decision, setDecision] = useState<DecisionOption | null>(null);
@@ -65,30 +61,30 @@ function App() {
   const [feedback, setFeedback] = useState<{ id: number; message: string } | null>(null);
   const wasJudgmentReady = useRef(false);
 
-  const selectedNode = case000.nodes.find((node) => node.id === selectedNodeId) ?? null;
+  const selectedNode = caseRecord.nodes.find((node) => node.id === selectedNodeId) ?? null;
   const visitedCount = visitedNodeIds.length;
   const requirements = getJudgmentRequirements({
     visitedNodeCount: visitedCount,
-    requiredNodesToJudge: case000.requiredNodesToJudge,
+    requiredNodesToJudge: caseRecord.requiredNodesToJudge,
     pinnedNodeCount: pinnedNodeIds.length,
     taggedNodes,
   });
   const canJudge = canUnlockJudgment({
     visitedNodeCount: visitedCount,
-    requiredNodesToJudge: case000.requiredNodesToJudge,
+    requiredNodesToJudge: caseRecord.requiredNodesToJudge,
     pinnedNodeCount: pinnedNodeIds.length,
     taggedNodes,
   });
   const taggedNodeCount = Object.values(taggedNodes).filter((tags) => tags.length > 0).length;
   const guidance = getCurrentGuidance({
     visitedNodeCount: visitedCount,
-    requiredNodesToJudge: case000.requiredNodesToJudge,
+    requiredNodesToJudge: caseRecord.requiredNodesToJudge,
     pinnedNodeCount: pinnedNodeIds.length,
     taggedNodeCount,
     resources,
     canJudge,
   });
-  const finalStats = useMemo(() => (decision ? addStats(case000.initialStats, decision.statDelta) : case000.initialStats), [decision]);
+  const finalStats = decision ? addStats(caseRecord.initialStats, decision.statDelta) : caseRecord.initialStats;
 
   const showFeedback = (message: string) => {
     setFeedback({ id: Date.now(), message });
@@ -106,9 +102,9 @@ function App() {
   }, [feedback]);
 
   const submitDecision = (nextDecision: DecisionOption) => {
-    const nextFinalStats = addStats(case000.initialStats, nextDecision.statDelta);
+    const nextFinalStats = addStats(caseRecord.initialStats, nextDecision.statDelta);
     const nextResultPayload: SavedCaseResult = {
-      caseId: case000.id,
+      caseId: caseRecord.id,
       decisionId: nextDecision.id,
       pinnedNodeIds,
       taggedNodes,
@@ -130,13 +126,13 @@ function App() {
   const selectNode = (nodeId: string) => {
     setSelectedNodeId(nodeId);
     setVisitedNodeIds((ids) => (ids.includes(nodeId) ? ids : [...ids, nodeId]));
-    const node = case000.nodes.find((item) => item.id === nodeId);
+    const node = caseRecord.nodes.find((item) => item.id === nodeId);
     appendLog(`記憶ノード確認：${node?.title ?? nodeId}。公定値と監査記録を照合。`);
     showFeedback('SCAN COMPLETE');
   };
 
   const togglePin = (nodeId: string) => {
-    const node = case000.nodes.find((item) => item.id === nodeId);
+    const node = caseRecord.nodes.find((item) => item.id === nodeId);
     if (pinnedNodeIds.includes(nodeId)) {
       setPinnedNodeIds((ids) => ids.filter((id) => id !== nodeId));
       appendLog(`判断根拠解除：${node?.title ?? nodeId}。`);
@@ -163,7 +159,7 @@ function App() {
   };
 
   const executeAction = (actionId: string) => {
-    const action = case000.analysisActions.find((item) => item.id === actionId);
+    const action = caseRecord.analysisActions.find((item) => item.id === actionId);
     if (!action || executedActionIds.includes(actionId)) return;
     if (!isAnalysisActionUnlocked({ action, visitedNodeIds, pinnedNodeIds, taggedNodes })) {
       appendLog(`解析権限未解放：${action.title}。必要記録を確認してください。`);
@@ -181,17 +177,31 @@ function App() {
 
   if (screen === 'title') return <TitleScreen onNext={() => setScreen('briefing')} />;
   if (screen === 'briefing') return <AuthBriefingScreen onNext={() => { markRead('city-os-briefing'); setReadFlags((flags) => (flags.includes('city-os-briefing') ? flags : [...flags, 'city-os-briefing'])); setScreen('caseSelect'); }} read={readFlags.includes('city-os-briefing')} />;
-  if (screen === 'caseSelect') return <CaseSelectScreen completed={completedCaseIds.includes(case000.id)} onNext={() => setScreen('caseOverview')} />;
-  if (screen === 'caseOverview') return <CaseOverviewScreen onNext={() => setScreen('investigation')} />;
+  if (screen === 'caseSelect') return <CaseSelectScreen completedCaseIds={completedCaseIds} onSelect={(nextCase) => {
+    setSelectedCaseId(nextCase.id);
+    setSelectedNodeId(null);
+    setVisitedNodeIds([]);
+    setPinnedNodeIds([]);
+    setTaggedNodes({});
+    setResources(nextCase.auditResourceMax);
+    setExecutedActionIds([]);
+    setSystemLogs(['監査室端末を起動。都市OS 基礎公定通知を待機。', `監査対象選択：${nextCase.id.toUpperCase()} / ${nextCase.recordName}。`]);
+    setDecision(null);
+    setResultPayload(null);
+    wasJudgmentReady.current = false;
+    setScreen('caseOverview');
+  }} />;
+  if (screen === 'caseOverview') return <CaseOverviewScreen caseRecord={caseRecord} onNext={() => setScreen('investigation')} />;
   if (screen === 'decision') {
-    return <DecisionScreen pinnedNodeIds={pinnedNodeIds} onBack={() => setScreen('investigation')} onDecide={submitDecision} />;
+    return <DecisionScreen caseRecord={caseRecord} pinnedNodeIds={pinnedNodeIds} onBack={() => setScreen('investigation')} onDecide={submitDecision} />;
   }
   if (screen === 'result' && decision && resultPayload) {
-    return <ResultScreen decision={decision} finalStats={finalStats} payload={resultPayload} taggedNodes={taggedNodes} />;
+    return <ResultScreen caseRecord={caseRecord} decision={decision} finalStats={finalStats} payload={resultPayload} taggedNodes={taggedNodes} />;
   }
 
   return (
     <InvestigationScreen
+      caseRecord={caseRecord}
       selectedNode={selectedNode}
       selectedNodeId={selectedNodeId}
       visitedNodeIds={visitedNodeIds}
@@ -255,7 +265,7 @@ function AuthBriefingScreen({ onNext, read }: { onNext: () => void; read: boolea
   );
 }
 
-function CaseSelectScreen({ completed, onNext }: { completed: boolean; onNext: () => void }) {
+function CaseSelectScreen({ completedCaseIds, onSelect }: { completedCaseIds: string[]; onSelect: (caseRecord: CaseRecord) => void }) {
   return (
     <Shell>
       <section className="document-card case-files-screen">
@@ -265,55 +275,53 @@ function CaseSelectScreen({ completed, onNext }: { completed: boolean; onNext: (
           <p>都市OSが保留した事件記録から、監査可能なファイルを選択してください。</p>
         </div>
         <div className="case-file-list">
-          <article className="case-file available">
-            <div className="case-file-topline"><span>CASE000</span><strong>監査可能</strong></div>
-            <p className="case-file-record">RECORD / {case000.recordName}</p>
-            <h3>{case000.title}</h3>
-            <p>{case000.subtitle}</p>
-            <dl>
-              <div><dt>管轄</dt><dd>{case000.organizationName}</dd></div>
-              <div><dt>場所</dt><dd>{case000.location}</dd></div>
-              <div><dt>状態</dt><dd>{completed ? '処理済記録あり / 再監査可能' : '未処理 / 監査可能'}</dd></div>
-            </dl>
-            <button onClick={onNext}>Case000を開く</button>
-          </article>
-          <article className="case-file frozen" aria-disabled="true">
-            <div className="case-file-topline"><span>{case001Preview.id.toUpperCase()}</span><strong>凍結中</strong></div>
-            <p className="case-file-record">PREVIEW ONLY / previewOnly</p>
-            <h3>{case001Preview.title}</h3>
-            <p>{case001Preview.subtitle}</p>
-            <div className="case-file-lock"><span aria-hidden="true">×</span> 監査経路は未開放です</div>
-          </article>
+          {cases.map((caseRecord) => {
+            const completed = completedCaseIds.includes(caseRecord.id);
+            return (
+              <article className="case-file available" key={caseRecord.id}>
+                <div className="case-file-topline"><span>{caseRecord.id.toUpperCase()}</span><strong>監査可能</strong></div>
+                <p className="case-file-record">RECORD / {caseRecord.recordName}</p>
+                <h3>{caseRecord.title}</h3>
+                <p>{caseRecord.subtitle}</p>
+                <dl>
+                  <div><dt>管轄</dt><dd>{caseRecord.organizationName}</dd></div>
+                  <div><dt>場所</dt><dd>{caseRecord.location}</dd></div>
+                  <div><dt>状態</dt><dd>{completed ? '処理済記録あり / 再監査可能' : '未処理 / 監査可能'}</dd></div>
+                </dl>
+                <button onClick={() => onSelect(caseRecord)}>{caseRecord.id.replace('case', 'Case')}を開く</button>
+              </article>
+            );
+          })}
         </div>
       </section>
     </Shell>
   );
 }
 
-function CaseOverviewScreen({ onNext }: { onNext: () => void }) {
+function CaseOverviewScreen({ caseRecord, onNext }: { caseRecord: CaseRecord; onNext: () => void }) {
   return (
     <Shell>
       <section className="document-card wide">
         <p className="eyebrow">事件概要</p>
-        <h2>{case000.title}</h2>
-        <p><AnnotatedText text={case000.overview} /></p>
+        <h2>{caseRecord.title}</h2>
+        <p><AnnotatedText text={caseRecord.overview} /></p>
         <section className="overview-grid">
           <div className="person-profiles-panel">
             <h3>人物プロファイル</h3>
             <div className="person-profile-list">
-              {case000.personLogs.map((person) => <PersonProfile key={person.id} person={person} />)}
+              {caseRecord.personLogs.map((person) => <PersonProfile key={person.id} person={person} />)}
             </div>
           </div>
           <div>
             <h3>処理要求</h3>
-            <p><strong>{case000.processingRequest.title}</strong>：<AnnotatedText text={case000.processingRequest.simpleFact} /></p>
-            <p className="warning-text"><AnnotatedText text={case000.processingRequest.warning} /></p>
+            <p><strong>{caseRecord.processingRequest.title}</strong>：<AnnotatedText text={caseRecord.processingRequest.simpleFact} /></p>
+            <p className="warning-text"><AnnotatedText text={caseRecord.processingRequest.warning} /></p>
           </div>
         </section>
         <section>
           <h3>操作主体候補</h3>
           <ul>
-            {case000.operatorCandidates.map((candidate) => (
+            {caseRecord.operatorCandidates.map((candidate) => (
               <li key={candidate.id}><strong>{candidate.candidate}</strong>：{candidate.simpleFact}</li>
             ))}
           </ul>
@@ -326,6 +334,7 @@ function CaseOverviewScreen({ onNext }: { onNext: () => void }) {
 }
 
 type InvestigationProps = {
+  caseRecord: CaseRecord;
   selectedNode: MemoryNode | null;
   selectedNodeId: string | null;
   visitedNodeIds: string[];
@@ -357,14 +366,14 @@ function GuidancePanel({ guidance }: { guidance: CurrentGuidance }) {
   );
 }
 
-function getAnalysisConditionItems(condition: AnalysisUnlockCondition, props: Pick<InvestigationProps, 'visitedNodeIds' | 'pinnedNodeIds' | 'taggedNodes'>) {
+function getAnalysisConditionItems(caseRecord: CaseRecord, condition: AnalysisUnlockCondition, props: Pick<InvestigationProps, 'visitedNodeIds' | 'pinnedNodeIds' | 'taggedNodes'>) {
   const taggedNodeIds = Object.entries(props.taggedNodes).filter(([, tags]) => tags.length > 0).map(([nodeId]) => nodeId);
 
   switch (condition.type) {
     case 'visited_nodes':
       return condition.nodeIds.map((nodeId) => ({
         completed: props.visitedNodeIds.includes(nodeId),
-        label: case000.nodes.find((node) => node.id === nodeId)?.title ?? nodeId,
+        label: caseRecord.nodes.find((node) => node.id === nodeId)?.title ?? nodeId,
       }));
     case 'pinned_any':
       return [{ completed: props.pinnedNodeIds.length >= condition.count, label: `任意の記録を${condition.count}件以上提出根拠に登録` }];
@@ -373,12 +382,13 @@ function getAnalysisConditionItems(condition: AnalysisUnlockCondition, props: Pi
     case 'tagged_node':
       return [{
         completed: taggedNodeIds.includes(condition.nodeId),
-        label: `${case000.nodes.find((node) => node.id === condition.nodeId)?.title ?? condition.nodeId}を矛盾分類`,
+        label: `${caseRecord.nodes.find((node) => node.id === condition.nodeId)?.title ?? condition.nodeId}を矛盾分類`,
       }];
   }
 }
 
 function AnalysisActionControl(props: {
+  caseRecord: CaseRecord;
   action: AnalysisAction;
   executed: boolean;
   onExecute: (actionId: string) => void;
@@ -388,7 +398,7 @@ function AnalysisActionControl(props: {
   visitedNodeIds: string[];
 }) {
   const unlocked = isAnalysisActionUnlocked(props);
-  const requirements = (props.action.unlockConditions ?? []).flatMap((condition) => getAnalysisConditionItems(condition, props));
+  const requirements = (props.action.unlockConditions ?? []).flatMap((condition) => getAnalysisConditionItems(props.caseRecord, condition, props));
 
   return (
     <div className={`analysis-action ${unlocked ? 'unlocked' : 'locked'}`}>
@@ -410,13 +420,13 @@ function AnalysisActionControl(props: {
   );
 }
 
-function ResourceGauge({ resources }: { resources: number }) {
+function ResourceGauge({ caseRecord, resources }: { caseRecord: CaseRecord; resources: number }) {
   return (
-    <div className={`resource-gauge ${resources === 0 ? 'depleted' : resources === 1 ? 'low' : ''}`} aria-label={`監査リソース ${resources} / ${case000.auditResourceMax}`}>
+    <div className={`resource-gauge ${resources === 0 ? 'depleted' : resources === 1 ? 'low' : ''}`} aria-label={`監査リソース ${resources} / ${caseRecord.auditResourceMax}`}>
       <span className="resource-blocks" aria-hidden="true">
-        {Array.from({ length: case000.auditResourceMax }, (_, index) => <i className={index < resources ? 'filled' : ''} key={index} />)}
+        {Array.from({ length: caseRecord.auditResourceMax }, (_, index) => <i className={index < resources ? 'filled' : ''} key={index} />)}
       </span>
-      <strong>{resources} / {case000.auditResourceMax}</strong>
+      <strong>{resources} / {caseRecord.auditResourceMax}</strong>
     </div>
   );
 }
@@ -432,19 +442,20 @@ function OperationToast({ message }: { message: string | null }) {
 }
 
 function InvestigationScreen(props: InvestigationProps) {
+  const { caseRecord } = props;
   const selectedNode = props.selectedNode;
   const suggestedTags = selectedNode?.suggestedTags ?? [];
   const eligibleForTags = suggestedTags.length > 0;
   const taggedNodeCount = Object.values(props.taggedNodes).filter((tags) => tags.length > 0).length;
-  const pinnedNodes = case000.nodes.filter((node) => props.pinnedNodeIds.includes(node.id));
+  const pinnedNodes = caseRecord.nodes.filter((node) => props.pinnedNodeIds.includes(node.id));
   const analysisReports = selectedNode
-    ? case000.analysisActions.filter((action) => (
+    ? caseRecord.analysisActions.filter((action) => (
         props.executedActionIds.includes(action.id)
         && action.targetNodeIds?.includes(selectedNode.id)
         && action.reportText
       ))
     : [];
-  const hasExecutableAnalysis = case000.analysisActions.some((action) => (
+  const hasExecutableAnalysis = caseRecord.analysisActions.some((action) => (
     !props.executedActionIds.includes(action.id)
     && props.resources > 0
     && isAnalysisActionUnlocked({
@@ -469,22 +480,22 @@ function InvestigationScreen(props: InvestigationProps) {
     <main className="app-shell game-grid">
       <aside className="pane left-pane">
         <div className="hud-panel-label"><span>01</span> CASE INDEX</div>
-        <p className="eyebrow">{case000.organizationName} / {case000.id.toUpperCase()}</p>
-        <h2>{case000.title}</h2>
+        <p className="eyebrow">{caseRecord.organizationName} / {caseRecord.id.toUpperCase()}</p>
+        <h2>{caseRecord.title}</h2>
         <GuidancePanel guidance={props.guidance} />
         <section className="pane-section compact-progress status-chip-row" aria-label="監査進行">
-          <span className={props.visitedNodeIds.length >= case000.requiredNodesToJudge ? 'status-chip valid' : 'status-chip muted'}>必要ノード確認 <strong>{props.visitedNodeIds.length}/{case000.requiredNodesToJudge}</strong></span>
+          <span className={props.visitedNodeIds.length >= caseRecord.requiredNodesToJudge ? 'status-chip valid' : 'status-chip muted'}>必要ノード確認 <strong>{props.visitedNodeIds.length}/{caseRecord.requiredNodesToJudge}</strong></span>
           <span className={props.pinnedNodeIds.length >= 1 ? 'status-chip valid' : 'status-chip muted'}>提出根拠 <strong>{props.pinnedNodeIds.length}/1</strong></span>
           <span className={taggedNodeCount >= 1 ? 'status-chip valid' : 'status-chip warning'}>矛盾分類 <strong>{taggedNodeCount}/1</strong></span>
-          <span className={props.resources === 0 ? 'status-chip critical' : props.resources <= 1 ? 'status-chip warning' : 'status-chip muted'}>監査リソース <strong>{props.resources}/{case000.auditResourceMax}</strong></span>
+          <span className={props.resources === 0 ? 'status-chip critical' : props.resources <= 1 ? 'status-chip warning' : 'status-chip muted'}>監査リソース <strong>{props.resources}/{caseRecord.auditResourceMax}</strong></span>
         </section>
         <section className="pane-section memory-node-index" aria-labelledby="memory-node-index-title">
           <div className="node-index-heading">
             <h3 id="memory-node-index-title">争点別 記憶ノード</h3>
-            <small>未確認 {case000.nodes.length - props.visitedNodeIds.length}</small>
+            <small>未確認 {caseRecord.nodes.length - props.visitedNodeIds.length}</small>
           </div>
           <div className="issue-list">
-            {case000.issues.map((issue) => {
+            {caseRecord.issues.map((issue) => {
               const reviewedCount = issue.relatedNodeIds.filter((nodeId) => props.visitedNodeIds.includes(nodeId)).length;
               const submittedCount = issue.relatedNodeIds.filter((nodeId) => props.pinnedNodeIds.includes(nodeId)).length;
 
@@ -504,7 +515,7 @@ function InvestigationScreen(props: InvestigationProps) {
                   </div>
                   <div className="memory-node-list">
                     {issue.relatedNodeIds.map((nodeId) => {
-                      const node = case000.nodes.find((item) => item.id === nodeId);
+                      const node = caseRecord.nodes.find((item) => item.id === nodeId);
                       if (!node) return null;
                       const isSelected = node.id === props.selectedNodeId;
                       const isVisited = props.visitedNodeIds.includes(node.id);
@@ -540,14 +551,14 @@ function InvestigationScreen(props: InvestigationProps) {
         <details className="pane-section disclosure-card">
           <summary>事件・監査情報を表示</summary>
           <h3>事件概要</h3>
-          <p className="case-subtitle">{case000.subtitle}</p>
-          <p>{case000.overview}</p>
+          <p className="case-subtitle">{caseRecord.subtitle}</p>
+          <p>{caseRecord.overview}</p>
           <h3>監査リソース</h3>
-          <ResourceGauge resources={props.resources} />
+          <ResourceGauge caseRecord={props.caseRecord} resources={props.resources} />
           <small>追加解析1件につき1消費。最終判断は残数0でも可能。</small>
           {props.resources === 0 && <p className="warning-text">監査リソース不足：追加解析を実行できません。</p>}
           <h3>初期都市ステータス</h3>
-          <StatusBars stats={case000.initialStats} />
+          <StatusBars stats={caseRecord.initialStats} />
         </details>
       </aside>
 
@@ -570,7 +581,7 @@ function InvestigationScreen(props: InvestigationProps) {
             ))}
           </div>
         </div>
-        <MemoryNetwork nodes={case000.nodes} selectedNodeId={props.selectedNodeId} visitedNodeIds={props.visitedNodeIds} pinnedNodeIds={props.pinnedNodeIds} taggedNodes={props.taggedNodes} executedActionIds={props.executedActionIds} onSelectNode={props.onSelectNode} />
+        <MemoryNetwork analysisActions={caseRecord.analysisActions} nodes={caseRecord.nodes} selectedNodeId={props.selectedNodeId} visitedNodeIds={props.visitedNodeIds} pinnedNodeIds={props.pinnedNodeIds} taggedNodes={props.taggedNodes} executedActionIds={props.executedActionIds} onSelectNode={props.onSelectNode} />
       </section>
 
       <aside className="pane right-pane">
@@ -624,7 +635,7 @@ function InvestigationScreen(props: InvestigationProps) {
           </section>
           <section className="pane-section right-city-status">
             <h3>都市ステータス</h3>
-            <StatusBars stats={case000.initialStats} />
+            <StatusBars stats={caseRecord.initialStats} />
           </section>
           <section className="pane-section node-core-facts">
             <h3>単純事実</h3>
@@ -665,11 +676,12 @@ function InvestigationScreen(props: InvestigationProps) {
           </details>
           <section className="pane-section analysis-summary">
             <div><span>追加解析</span><strong>{analysisStatus}</strong></div>
-            <div className="analysis-resource-row"><span>監査リソース残数</span><ResourceGauge resources={props.resources} /></div>
+            <div className="analysis-resource-row"><span>監査リソース残数</span><ResourceGauge caseRecord={props.caseRecord} resources={props.resources} /></div>
             <details className="inline-details actions">
               <summary>解析メニューを表示</summary>
-              {case000.analysisActions.map((action) => (
+              {caseRecord.analysisActions.map((action) => (
                 <AnalysisActionControl
+                  caseRecord={caseRecord}
                   action={action}
                   executed={props.executedActionIds.includes(action.id)}
                   key={action.id}
@@ -737,7 +749,7 @@ function StatusBars({ stats }: { stats: CityStats }) {
   );
 }
 
-function DecisionScreen({ pinnedNodeIds, onBack, onDecide }: { pinnedNodeIds: string[]; onBack: () => void; onDecide: (decision: DecisionOption) => void }) {
+function DecisionScreen({ caseRecord, pinnedNodeIds, onBack, onDecide }: { caseRecord: CaseRecord; pinnedNodeIds: string[]; onBack: () => void; onDecide: (decision: DecisionOption) => void }) {
   return (
     <Shell>
       <section className="document-card wide ruling-sheet">
@@ -748,9 +760,9 @@ function DecisionScreen({ pinnedNodeIds, onBack, onDecide }: { pinnedNodeIds: st
           <p>提出根拠と各裁定案が採用する記録、保留する争点、都市ステータスへの影響を照合してください。</p>
         </header>
         <div className="decision-list">
-          {case000.decisions.map((option, index) => {
-            const acceptedNodes = case000.nodes.filter((node) => option.acceptedEvidenceNodeIds?.includes(node.id));
-            const ignoredIssues = case000.issues.filter((issue) => option.ignoredIssueIds?.includes(issue.id));
+          {caseRecord.decisions.map((option, index) => {
+            const acceptedNodes = caseRecord.nodes.filter((node) => option.acceptedEvidenceNodeIds?.includes(node.id));
+            const ignoredIssues = caseRecord.issues.filter((issue) => option.ignoredIssueIds?.includes(issue.id));
             const submittedAcceptedCount = acceptedNodes.filter((node) => pinnedNodeIds.includes(node.id)).length;
 
             return (
@@ -805,8 +817,8 @@ function DecisionScreen({ pinnedNodeIds, onBack, onDecide }: { pinnedNodeIds: st
   );
 }
 
-function ResultScreen({ decision, finalStats, payload, taggedNodes }: { decision: DecisionOption; finalStats: CityStats; payload: SavedCaseResult; taggedNodes: TaggedNodes }) {
-  const pinned = case000.nodes.filter((node) => payload.pinnedNodeIds.includes(node.id));
+function ResultScreen({ caseRecord, decision, finalStats, payload, taggedNodes }: { caseRecord: CaseRecord; decision: DecisionOption; finalStats: CityStats; payload: SavedCaseResult; taggedNodes: TaggedNodes }) {
+  const pinned = caseRecord.nodes.filter((node) => payload.pinnedNodeIds.includes(node.id));
   const taggedEntries = Object.entries(taggedNodes).filter(([, tags]) => tags.length);
 
   return (
@@ -815,7 +827,7 @@ function ResultScreen({ decision, finalStats, payload, taggedNodes }: { decision
         <p className="eyebrow archive-eyebrow">AUDIT RULING ARCHIVED</p>
         <h2 className="ruling-title"><span>裁定記録</span><small>IRREVERSIBLE AUDIT RECORD</small></h2>
         <div className="archive-metadata" aria-label="保存記録情報">
-          <span>CASE000</span><span>KASUMI-GATE-09</span><span>{case000.recordName}</span><strong>保存完了</strong>
+          <span>{caseRecord.id.toUpperCase()}</span><span>{caseRecord.recordName}</span><span>{caseRecord.location}</span><strong>保存完了</strong>
         </div>
         <section className="result-summary" aria-label="裁定結果要約">
           <p><span>裁定</span><strong>{decision.finalRuling}</strong></p>
@@ -823,10 +835,10 @@ function ResultScreen({ decision, finalStats, payload, taggedNodes }: { decision
           <p className="sacrificed-value"><span>犠牲にした価値（軽視）</span><strong>{decision.disregardedValue}</strong></p>
           <p><span>影響</span><strong>{cityStatKeys.map((key) => `${statLabels[key]} ${decision.statDelta[key] >= 0 ? '+' : ''}${decision.statDelta[key]}`).join(' / ')}</strong></p>
         </section>
-        <div className={`ruling-stamp ruling-${decision.id}`} aria-label={`裁定印：${rulingStampLabels[decision.id] ?? decision.finalRuling}`}>
+        <div className={`ruling-stamp ruling-${decision.id}`} aria-label={`裁定印：${decision.resultStampLabel ?? decision.finalRuling}`}>
           <span>都市OS監査室</span>
-          <strong>{rulingStampLabels[decision.id] ?? decision.finalRuling}</strong>
-          <small>FINAL / CASE000</small>
+          <strong>{decision.resultStampLabel ?? decision.finalRuling}</strong>
+          <small>FINAL / {caseRecord.id.toUpperCase()}</small>
         </div>
         <div className="result-grid">
           <ResultSection title="最終裁定">
@@ -846,20 +858,20 @@ function ResultScreen({ decision, finalStats, payload, taggedNodes }: { decision
           </ResultSection>
           <ResultSection title="分類された矛盾">
             {taggedEntries.length ? taggedEntries.map(([nodeId, tags]) => {
-              const node = case000.nodes.find((item) => item.id === nodeId);
+              const node = caseRecord.nodes.find((item) => item.id === nodeId);
               return <p key={nodeId}>・{node?.title ?? nodeId}：{tags.map((tag) => contradictionTagLabels[tag]).join(' / ')}</p>;
             }) : <p>矛盾分類なし。</p>}
           </ResultSection>
           <ResultSection title="実行した解析アクション">
             {payload.executedActionIds.length ? payload.executedActionIds.map((id) => {
-              const action = case000.analysisActions.find((item) => item.id === id);
+              const action = caseRecord.analysisActions.find((item) => item.id === id);
               return <p key={id}>・{action?.title ?? id}</p>;
             }) : <p>追加解析なし。既存記録のみで判断。</p>}
           </ResultSection>
           <ResultSection title="都市ステータス変動">
             <div className="stat-delta-list">
               {cityStatKeys.map((key) => {
-                const before = case000.initialStats[key];
+                const before = caseRecord.initialStats[key];
                 const after = finalStats[key];
                 const delta = after - before;
                 return <p key={key}>{statLabels[key]}：{before} → {after} <span className={delta >= 0 ? 'delta-plus' : 'delta-minus'}>({delta >= 0 ? '+' : ''}{delta})</span></p>;
@@ -872,11 +884,6 @@ function ResultScreen({ decision, finalStats, payload, taggedNodes }: { decision
           </ResultSection>
           <ResultSection title="結末文">
             <p className="ending-text"><TypewriterText text={decision.endingText} speed={18} animateKey={decision.id} /></p>
-          </ResultSection>
-          <ResultSection title="次回記録">
-            <p className="sealed-record">{case001Preview.id.toUpperCase()}「{case001Preview.title}」：{case001Preview.subtitle}。アクセス権限未付与。記録は凍結されています。</p>
-            {case001Preview.handoffSummary && <p><AnnotatedText text={case001Preview.handoffSummary} /></p>}
-            {case001Preview.preservedFragment && <code><AnnotatedText text={case001Preview.preservedFragment} /></code>}
           </ResultSection>
         </div>
       </section>

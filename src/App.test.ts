@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { canUnlockJudgment, getCurrentGuidance, getJudgmentRequirements, isAnalysisActionUnlocked, isWarningLog } from './auditRules';
-import { case000, case001Preview, contradictionTags } from './data/cases';
+import { case000, case001, contradictionTags } from './data/cases';
 import type { DecisionOption } from './types';
 
 const terminologyFiles = import.meta.glob(
@@ -16,6 +16,47 @@ const resultScreenFields: (keyof DecisionOption)[] = [
   'auditNote',
   'endingText',
 ];
+
+describe('case001 playable data', () => {
+  it('defines a complete case without production meta text', () => {
+    expect(case001.nodes).toHaveLength(7);
+    expect(case001.issues).toHaveLength(3);
+    expect(case001.analysisActions).toHaveLength(3);
+    expect(case001.decisions).toHaveLength(3);
+    expect(case001.requiredNodesToJudge).toBe(4);
+    expect(case001.decisions.map((decision) => decision.statDelta)).toEqual([
+      { security: 6, ethics: -10, surveillance: 3, egoStability: -5 },
+      { security: -3, ethics: 8, surveillance: 2, egoStability: 6 },
+      { security: 4, ethics: -6, surveillance: 8, egoStability: -3 },
+    ]);
+    const playableText = JSON.stringify(case001);
+    ['previewOnly', 'プレイヤー', 'Case002に続く'].forEach((term) => expect(playableText).not.toContain(term));
+  });
+
+  it('defines what the repeated voice witnessed without identifying the command source', () => {
+    const voice = case001.nodes.find((node) => node.id === 'repeated-voice');
+    const fragment = case001.nodes.find((node) => node.id === 'fragment-memory');
+    const reconstruction = case001.analysisActions.find((action) => action.id === 'reconstruct-fragment');
+
+    expect(voice?.simpleFact).toContain('犯人の顔ではなく');
+    expect(voice?.simpleFact).toContain('通常認証から KASUMI-GATE-09 へ切り替わり');
+    expect(voice?.simpleFact).toContain('人格署名として偽装処理された瞬間');
+    expect(fragment?.simpleFact).toContain('右腕義体は発砲動作に入った');
+    expect(fragment?.simpleFact).toContain('表情・視線・生体反応に発砲意図は記録されていない');
+    expect(fragment?.simpleFact).toContain('発砲命令は間宮怜司の人格署名で処理');
+    expect(fragment?.inspectorNote).toContain('間宮の右腕義体が発砲した事実');
+    expect(fragment?.inspectorNote).toContain('間宮本人が発砲しようとしていなかった兆候');
+    expect(fragment?.inspectorNote).toContain('発砲命令の偽装処理');
+    expect(fragment?.metrics).toMatchObject({
+      制御表示: '通常認証 → KASUMI-GATE-09',
+      発砲意図反応: '検出なし',
+      命令署名: '間宮怜司',
+      命令元: '未確定',
+    });
+    expect(fragment?.warning).toContain('発行元と実行主体は断片内に記録されていない');
+    expect(reconstruction?.reportText).toContain('命令元は未確定');
+  });
+});
 
 describe('audit log severity', () => {
   it('reserves warning styling for blocking operations instead of matching incidental words', () => {
@@ -71,7 +112,7 @@ describe('case000 data', () => {
 
   it('defines the recorder without implying a complete Nanase Miori backup', () => {
     const victimRecorder = case000.nodes.find((node) => node.id === 'victim-medium');
-    const playerFacingScenario = JSON.stringify({ case000, case001Preview });
+    const playerFacingScenario = JSON.stringify({ case000, case001 });
 
     expect(case000.overview).toContain('都市OSに登録されていない小型の未登録人格記録装置');
     expect(case000.overview).toContain('完全な人格バックアップではない');
@@ -93,9 +134,9 @@ describe('case000 data', () => {
       証言能力: '制限',
     });
     expect(case000.issues.find((issue) => issue.id === 'legal_persona')?.title).toContain('不完全な声を証言として扱う');
-    expect(case001Preview.subtitle).toBe('不完全な声を証言として扱えるか');
-    expect(case001Preview.preservedFragment).toContain('私は、見ていました');
-    expect(playerFacingScenario).not.toContain('媒体');
+    expect(case001.subtitle).toBe('不完全な声を証言として扱えるか');
+    expect(case001.nodes.find((node) => node.id === 'repeated-voice')?.simpleFact).toContain('私は、見ていました');
+    expect(playerFacingScenario).not.toContain('被害者媒体');
   });
 
   it('keeps investigator titles distinct from control-system terminology across repository text', () => {
@@ -323,13 +364,13 @@ describe('case000 data', () => {
     });
   });
 
-  it('connects 七瀬未織の記録装置 to the Case001 preview without making it playable', () => {
+  it('connects 七瀬未織の記録装置 to the playable Case001 record', () => {
     const victimMedium = case000.nodes.find((node) => node.id === 'victim-medium');
     expect(victimMedium).toBeDefined();
     expect(victimMedium?.simpleFact).toContain('七瀬未織');
     expect(victimMedium?.metrics.発話状態).toBe('反復');
-    expect(case001Preview.linkedFromNodeId).toBe('victim-medium');
-    expect(case001Preview.previewOnly).toBe(true);
+    expect(case001.id).toBe('case001');
+    expect(case001.nodes).toHaveLength(7);
   });
 
   it('communicates node importance with labeled colors instead of critical instability', () => {
