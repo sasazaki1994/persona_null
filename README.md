@@ -56,7 +56,8 @@ itch.io へ転記できる紹介文、短いゲーム説明、スクリーンシ
    - `requiredNodesToJudge` 以上の記憶ノードを確認する。
    - 最低1件を提出根拠に登録する。
    - 最低1件の矛盾タグを付ける。
-10. 最終判断 A / B / C のいずれかを選ぶと、結果画面に行政処理ログが表示され、localStorage に完了状態が保存されます。
+10. 最終判断 A / B / C のいずれかを選ぶと、結果画面に行政処理ログが表示され、localStorage に事件ごとの完了結果が保存されます。
+11. 結果画面で **事件選択へ戻る** を選ぶと、処理済み表示を確認して別事件または同じ事件の再監査へ進めます。
 
 ## 実装範囲
 
@@ -126,7 +127,9 @@ Vercel では **Framework Preset: Vite / Install: `npm ci` / Build: `npm run bui
 - [スクリーンショット撮影・配置手順](docs/screenshots.md)
 - [Vercel公開・Production確認手順](docs/deploy.md)
 - [Case000 MVP仕様](docs/specs/case000-mvp.md)
-- [Gherkin acceptance spec](features/case000_mvp.feature)
+- [Case001 playable仕様](docs/specs/case001-playable.md)
+- [Case000 Gherkin acceptance spec](features/case000_mvp.feature)
+- [Case001 Gherkin acceptance spec](features/case001_playable.feature)
 
 ## ライセンス
 

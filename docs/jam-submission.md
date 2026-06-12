@@ -18,6 +18,8 @@
 - [x] `docs/images/title.svg` を配置した。
 - [x] `docs/images/case000-investigation.svg` を配置した。
 - [x] `docs/images/case000-overview.svg` を配置した。
+- [x] README がリポジトリ内の3画像を参照し、それぞれに画面の役割を示すキャプションを記載している。
+- [x] `docs/itch-page.md` の転記元文面が Case000 / Case001 の両方をプレイ可能な事件として説明している。
 - [ ] GitHub 上の README でタイトル、事件概要、調査画面の3画像とキャプションが表示される。
 - [ ] 作品説明に Case000 / Case001 の両方がプレイ可能であることを明記した。
 - [ ] `docs/itch-page.md` の Short description と紹介文を itch.io に転記した。
@@ -26,15 +28,15 @@
 ## 品質ゲート
 
 - [ ] Node.js 20 環境で `npm ci` が成功した。
-- [ ] `npm run lint` が成功した。
-- [ ] `npm run test` が成功した。
-- [ ] `npm run build` が成功し、`dist/` が生成された。
+- [x] `npm run lint` が成功した。
+- [x] `npm run test` が成功した。
+- [x] `npm run build` が成功し、`dist/` が生成された。
 - [ ] 対象コミットの GitHub Actions CI が成功した。
 - [ ] 対象コミットの Vercel Production Deployment が成功した。
 
-## Production確認
+## Production確認（人間による手動確認）
 
-[`docs/deploy.md` の Production動作確認](deploy.md#production動作確認) を同じ Production URL で最初から最後まで実施します。
+以下はリポジトリ内の自動テストだけでは完了扱いにしません。[`docs/deploy.md` の Production動作確認](deploy.md#production動作確認) を同じ Production URL で最初から最後まで実施します。
 
 - [ ] タイトル画面から Case000 と Case001 の各結果画面まで進行できた。
 - [ ] 7ノード、タイピング演出、用語注釈、ピン留め、矛盾分類、監査リソースを確認した。

@@ -34,12 +34,15 @@ Feature: Case001 焼却されなかった声を監査する
     When 最終判断へ進む
     Then 焼却承認と証拠保全と異常記録隔離の3裁定が表示される
 
-  Scenario: Case001 の結果を保存する
+  Scenario: Case001 の結果を保存して事件選択へ戻る
     Given Case001 の最終判断画面を開いている
     When いずれかの裁定を確定する
-    Then 結果画面に「救った価値（優先）」と「犠牲にした価値（軽視）」が表示される
+    Then 結果画面に「優先された価値」と「軽視された価値」が表示される
+    And 提出根拠と矛盾分類と解析履歴を含む行政処理ログが表示される
     And persona-null:case-results に caseId "case001" の結果が保存される
-    And 事件選択では Case001 が処理済みとして判定される
+    When 「事件選択へ戻る」を選択する
+    Then 事件選択で Case001 が処理済みとして表示される
+    And Case000 または Case001 を再び開ける
 
   Scenario: Case000 の互換性を維持する
     When Case000 を選択して既存の判断条件を満たす

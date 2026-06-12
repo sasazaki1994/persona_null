@@ -1,5 +1,7 @@
 # Persona Null MVP Implementation Spec — Case000「誰が撃ったのか」
 
+> **現行範囲について:** 本書は Case000 単独MVPを確定した時点の基礎仕様である。現在の提出版では Case001 もプレイ可能であり、Case001 の可否・画面遷移・保存仕様について本書内の `previewOnly` 記述と競合する場合は [`case001-playable.md`](case001-playable.md) を優先する。
+
 ## 0. 確定方針
 
 ### 0.1 Case000 用語ルール
