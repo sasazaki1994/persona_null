@@ -99,7 +99,7 @@ export function getCurrentGuidance(params: {
       phase: 'review',
       title: '記憶記録の確認',
       instruction: `記憶ノードを${params.requiredNodesToJudge}件以上確認してください`,
-      action: 'Memory Network から未確認ノードを選択',
+      action: '左の「争点別 記憶ノード」から未確認の記録を選択',
       resourceNote,
     };
   }
@@ -119,7 +119,7 @@ export function getCurrentGuidance(params: {
       phase: 'tag',
       title: '矛盾記録の分類',
       instruction: '矛盾対象ノードを1件以上分類してください',
-      action: 'halo が強い矛盾ノードを選び、矛盾分類を登録',
+      action: '左の一覧で「矛盾あり」の記録を選び、右の「矛盾分類」を登録',
       resourceNote,
     };
   }

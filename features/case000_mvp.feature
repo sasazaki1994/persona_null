@@ -465,13 +465,15 @@ Feature: Persona Null Case000 playable audit slice
     Then the judgment console always shows "必要ノード確認", "判断根拠", and "矛盾分類" with current and required counts
     And every judgment requirement is labeled "完了" or "未達成"
     And the Memory Network instructions and legends do not overlap its nodes
+    And the selected-record label is placed outside the Memory Network drawing area on PC browsers
     And unreviewed, reviewed, important, contradictory, selected, and submitted records are distinguishable without relying on color alone
     And the right pane prioritizes the selected record, judgment grounds, contradiction classification, and city status
     And detailed logs and optional analysis controls are progressively disclosed
-    And red warning panels are limited to critical records or important records with contradictions
+    And red warning panels are limited to records whose warningLevel is critical
     When all judgment requirements are complete
     Then the final judgment button becomes visually prominent and enabled
     When the auditor submits a final decision
     Then the result summary shows the final ruling, the value saved by prioritization, and the value sacrificed by disregard together
+    And the detailed result sections do not repeat the ruling and value fields already shown in the summary
     And the result records submitted judgment grounds, classified contradictions, and city status changes
     And a short ending text is visually separated from administrative details

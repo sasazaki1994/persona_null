@@ -339,7 +339,7 @@ function CaseOverviewScreen({ caseRecord, onNext }: { caseRecord: CaseRecord; on
           <div>
             <h3>処理要求</h3>
             <p><strong>{caseRecord.processingRequest.title}</strong>：<AnnotatedText text={caseRecord.processingRequest.simpleFact} /></p>
-            <p className="warning-text"><AnnotatedText text={caseRecord.processingRequest.warning} /></p>
+            <p className="processing-note"><strong>処理上の注意：</strong><AnnotatedText text={caseRecord.processingRequest.warning} /></p>
           </div>
         </section>
         <section>
@@ -671,7 +671,7 @@ function InvestigationScreen(props: InvestigationProps) {
               <TypewriterText text={selectedNode.inspectorNote} speed={14} animateKey={`note-${selectedNode.id}`} />
             </section>
           )}
-          {(selectedNode.warningLevel === 'critical' || (selectedNode.hasContradiction && selectedNode.importance !== 'standard')) && selectedNode.warning.trim() !== '' && (
+          {selectedNode.warningLevel === 'critical' && selectedNode.warning.trim() !== '' && (
             <section className="pane-section node-warning">
               <h3>警告</h3>
               <p className="warning-text"><AnnotatedText text={selectedNode.warning} /></p>
@@ -857,7 +857,7 @@ function ResultScreen({ caseRecord, decision, finalStats, payload, taggedNodes, 
           <p><span>裁定</span><strong>{decision.finalRuling}</strong></p>
           <p className="saved-value"><span>救った価値（優先）</span><strong>{decision.prioritizedValues.join(' / ')}</strong></p>
           <p className="sacrificed-value"><span>犠牲にした価値（軽視）</span><strong>{decision.sacrificedValues.join(' / ')}</strong></p>
-          <p><span>影響</span><strong>{cityStatKeys.map((key) => `${statLabels[key]} ${decision.statDelta[key] >= 0 ? '+' : ''}${decision.statDelta[key]}`).join(' / ')}</strong></p>
+          <p><span>都市ステータス変動</span><strong>{cityStatKeys.map((key) => `${statLabels[key]} ${decision.statDelta[key] >= 0 ? '+' : ''}${decision.statDelta[key]}`).join(' / ')}</strong></p>
         </section>
         <div className={`ruling-stamp ruling-${decision.id}`} aria-label={`裁定印：${decision.resultStampLabel ?? decision.finalRuling}`}>
           <span>都市OS監査室</span>
@@ -866,17 +866,8 @@ function ResultScreen({ caseRecord, decision, finalStats, payload, taggedNodes, 
         </div>
         <p className="city-os-reference-note">この裁定は、以後の未確定人格案件における参照基準として保存されます。</p>
         <div className="result-grid">
-          <ResultSection title="最終裁定">
-            <p><AnnotatedText text={decision.finalRuling} /></p>
-          </ResultSection>
           <ResultSection title="処理内容">
             <p><AnnotatedText text={decision.processing} /></p>
-          </ResultSection>
-          <ResultSection title="優先された価値">
-            <p>{decision.prioritizedValues.join(' / ')}</p>
-          </ResultSection>
-          <ResultSection title="軽視された価値">
-            <p>{decision.sacrificedValues.join(' / ')}</p>
           </ResultSection>
           <ResultSection title="提出された判断根拠">
             {pinned.length ? pinned.map((node) => <p key={node.id}>・{node.title}：{node.simpleFact}</p>) : <p>根拠提出なし。</p>}

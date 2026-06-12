@@ -245,7 +245,9 @@ describe('Persona Null player flow', () => {
     expect(container.textContent).toContain('KASUMI-GATE-09');
     expect(container.textContent).toContain('保存完了');
     expect(container.querySelector('[aria-label="裁定結果要約"]')).not.toBeNull();
-    expect(container.textContent).toContain('最終裁定');
+    expect([...container.querySelectorAll('.result-section h3')].map((heading) => heading.textContent)).not.toContain('最終裁定');
+    expect([...container.querySelectorAll('.result-section h3')].map((heading) => heading.textContent)).not.toContain('優先された価値');
+    expect([...container.querySelectorAll('.result-section h3')].map((heading) => heading.textContent)).not.toContain('軽視された価値');
     expect(container.querySelector('[aria-label="裁定結果要約"]')?.textContent).toContain('間宮怜司を発砲責任者として拘束');
     expect(container.querySelector('[aria-label="裁定結果要約"]')?.textContent).toContain('救った価値（優先）');
     expect(container.querySelector('[aria-label="裁定結果要約"]')?.textContent).toContain('犠牲にした価値（軽視）');
@@ -424,6 +426,7 @@ describe('Persona Null player flow', () => {
     expect(container.textContent).toContain('偽装処理された瞬間');
 
     clickButton('ノード：断片記憶');
+    expect(container.querySelector('.node-warning')).toBeNull();
     expect(container.textContent).toContain('表情・視線・生体反応に発砲意図は記録されていない');
     expect(container.textContent).toContain('発砲命令は');
     expect(container.textContent).toContain('で処理されている');
