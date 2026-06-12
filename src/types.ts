@@ -113,6 +113,10 @@ export type AnalysisAction = {
   unlockConditions?: AnalysisUnlockCondition[];
 };
 
+export const auditValueLabels = ['人格断片保護', '記録整合性優先', '危険源隔離', '証拠保全'] as const;
+
+export type AuditValue = typeof auditValueLabels[number];
+
 export type DecisionOption = {
   id: string;
   label: string;
@@ -120,6 +124,8 @@ export type DecisionOption = {
   processing: string;
   prioritizedValue: string;
   disregardedValue: string;
+  prioritizedValues: AuditValue[];
+  sacrificedValues: AuditValue[];
   auditNote: string;
   endingText: string;
   statDelta: CityStats;

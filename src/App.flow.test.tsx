@@ -79,6 +79,7 @@ describe('Persona Null player flow', () => {
     expect(container.textContent).not.toContain('previewOnly');
     expect(container.textContent).not.toContain('凍結中');
     expect(findButton('Case001を開く')).toBeDefined();
+    expect(container.querySelector('[aria-label="監査傾向"]')?.textContent).toContain('監査傾向：未記録');
   });
 
   it('shows a saved Case001 result as processed in the case archive', () => {
@@ -100,6 +101,23 @@ describe('Persona Null player flow', () => {
     const case001Button = findButton('Case001を開く');
     const case001Card = case001Button?.closest('.case-file');
     expect(case001Card?.textContent).toContain('処理済記録あり / 再監査可能');
+    const tendency = container.querySelector('[aria-label="監査傾向"]');
+    expect(tendency?.textContent).toContain('人格断片保護1');
+    expect(tendency?.textContent).toContain('証拠保全1');
+    expect(tendency?.textContent).toContain('都市変動累計');
+  });
+
+  it('keeps the case archive available when saved result JSON is malformed', () => {
+    act(() => root.unmount());
+    localStorage.setItem('persona-null:case-results', '{not-json');
+    root = createRoot(container);
+    act(() => root.render(<App />));
+
+    clickButton('監査端末を起動');
+    clickButton('通知を確認');
+    expect(container.querySelector('[aria-label="監査傾向"]')?.textContent).toContain('監査傾向：未記録');
+    expect(findButton('Case000を開く')).toBeDefined();
+    expect(findButton('Case001を開く')).toBeDefined();
   });
 
   it('shows record status, resource gauge, and restrained operation feedback', () => {
@@ -232,9 +250,12 @@ describe('Persona Null player flow', () => {
     expect(container.textContent).toContain('提出された判断根拠');
     expect(container.textContent).toContain('分類された矛盾');
     expect(container.textContent).toContain('都市ステータス変動');
+    expect(container.textContent).toContain('この裁定は、以後の未確定人格案件における参照基準として保存されます。');
     expect(container.textContent).not.toContain('選択肢A');
     expect(container.querySelector('.ruling-stamp')).not.toBeNull();
     expect(localStorage.getItem('persona-null:case-results')).not.toBeNull();
+    clickButton('事件選択へ戻る');
+    expect(container.querySelector('[aria-label="監査傾向"]')?.textContent).toContain('記録整合性優先1');
   });
   it('presents the investigation as an audit terminal with semantic cards, chips, and chronological logs', () => {
     enterInvestigation();
