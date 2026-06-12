@@ -800,8 +800,8 @@ function DecisionScreen({ caseRecord, pinnedNodeIds, onBack, onDecide }: { caseR
                   <p><AnnotatedText text={option.processing} /></p>
                 </section>
                 <section className="decision-values">
-                  <p><strong>優先される価値</strong>{option.prioritizedValue}</p>
-                  <p><strong>失われる価値</strong>{option.disregardedValue}</p>
+                  <p><strong>優先される価値</strong>{option.prioritizedValues.join(' / ')}</p>
+                  <p><strong>失われる価値</strong>{option.sacrificedValues.join(' / ')}</p>
                 </section>
                 <section className="ruling-evidence-section">
                   <div className="decision-section-heading">
@@ -855,8 +855,8 @@ function ResultScreen({ caseRecord, decision, finalStats, payload, taggedNodes, 
         </div>
         <section className="result-summary" aria-label="裁定結果要約">
           <p><span>裁定</span><strong>{decision.finalRuling}</strong></p>
-          <p className="saved-value"><span>救った価値（優先）</span><strong>{decision.prioritizedValue}</strong></p>
-          <p className="sacrificed-value"><span>犠牲にした価値（軽視）</span><strong>{decision.disregardedValue}</strong></p>
+          <p className="saved-value"><span>救った価値（優先）</span><strong>{decision.prioritizedValues.join(' / ')}</strong></p>
+          <p className="sacrificed-value"><span>犠牲にした価値（軽視）</span><strong>{decision.sacrificedValues.join(' / ')}</strong></p>
           <p><span>影響</span><strong>{cityStatKeys.map((key) => `${statLabels[key]} ${decision.statDelta[key] >= 0 ? '+' : ''}${decision.statDelta[key]}`).join(' / ')}</strong></p>
         </section>
         <div className={`ruling-stamp ruling-${decision.id}`} aria-label={`裁定印：${decision.resultStampLabel ?? decision.finalRuling}`}>
@@ -873,10 +873,10 @@ function ResultScreen({ caseRecord, decision, finalStats, payload, taggedNodes, 
             <p><AnnotatedText text={decision.processing} /></p>
           </ResultSection>
           <ResultSection title="優先された価値">
-            <p>{decision.prioritizedValue}</p>
+            <p>{decision.prioritizedValues.join(' / ')}</p>
           </ResultSection>
           <ResultSection title="軽視された価値">
-            <p>{decision.disregardedValue}</p>
+            <p>{decision.sacrificedValues.join(' / ')}</p>
           </ResultSection>
           <ResultSection title="提出された判断根拠">
             {pinned.length ? pinned.map((node) => <p key={node.id}>・{node.title}：{node.simpleFact}</p>) : <p>根拠提出なし。</p>}

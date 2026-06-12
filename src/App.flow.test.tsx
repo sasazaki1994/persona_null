@@ -231,6 +231,8 @@ describe('Persona Null player flow', () => {
     expect(container.textContent).toContain('人格断片、または周辺の未登録反応');
     const rulingOptions = [...container.querySelectorAll<HTMLElement>('.ruling-option')];
     expect(rulingOptions).toHaveLength(case000.decisions.length);
+    expect(rulingOptions[0].textContent).toContain('優先される価値記録整合性優先');
+    expect(rulingOptions[0].textContent).toContain('失われる価値人格断片保護');
     expect(rulingOptions[0].textContent).toContain('採用される根拠');
     expect(rulingOptions[0].textContent).toContain('提出一致 0 / 2');
     expect(rulingOptions[0].textContent).toContain('この裁定案は未提出記録を採用根拠に含みます。');
@@ -247,6 +249,8 @@ describe('Persona Null player flow', () => {
     expect(container.querySelector('[aria-label="裁定結果要約"]')?.textContent).toContain('間宮怜司を発砲責任者として拘束');
     expect(container.querySelector('[aria-label="裁定結果要約"]')?.textContent).toContain('救った価値（優先）');
     expect(container.querySelector('[aria-label="裁定結果要約"]')?.textContent).toContain('犠牲にした価値（軽視）');
+    expect(container.querySelector('[aria-label="裁定結果要約"]')?.textContent).toContain('記録整合性優先');
+    expect(container.querySelector('[aria-label="裁定結果要約"]')?.textContent).toContain('人格断片保護');
     expect(container.textContent).toContain('提出された判断根拠');
     expect(container.textContent).toContain('分類された矛盾');
     expect(container.textContent).toContain('都市ステータス変動');

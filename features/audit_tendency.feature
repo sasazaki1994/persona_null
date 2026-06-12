@@ -9,6 +9,13 @@ Feature: 事件をまたぐ監査傾向を蓄積表示する
     When 事件ファイル選択を開く
     Then 「監査傾向：未記録」と表示される
 
+  Scenario: 裁定画面と結果画面で共通の価値分類を表示する
+    Given Case000 または Case001 の最終判断画面を開いている
+    Then 各裁定の優先される価値は prioritizedValues の分類と一致する
+    And 各裁定の失われる価値は sacrificedValues の分類と一致する
+    When いずれかの裁定を確定する
+    Then 結果画面にも同じ優先分類と軽視分類が表示される
+
   Scenario: Case000 または Case001 の裁定を集計する
     Given Case000 または Case001 の最終裁定が保存されている
     When 事件ファイル選択を開く

@@ -122,8 +122,6 @@ export type DecisionOption = {
   label: string;
   finalRuling: string;
   processing: string;
-  prioritizedValue: string;
-  disregardedValue: string;
   prioritizedValues: AuditValue[];
   sacrificedValues: AuditValue[];
   auditNote: string;
