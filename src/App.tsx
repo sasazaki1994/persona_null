@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { aggregateAuditTendency } from './auditTendency';
 import { canUnlockJudgment, getCurrentGuidance, getJudgmentRequirements, isAnalysisActionUnlocked, isWarningLog, type CurrentGuidance, type JudgmentRequirement } from './auditRules';
 import { case000, cases, contradictionTagLabels } from './data/cases';
 import { AnnotatedText } from './components/AnnotatedText';
@@ -6,6 +7,7 @@ import { TypewriterText } from './components/TypewriterText';
 import { PersonProfile } from './components/PersonProfile';
 import { MemoryNetwork } from './MemoryNetwork';
 import { loadCaseResults, loadReadFlags, markRead, saveCaseResult } from './storage';
+import { auditValueLabels } from './types';
 import type { AnalysisAction, AnalysisUnlockCondition, CaseRecord, CityStats, ContradictionTag, DecisionOption, MemoryNode, NodeImportance, SavedCaseResult, Screen, TaggedNodes } from './types';
 import './styles.css';
 
@@ -56,7 +58,8 @@ function App() {
   const [systemLogs, setSystemLogs] = useState<string[]>(['監査室端末を起動。都市OS 基礎公定通知を待機。']);
   const [decision, setDecision] = useState<DecisionOption | null>(null);
   const [resultPayload, setResultPayload] = useState<SavedCaseResult | null>(null);
-  const [completedCaseIds, setCompletedCaseIds] = useState<string[]>(() => loadCaseResults().map((result) => result.caseId));
+  const [savedCaseResults, setSavedCaseResults] = useState<SavedCaseResult[]>(() => loadCaseResults());
+  const completedCaseIds = savedCaseResults.map((result) => result.caseId);
   const [readFlags, setReadFlags] = useState<string[]>(() => loadReadFlags());
   const [feedback, setFeedback] = useState<{ id: number; message: string } | null>(null);
   const wasJudgmentReady = useRef(false);
@@ -115,7 +118,7 @@ function App() {
 
     const saved = saveCaseResult(nextResultPayload);
     if (saved) {
-      setCompletedCaseIds((ids) => (ids.includes(nextResultPayload.caseId) ? ids : [...ids, nextResultPayload.caseId]));
+      setSavedCaseResults((results) => [...results.filter((item) => item.caseId !== nextResultPayload.caseId), nextResultPayload]);
     }
     setResultPayload(nextResultPayload);
     setDecision(nextDecision);
@@ -177,7 +180,7 @@ function App() {
 
   if (screen === 'title') return <TitleScreen onNext={() => setScreen('briefing')} />;
   if (screen === 'briefing') return <AuthBriefingScreen onNext={() => { markRead('city-os-briefing'); setReadFlags((flags) => (flags.includes('city-os-briefing') ? flags : [...flags, 'city-os-briefing'])); setScreen('caseSelect'); }} read={readFlags.includes('city-os-briefing')} />;
-  if (screen === 'caseSelect') return <CaseSelectScreen completedCaseIds={completedCaseIds} onSelect={(nextCase) => {
+  if (screen === 'caseSelect') return <CaseSelectScreen completedCaseIds={completedCaseIds} savedCaseResults={savedCaseResults} onSelect={(nextCase) => {
     setSelectedCaseId(nextCase.id);
     setSelectedNodeId(null);
     setVisitedNodeIds([]);
@@ -196,7 +199,7 @@ function App() {
     return <DecisionScreen caseRecord={caseRecord} pinnedNodeIds={pinnedNodeIds} onBack={() => setScreen('investigation')} onDecide={submitDecision} />;
   }
   if (screen === 'result' && decision && resultPayload) {
-    return <ResultScreen caseRecord={caseRecord} decision={decision} finalStats={finalStats} payload={resultPayload} taggedNodes={taggedNodes} />;
+    return <ResultScreen caseRecord={caseRecord} decision={decision} finalStats={finalStats} payload={resultPayload} taggedNodes={taggedNodes} onArchive={() => setScreen('caseSelect')} />;
   }
 
   return (
@@ -265,7 +268,9 @@ function AuthBriefingScreen({ onNext, read }: { onNext: () => void; read: boolea
   );
 }
 
-function CaseSelectScreen({ completedCaseIds, onSelect }: { completedCaseIds: string[]; onSelect: (caseRecord: CaseRecord) => void }) {
+function CaseSelectScreen({ completedCaseIds, savedCaseResults, onSelect }: { completedCaseIds: string[]; savedCaseResults: SavedCaseResult[]; onSelect: (caseRecord: CaseRecord) => void }) {
+  const tendency = aggregateAuditTendency(savedCaseResults, cases);
+
   return (
     <Shell>
       <section className="document-card case-files-screen">
@@ -274,6 +279,7 @@ function CaseSelectScreen({ completedCaseIds, onSelect }: { completedCaseIds: st
           <h2>監査対象記録</h2>
           <p>都市OSが保留した事件記録から、監査可能なファイルを選択してください。</p>
         </div>
+        <AuditTendencyPanel tendency={tendency} />
         <div className="case-file-list">
           {cases.map((caseRecord) => {
             const completed = completedCaseIds.includes(caseRecord.id);
@@ -295,6 +301,24 @@ function CaseSelectScreen({ completedCaseIds, onSelect }: { completedCaseIds: st
         </div>
       </section>
     </Shell>
+  );
+}
+
+
+function AuditTendencyPanel({ tendency }: { tendency: ReturnType<typeof aggregateAuditTendency> }) {
+  if (tendency.recordedCases === 0) {
+    return <section className="audit-tendency empty" aria-label="監査傾向"><h3>監査傾向：未記録</h3></section>;
+  }
+
+  return (
+    <section className="audit-tendency" aria-label="監査傾向">
+      <div className="audit-tendency-heading"><div><p className="eyebrow">CITY OS / REFERENCE PROFILE</p><h3>監査傾向</h3></div><strong>{tendency.recordedCases}件記録</strong></div>
+      <div className="audit-tendency-grid">
+        <div><h4>優先した価値</h4>{auditValueLabels.map((value) => <p key={value}><span>{value}</span><strong>{tendency.prioritized[value]}</strong></p>)}</div>
+        <div><h4>軽視した価値</h4>{auditValueLabels.map((value) => <p key={value}><span>{value}</span><strong>{tendency.sacrificed[value]}</strong></p>)}</div>
+        <div><h4>都市変動累計</h4>{cityStatKeys.map((key) => { const delta = tendency.statDelta[key]; return <p key={key}><span>{statLabels[key]}</span><strong className={delta >= 0 ? 'delta-plus' : 'delta-minus'}>{delta >= 0 ? '+' : ''}{delta}</strong></p>; })}</div>
+      </div>
+    </section>
   );
 }
 
@@ -776,8 +800,8 @@ function DecisionScreen({ caseRecord, pinnedNodeIds, onBack, onDecide }: { caseR
                   <p><AnnotatedText text={option.processing} /></p>
                 </section>
                 <section className="decision-values">
-                  <p><strong>優先される価値</strong>{option.prioritizedValue}</p>
-                  <p><strong>失われる価値</strong>{option.disregardedValue}</p>
+                  <p><strong>優先される価値</strong>{option.prioritizedValues.join(' / ')}</p>
+                  <p><strong>失われる価値</strong>{option.sacrificedValues.join(' / ')}</p>
                 </section>
                 <section className="ruling-evidence-section">
                   <div className="decision-section-heading">
@@ -817,7 +841,7 @@ function DecisionScreen({ caseRecord, pinnedNodeIds, onBack, onDecide }: { caseR
   );
 }
 
-function ResultScreen({ caseRecord, decision, finalStats, payload, taggedNodes }: { caseRecord: CaseRecord; decision: DecisionOption; finalStats: CityStats; payload: SavedCaseResult; taggedNodes: TaggedNodes }) {
+function ResultScreen({ caseRecord, decision, finalStats, payload, taggedNodes, onArchive }: { caseRecord: CaseRecord; decision: DecisionOption; finalStats: CityStats; payload: SavedCaseResult; taggedNodes: TaggedNodes; onArchive: () => void }) {
   const pinned = caseRecord.nodes.filter((node) => payload.pinnedNodeIds.includes(node.id));
   const taggedEntries = Object.entries(taggedNodes).filter(([, tags]) => tags.length);
 
@@ -831,8 +855,8 @@ function ResultScreen({ caseRecord, decision, finalStats, payload, taggedNodes }
         </div>
         <section className="result-summary" aria-label="裁定結果要約">
           <p><span>裁定</span><strong>{decision.finalRuling}</strong></p>
-          <p className="saved-value"><span>救った価値（優先）</span><strong>{decision.prioritizedValue}</strong></p>
-          <p className="sacrificed-value"><span>犠牲にした価値（軽視）</span><strong>{decision.disregardedValue}</strong></p>
+          <p className="saved-value"><span>救った価値（優先）</span><strong>{decision.prioritizedValues.join(' / ')}</strong></p>
+          <p className="sacrificed-value"><span>犠牲にした価値（軽視）</span><strong>{decision.sacrificedValues.join(' / ')}</strong></p>
           <p><span>影響</span><strong>{cityStatKeys.map((key) => `${statLabels[key]} ${decision.statDelta[key] >= 0 ? '+' : ''}${decision.statDelta[key]}`).join(' / ')}</strong></p>
         </section>
         <div className={`ruling-stamp ruling-${decision.id}`} aria-label={`裁定印：${decision.resultStampLabel ?? decision.finalRuling}`}>
@@ -840,6 +864,7 @@ function ResultScreen({ caseRecord, decision, finalStats, payload, taggedNodes }
           <strong>{decision.resultStampLabel ?? decision.finalRuling}</strong>
           <small>FINAL / {caseRecord.id.toUpperCase()}</small>
         </div>
+        <p className="city-os-reference-note">この裁定は、以後の未確定人格案件における参照基準として保存されます。</p>
         <div className="result-grid">
           <ResultSection title="最終裁定">
             <p><AnnotatedText text={decision.finalRuling} /></p>
@@ -848,10 +873,10 @@ function ResultScreen({ caseRecord, decision, finalStats, payload, taggedNodes }
             <p><AnnotatedText text={decision.processing} /></p>
           </ResultSection>
           <ResultSection title="優先された価値">
-            <p>{decision.prioritizedValue}</p>
+            <p>{decision.prioritizedValues.join(' / ')}</p>
           </ResultSection>
           <ResultSection title="軽視された価値">
-            <p>{decision.disregardedValue}</p>
+            <p>{decision.sacrificedValues.join(' / ')}</p>
           </ResultSection>
           <ResultSection title="提出された判断根拠">
             {pinned.length ? pinned.map((node) => <p key={node.id}>・{node.title}：{node.simpleFact}</p>) : <p>根拠提出なし。</p>}
@@ -886,6 +911,7 @@ function ResultScreen({ caseRecord, decision, finalStats, payload, taggedNodes }
             <p className="ending-text"><TypewriterText text={decision.endingText} speed={18} animateKey={decision.id} /></p>
           </ResultSection>
         </div>
+        <button className="secondary result-archive-button" onClick={onArchive}>事件選択へ戻る</button>
       </section>
     </Shell>
   );

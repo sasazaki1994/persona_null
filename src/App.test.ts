@@ -11,8 +11,8 @@ const terminologyFiles = import.meta.glob(
 const resultScreenFields: (keyof DecisionOption)[] = [
   'finalRuling',
   'processing',
-  'prioritizedValue',
-  'disregardedValue',
+  'prioritizedValues',
+  'sacrificedValues',
   'auditNote',
   'endingText',
 ];
@@ -410,6 +410,15 @@ describe('case000 data', () => {
     const appSource = terminologyFiles['./App.tsx'];
 
     expect(appSource).toContain('acceptedNodes.length > 0 && submittedAcceptedCount === 0');
+  });
+
+  it('uses normalized value arrays as the only decision value source', () => {
+    [...case000.decisions, ...case001.decisions].forEach((decision) => {
+      expect(decision.prioritizedValues.length).toBeGreaterThan(0);
+      expect(decision.sacrificedValues.length).toBeGreaterThan(0);
+      expect(decision).not.toHaveProperty('prioritizedValue');
+      expect(decision).not.toHaveProperty('disregardedValue');
+    });
   });
 
   it('result decisions include all result-screen report fields', () => {
