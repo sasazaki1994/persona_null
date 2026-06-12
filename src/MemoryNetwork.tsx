@@ -340,8 +340,10 @@ export function MemoryNetwork({
   ].filter((state): state is string => Boolean(state)) : [];
 
   return (
-    <div className="network" ref={hostRef} aria-label="記憶ノードネットワーク">
-      <div className="network-scanlines" aria-hidden="true" />
+    <div className="network-stage">
+      <div className="network" ref={hostRef} aria-label="記憶ノードネットワーク">
+        <div className="network-scanlines" aria-hidden="true" />
+      </div>
       {labelNode && (
         <aside className="network-node-label" aria-live="polite">
           <p>{hoveredNodeId ? 'HOVER RECORD' : 'SELECTED RECORD'} / {labelNode.id}<span>{labelNode.id === selectedNodeId ? 'SCAN LOCKED' : 'SIGNAL TRACE'}</span></p>

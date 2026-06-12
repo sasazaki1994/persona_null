@@ -203,9 +203,14 @@ describe('case000 data', () => {
       resources: case000.auditResourceMax,
     };
 
-    expect(getCurrentGuidance({ ...base, visitedNodeCount: 0, pinnedNodeCount: 0, taggedNodeCount: 0, canJudge: false }).phase).toBe('review');
+    const reviewGuidance = getCurrentGuidance({ ...base, visitedNodeCount: 0, pinnedNodeCount: 0, taggedNodeCount: 0, canJudge: false });
+    const tagGuidance = getCurrentGuidance({ ...base, visitedNodeCount: 4, pinnedNodeCount: 1, taggedNodeCount: 0, canJudge: false });
+    expect(reviewGuidance.phase).toBe('review');
+    expect(reviewGuidance.action).toContain('争点別 記憶ノード');
     expect(getCurrentGuidance({ ...base, visitedNodeCount: 4, pinnedNodeCount: 0, taggedNodeCount: 0, canJudge: false }).phase).toBe('pin');
-    expect(getCurrentGuidance({ ...base, visitedNodeCount: 4, pinnedNodeCount: 1, taggedNodeCount: 0, canJudge: false }).phase).toBe('tag');
+    expect(tagGuidance.phase).toBe('tag');
+    expect(tagGuidance.action).toContain('「矛盾あり」');
+    expect(tagGuidance.action).not.toContain('halo');
     expect(getCurrentGuidance({ ...base, visitedNodeCount: 4, pinnedNodeCount: 1, taggedNodeCount: 1, canJudge: true }).phase).toBe('judge');
   });
 
