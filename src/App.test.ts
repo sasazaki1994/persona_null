@@ -387,14 +387,24 @@ describe('case000 data', () => {
   it('documents Jam URL, screenshot, Production, and narrow-screen readiness', () => {
     const readme = terminologyFiles['../README.md'];
     const deploy = terminologyFiles['../docs/deploy.md'];
+    const jamSubmission = terminologyFiles['../docs/jam-submission.md'];
+    const itchPage = terminologyFiles['../docs/itch-page.md'];
     const screenshots = terminologyFiles['../docs/screenshots.md'];
     expect(readme).toContain('[https://persona-null.vercel.app](https://persona-null.vercel.app)');
     expect(readme).toContain('docs/images/title.svg');
     expect(readme).toContain('docs/images/case000-overview.svg');
     expect(readme).toContain('docs/images/case000-investigation.svg');
     expect(readme).not.toMatch(/docs\/images\/[^)\s]+\.png/);
+    expect(readme).toContain('Case000「誰が撃ったのか」と Case001「焼却されなかった声」');
+    expect(readme).toContain('事件選択へ戻る');
     expect(deploy).toContain('Production動作確認');
+    expect(deploy).toContain('テキスト確認用の最低限対応');
+    expect(jamSubmission).toContain('Production確認（人間による手動確認）');
+    expect(itchPage).toContain('Case000「誰が撃ったのか」** と **Case001「焼却されなかった声」');
+    expect(itchPage).toContain('調査途中の進行状態は保存されません');
+    expect(itchPage).not.toContain('Case001「焼却されなかった声」は予告表示のみ');
     expect(screenshots).toContain('Vercel Production 版から撮影した実画像');
+    expect(screenshots).toContain('Case001 は本編としてプレイ可能です');
 
     [
       '../docs/images/title.svg',

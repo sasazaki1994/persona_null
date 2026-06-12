@@ -1,10 +1,10 @@
 Feature: Persona Null Case000 playable audit slice
   Persona Null must allow an auditor from 監査室 to inspect KASUMI-GATE-09 / Case000「誰が撃ったのか」, classify contradictions, make an irreversible decision, and save the submitted audit structure locally.
-  Case001「焼却されなかった声」 must remain locked preview content only.
+  Case001「焼却されなかった声」 is a separate playable case governed by features/case001_playable.feature.
 
   Background:
     Given the app is running as a React Vite TypeScript single page app
-    And the playable case dataset contains only Case000
+    And the playable case dataset contains Case000 and Case001
     And Case000 has 7 memory nodes, 3 audit resources, 3 analysis actions, and 3 final decisions
 
   Scenario: Reaching investigation from title
@@ -14,7 +14,7 @@ Feature: Persona Null Case000 playable audit slice
     And selects Case000
     And starts the investigation
     Then the investigation screen shows the Case000 status panes and memory network
-    And the Case001 card is shown only as locked preview content
+    And the Case001 card is also shown as an available incident file
 
   Scenario: Inspecting memory nodes in the Three.js network
     Given the auditor is on the investigation screen
@@ -129,8 +129,8 @@ Feature: Persona Null Case000 playable audit slice
 
   Scenario: Reporting the submitted audit structure
     Given the auditor has reached the result screen
-    Then the result screen shows separated administrative-log sections for final ruling, processing, prioritized value, disregarded value, submitted judgment grounds, classified contradictions, executed analysis actions, city status changes, audit notes, a short ending text, and the Case001 preview
-    And the result screen does not introduce a playable Case001 route
+    Then the result screen shows separated administrative-log sections for final ruling, processing, prioritized value, disregarded value, submitted judgment grounds, classified contradictions, executed analysis actions, city status changes, audit notes, and a short ending text
+    And the result screen provides an action to return to the case selection screen
 
   Scenario: Resilient result persistence
     Given localStorage contains malformed saved result JSON
@@ -155,7 +155,7 @@ Feature: Persona Null Case000 playable audit slice
     And 操作主体, 操作経路, and 操作源 remain control-system terms
     And no deprecated urban-security investigator title remains in source, specs, or documentation
     And the scenario exposes exactly 3 operation subject candidates
-    And the Case001 preview remains previewOnly without being referenced by memory-node or analysis text
+    And Case001 records remain isolated from Case000 memory-node and analysis text
     And MVP cut items are separated from expansion backlog items
 
   Scenario: Showing replaceable Case000 audit portraits
@@ -193,16 +193,16 @@ Feature: Persona Null Case000 playable audit slice
     And npm run lint succeeds
     And npm run test succeeds
     And Case000 remains playable from title screen to result screen
-    And Case001 remains previewOnly locked preview content without a playable route
+    And Case001 remains playable from the case selection screen to its result screen
 
   Scenario: Final pre-submission verification
     Given the maintainer has a Vercel Production URL for the Jam build
     Then the title screen is visible at that URL
     And Case000 can be played through to the result screen
     And all 7 nodes, evidence pinning, contradiction tagging, and final judgment can be verified
-    And the result shows the ruling, processing, values, audit note, and Case001 preview
+    And each result shows the ruling, processing, values, audit note, and an action to return to case selection
     And reloading after completion allows the Case000 processed indicator to be verified
-    And Case001 remains previewOnly without a playable route
+    And Case001 can be played through to the result screen
     And the checklist states that mobile is minimally readable while a PC browser is recommended
     And at widths up to 899px the investigation panes stack into one column
     And at widths up to 520px headings, controls, captions, and logs remain readable without page-level horizontal overflow
@@ -216,7 +216,7 @@ Feature: Persona Null Case000 playable audit slice
     And only the latest system log uses the typewriter presentation
     And the auditor can reveal the full text immediately by clicking the presentation or its full-text button
     And reduced-motion users receive the full text without typing or cursor animation
-    And Case000 progression, judgment conditions, persistence, and the Case001 preview-only restriction remain unchanged
+    And Case000 progression, judgment conditions, and persistence remain unchanged
 
   Scenario: Guiding the auditor through the next required investigation action
     Given the auditor is on the investigation screen
@@ -364,7 +364,7 @@ Feature: Persona Null Case000 playable audit slice
     And 監査注記は選んだ処理、判断根拠、残るリスクを短い文で示す
 
   Scenario: Explaining Nanase Miori's unregistered persona recorder
-    Given the auditor reads the Case000 overview and the Case001 preview
+    Given the auditor reads the Case000 overview and opens Case001
     Then the first player-facing mention identifies the unregistered persona recorder as a small recording device not registered with the city OS
     And the recorder contains only parts of Nanase Miori's speech logs, memory fragments, and persona signature
     And the text states that the recorder is not a complete persona backup
@@ -372,9 +372,9 @@ Feature: Persona Null Case000 playable audit slice
     And testimony capability is restricted because the persona signature is partial and memory continuity is fragmentary
     And the recorder reports a self-preservation response to deletion processing
     And the Case001 question is whether an incomplete voice can be treated as testimony
-    And the preview repeats "私は、見ていました"
+    And the Case001 records repeat "私は、見ていました"
     And player-facing labels do not use the standalone term "媒体" for the recorder
-    And Case001 remains previewOnly without a playable route
+    And Case001 can be played through to the result screen
 
   Scenario: Production URL と実画面で探索体験を案内する
     Given Case000 MVP が Vercel Production に公開されている
@@ -392,11 +392,11 @@ Feature: Persona Null Case000 playable audit slice
     And 公開文面は回答を読むだけでなく根拠、接続、矛盾、監査状態を探索する体験だと説明する
     And タイトル画面、事件概要、調査画面の各スクリーンショットに公開用説明がある
     And 調査画面の説明は Memory Network と7つの記憶ノードと根拠登録または矛盾分類を示す
-    And README と itch.io 紹介文は Case000 のみプレイ可能で Case001 は予告のみだと明記する
+    And README と itch.io 紹介文は Case000 と Case001 の両方がプレイ可能だと明記する
     And 公開文面は発砲義体を間宮怜司に登録された警備用右腕義体として説明する
     And 公開文面は七瀬未織を被害者かつ未登録人格記録装置の所持者として説明する
     And 公開文面は発砲義体を七瀬未織の所有物として説明しない
-    And 未実装の音演出、Case001 本編、完全なスマートフォン最適化を実装済みと誤認させない
+    And 未実装の音演出、Case002 以降、最終エンディング分岐、完全なスマートフォン最適化を実装済みと誤認させない
     And 公開コピーの変更は Case000 の進行条件、保存形式、データ構造、画面実装を変更しない
 
   Scenario: Showing red warnings only for critical memory nodes
@@ -454,11 +454,11 @@ Feature: Persona Null Case000 playable audit slice
     And CASE000, KASUMI-GATE-09, and 保存完了 are visible as archive metadata
     And the ending text is presented with expanded readable spacing
 
-  Scenario: Presenting available and frozen cases as incident files
+  Scenario: Presenting both playable cases as incident files
     Given the auditor opens the case selection screen
     Then Case000 is shown as an incident file with record name, summary, and status "監査可能"
-    And Case001 is shown as previewOnly with status "凍結中"
-    And Case001 cannot start a playable route
+    And Case001 is shown as an incident file with record name, summary, and status "監査可能"
+    And Case001 can start a playable route
 
   Scenario: Guiding a first-time auditor through the public MVP
     Given the auditor is on the Case000 investigation screen
