@@ -176,6 +176,16 @@ meter { width: 100%; accent-color: #58dcff; }
 .overview-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; margin: 1.25rem 0; }
 .overview-grid > div { border: 1px solid #244555; background: rgba(6, 17, 29, 0.5); padding: 1rem; }
 .overview-grid h3 { margin-top: 0; color: #7eeaff; }
+.continuity-panel { margin: 1.25rem 0; border: 1px solid rgba(126, 234, 255, 0.38); border-left: 3px solid #7eeaff; background: rgba(6, 24, 34, 0.72); padding: 1rem; }
+.continuity-panel h3, .continuity-panel h4 { color: #bdf8ff; }
+.continuity-panel h3 { margin: 0.15rem 0 0.8rem; }
+.continuity-panel h4 { margin: 0 0 0.45rem; }
+.continuity-panel small { display: block; margin-top: 0.8rem; color: #91b4bd; }
+.continuity-notice { border-left: 2px solid rgba(126, 234, 255, 0.5); padding-left: 0.75rem; color: #d7f4f7; }
+.continuity-bias { display: grid; gap: 0.45rem; margin-top: 0.8rem; }
+.continuity-detention_bias { border-left-color: #ffbd73; }
+.continuity-preservation_bias { border-left-color: #78d6a6; }
+.continuity-isolation_bias { border-left-color: #ff7187; }
 
 
 .pane, .document-card, .start-card, .result-section, .network-caption {

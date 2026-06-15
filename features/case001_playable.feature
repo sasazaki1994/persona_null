@@ -49,6 +49,16 @@ Feature: Case001 焼却されなかった声を監査する
     Then Case000 の既存3裁定から最終判断できる
     And 既存形式の Case000 保存結果を読み込める
 
+  Scenario: Case000 の裁定を Case001 の参照基準として適用する
+    Given Case000 の裁定結果が保存されている
+    When Case001 の事件概要を開く
+    Then 「前回裁定の参照基準」が表示される
+    And Case001 の事実記録は変更されない
+    And 都市ステータスへの暫定影響は表示のみに使われる
+    When Case001 の調査を開始する
+    Then 前回裁定による処理基準が監査ログへ1行追加される
+    But finalStats と SavedCaseResult の保存形式は変更されない
+
   Scenario: 解析の副作用を監査記録として残す
     Given Case001 を開いて解析アクションの解放条件を満たした
     When 副作用を持つ解析アクションを実行する
