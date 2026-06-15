@@ -1305,3 +1305,21 @@ button.judge:not(:disabled) { position: relative; font-weight: 800; letter-spaci
 @media (max-width: 520px) {
   .result-summary p { grid-template-columns: 1fr; }
 }
+
+.judgment-blockers {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.75rem;
+  margin: 0;
+  padding: 0;
+  color: #e8b96d;
+  font-size: 0.68rem;
+  list-style: none;
+}
+
+.judgment-blockers li::before {
+  content: 'LOCK / ';
+  color: #ff8f70;
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+}

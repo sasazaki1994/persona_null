@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
-import type { AnalysisAction, MemoryNode, NodeImportance, TaggedNodes } from './types';
+import type { InvestigationAction, MemoryNode, NodeImportance, TaggedNodes } from './types';
 
 type Props = {
-  analysisActions: AnalysisAction[];
+  actions: InvestigationAction[];
   nodes: MemoryNode[];
   selectedNodeId?: string | null;
   visitedNodeIds: string[];
@@ -30,7 +30,7 @@ function requiresContradictionReview(node: MemoryNode) {
 }
 
 export function MemoryNetwork({
-  analysisActions,
+  actions,
   nodes,
   selectedNodeId,
   visitedNodeIds,
@@ -44,10 +44,10 @@ export function MemoryNetwork({
   const hoverRef = useRef<string | null>(null);
   const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
   const analyzedNodeIds = useMemo(() => new Set(
-    analysisActions
+    actions
       .filter((action) => executedActionIds.includes(action.id))
       .flatMap((action) => action.targetNodeIds ?? []),
-  ), [analysisActions, executedActionIds]);
+  ), [actions, executedActionIds]);
   const labelNode = nodes.find((node) => node.id === (hoveredNodeId ?? selectedNodeId)) ?? null;
 
   useEffect(() => {

@@ -103,10 +103,18 @@ export type AnalysisUnlockCondition =
   | { type: 'tagged_any'; count: number }
   | { type: 'tagged_node'; nodeId: string };
 
-export type AnalysisAction = {
+export type InvestigationActionType =
+  | 'scan_persona_signature'
+  | 'scan_memory_origin'
+  | 'restore_damaged_log'
+  | 'compare_nodes';
+
+export type InvestigationAction = {
   id: string;
+  type: InvestigationActionType;
   title: string;
   description: string;
+  cost: 1;
   resultLog: string;
   targetNodeIds?: string[];
   reportText?: string;
@@ -159,7 +167,7 @@ export type CaseRecord = {
   mvpScope: MvpScope;
   issues: CaseIssue[];
   nodes: MemoryNode[];
-  analysisActions: AnalysisAction[];
+  actions: InvestigationAction[];
   decisions: DecisionOption[];
 };
 

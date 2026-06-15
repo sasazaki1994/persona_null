@@ -197,10 +197,18 @@ export type AnalysisUnlockCondition =
   | { type: 'tagged_any'; count: number }
   | { type: 'tagged_node'; nodeId: string };
 
-export type AnalysisAction = {
+export type InvestigationActionType =
+  | 'scan_persona_signature'
+  | 'scan_memory_origin'
+  | 'restore_damaged_log'
+  | 'compare_nodes';
+
+export type InvestigationAction = {
   id: string;
+  type: InvestigationActionType;
   title: string;
   description: string;
+  cost: 1;
   resultLog: string;
   targetNodeIds?: string[];
   reportText?: string;
@@ -248,7 +256,7 @@ export type CaseRecord = {
   mvpScope: MvpScope;
   issues: CaseIssue[];
   nodes: MemoryNode[];
-  analysisActions: AnalysisAction[];
+  actions: InvestigationAction[];
   decisions: DecisionOption[];
 };
 
@@ -303,7 +311,7 @@ export const cases: CaseRecord[] = [
     mvpScope: { cutForMvp: [], keepForExpansion: [] },
     issues: [],
     nodes: [],
-    analysisActions: [],
+    actions: [],
     decisions: [],
   },
 ];
@@ -380,15 +388,16 @@ export const contradictionTagLabels: Record<ContradictionTag, string> = {
 
 ### 5.4 解析アクション
 
-`case000.analysisActions` は 3 件。各アクションは 1 回だけ実行でき、解放条件をすべて満たした場合に限り実行時に監査リソースを 1 消費する。未解放アクションは disabled とし、未達条件をチェックリスト表示する。実行済みアクションの `targetNodeIds` に選択ノードが含まれる場合、右ペインへ `reportText` を「追加解析結果」として表示する。
+`case000.actions` は `scan_persona_signature`、`scan_memory_origin`、`restore_damaged_log`、`compare_nodes` の4種を各1件持つ。各アクションの `cost` は1で、各アクションは 1 回だけ実行でき、解放条件をすべて満たした場合に限り実行時に監査リソースを 1 消費する。未解放アクションは disabled とし、未達条件をチェックリスト表示する。実行済みアクションの `targetNodeIds` に選択ノードが含まれる場合、右ペインへ `reportText` を「追加解析結果」として表示する。
 
-| 期待 id | 目的 | 解放条件 |
-| --- | --- | --- |
-| `resignature` | 人格署名を再照合する | 七瀬未織の記録装置を確認済み、かつ任意の記録を1件以上提出根拠に登録 |
-| `restore-eight` | NULL 記憶区間の復元を試行する | 間宮の発砲記憶と義体稼働履歴を確認済み |
-| `match-key-medium` | 認証痕と七瀬未織の記録装置を照合する | KASUMI-GATE-09認証痕と最後の通信を確認済み |
+| id | type | 目的 | 解放条件 |
+| --- | --- | --- | --- |
+| `scan-persona-signature` | `scan_persona_signature` | 人格署名を再照合する | 七瀬未織の記録装置を確認済み、かつ任意の記録を1件以上判断根拠に追加 |
+| `scan-memory-origin` | `scan_memory_origin` | 欠落8秒の記憶由来を走査する | 間宮の発砲記憶を確認済み |
+| `restore-damaged-log` | `restore_damaged_log` | NULL 記憶区間の復元を試行する | 間宮の発砲記憶と義体稼働履歴を確認済み |
+| `compare-key-medium` | `compare_nodes` | 認証痕と七瀬未織の記録装置を照合する | KASUMI-GATE-09認証痕と最後の通信を確認済み |
 
-解放条件は `visited_nodes`、`pinned_any`、`tagged_any`、`tagged_node` を扱い、`isAnalysisActionUnlocked` が `visitedNodeIds`、`pinnedNodeIds`、`taggedNodes` を照合する。
+解放条件は `visited_nodes`、`pinned_any`、`tagged_any`、`tagged_node` を扱い、`isInvestigationActionUnlocked` が `visitedNodeIds`、`pinnedNodeIds`、`taggedNodes` を照合する。
 
 ### 5.5 最終判断選択肢
 
@@ -658,7 +667,7 @@ const finalStats: CityStats = {
 - `finalStats.security|ethics|surveillance|egoStability: number`
 - `completedAt: string`
 
-不正 JSON、配列でない JSON、不正 entry、localStorage 例外は `console.error` に記録し、空配列または valid entry のみを返す。
+不正 JSON は `console.error` に記録して `persona-null:case-results` を削除し、空配列を返す。配列でない JSON、不正 entry、localStorage 例外は `console.error` に記録し、空配列または valid entry のみを返す。
 
 ### 11.5 read flags
 

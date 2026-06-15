@@ -5,7 +5,7 @@ Feature: Persona Null Case000 playable audit slice
   Background:
     Given the app is running as a React Vite TypeScript single page app
     And the playable case dataset contains Case000 and Case001
-    And Case000 has 7 memory nodes, 3 audit resources, 3 analysis actions, and 3 final decisions
+    And Case000 has 7 memory nodes, 3 audit resources, 4 typed investigation actions, and 3 final decisions
 
   Scenario: Reaching investigation from title
     Given the auditor starts at the Persona Null title screen
@@ -51,6 +51,7 @@ Feature: Persona Null Case000 playable audit slice
     Then the final judgment button is disabled
     And judgment blocker reasons are shown as a checklist
     And the checklist includes node visit count, pinned ground count, and contradiction classification status
+    And the UI shows "必要なノードを確認してください", "判断根拠が未選択です", and "矛盾分類が未完了です" for the corresponding unmet conditions
 
   Scenario: Pinning judgment grounds
     Given the auditor is on the investigation screen
@@ -68,7 +69,8 @@ Feature: Persona Null Case000 playable audit slice
     And each related node shows 未確認 or 確認済 together with any applicable 選択中, 根拠提出済, and 矛盾分類済 badges
     When the auditor selects an important memory node with an auditHint
     Then the node detail shows a "監査官メモ" without asserting a final answer
-    And the evidence registration control is labeled "提出根拠に登録"
+    And the evidence registration control is labeled "判断根拠に追加"
+    And after registration the same control is labeled "判断根拠から外す"
 
   Scenario: Showing only node-specific contradiction candidates
     Given the auditor selected a memory node with suggested contradiction tags
@@ -100,6 +102,11 @@ Feature: Persona Null Case000 playable audit slice
     And the same action is disabled after execution
     And the action report is shown as an additional analysis result on each target memory node
 
+  Scenario: Providing the four MVP investigation action types
+    Given the auditor opens Case000
+    Then the case actions include scan_persona_signature, scan_memory_origin, restore_damaged_log, and compare_nodes
+    And every investigation action costs exactly one audit resource
+
   Scenario: Preventing analysis without audit resources
     Given audit resources are zero
     Then unexecuted analysis action buttons are disabled
@@ -130,6 +137,7 @@ Feature: Persona Null Case000 playable audit slice
   Scenario: Reporting the submitted audit structure
     Given the auditor has reached the result screen
     Then the result screen shows separated administrative-log sections for final ruling, processing, prioritized value, disregarded value, submitted judgment grounds, classified contradictions, executed analysis actions, city status changes, audit notes, and a short ending text
+    And each submitted judgment ground displays the pinned memory node summary
     And the result screen provides an action to return to the case selection screen
 
   Scenario: Resilient result persistence

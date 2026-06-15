@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { canUnlockJudgment, getCurrentGuidance, getJudgmentRequirements, isAnalysisActionUnlocked, isWarningLog } from './auditRules';
+import { canUnlockJudgment, getCurrentGuidance, getJudgmentRequirements, isInvestigationActionUnlocked, isWarningLog } from './auditRules';
 import { case000, case001, contradictionTags } from './data/cases';
 import type { DecisionOption } from './types';
 
@@ -21,7 +21,7 @@ describe('case001 playable data', () => {
   it('defines a complete case without production meta text', () => {
     expect(case001.nodes).toHaveLength(7);
     expect(case001.issues).toHaveLength(3);
-    expect(case001.analysisActions).toHaveLength(3);
+    expect(case001.actions).toHaveLength(3);
     expect(case001.decisions).toHaveLength(3);
     expect(case001.requiredNodesToJudge).toBe(4);
     expect(case001.decisions.map((decision) => decision.statDelta)).toEqual([
@@ -36,7 +36,7 @@ describe('case001 playable data', () => {
   it('defines what the repeated voice witnessed without identifying the command source', () => {
     const voice = case001.nodes.find((node) => node.id === 'repeated-voice');
     const fragment = case001.nodes.find((node) => node.id === 'fragment-memory');
-    const reconstruction = case001.analysisActions.find((action) => action.id === 'reconstruct-fragment');
+    const reconstruction = case001.actions.find((action) => action.id === 'reconstruct-fragment');
 
     expect(voice?.simpleFact).toContain('犯人の顔ではなく');
     expect(voice?.simpleFact).toContain('通常認証から KASUMI-GATE-09 へ切り替わり');
@@ -152,10 +152,10 @@ describe('case000 data', () => {
     expect(serializedCase).toContain('操作源');
   });
 
-  it('provides three final decisions, three resources, and three analysis actions', () => {
+  it('provides three final decisions, three resources, and four investigation actions', () => {
     expect(case000.auditResourceMax).toBe(3);
     expect(case000.decisions).toHaveLength(3);
-    expect(case000.analysisActions).toHaveLength(3);
+    expect(case000.actions).toHaveLength(4);
   });
 
 
@@ -227,19 +227,24 @@ describe('case000 data', () => {
   });
 
   it('maps every analysis report to its target memory nodes', () => {
-    expect(case000.analysisActions.map(({ id, targetNodeIds, reportText }) => ({ id, targetNodeIds, reportText }))).toEqual([
+    expect(case000.actions.map(({ id, targetNodeIds, reportText }) => ({ id, targetNodeIds, reportText }))).toEqual([
       {
-        id: 'resignature',
+        id: 'scan-persona-signature',
         targetNodeIds: ['shot-log', 'victim-medium'],
         reportText: '署名一致率は改善せず。間宮署名は残るが、単独の責任確定には不足。',
       },
       {
-        id: 'restore-eight',
+        id: 'scan-memory-origin',
+        targetNodeIds: ['missing-memory'],
+        reportText: '欠落は内部保護処理を経由。本人由来か外部干渉由来かは確定不能。',
+      },
+      {
+        id: 'restore-damaged-log',
         targetNodeIds: ['missing-memory', 'arm-history'],
         reportText: '欠損区間は断片のみ復元。外部命令断定ではなく境界曖昧化を示唆。',
       },
       {
-        id: 'match-key-medium',
+        id: 'compare-key-medium',
         targetNodeIds: ['kasumi-key', 'victim-medium', 'last-comm'],
         reportText: '七瀬未織の記録装置側に同鍵形式の応答痕。記録装置を操作源と断定するには不足。未焼却音声断片を保全候補へ追加。',
       },
@@ -249,7 +254,7 @@ describe('case000 data', () => {
   it('keeps investigation node details and analysis output free of production metadata', () => {
     const playerFacingInvestigationText = [
       ...case000.nodes.flatMap((node) => [node.summary, node.log, node.simpleFact, node.inspectorNote, node.warning, ...Object.keys(node.metrics), ...Object.values(node.metrics).map(String)]),
-      ...case000.analysisActions.flatMap((action) => [action.resultLog, action.reportText ?? '']),
+      ...case000.actions.flatMap((action) => [action.resultLog, action.reportText ?? '']),
     ].join(' ');
 
     for (const metaTerm of ['Case001', '後続事件', 'MVP', 'Jam', 'プレイヤー', 'シナリオ', '本編', '予告']) {
@@ -258,17 +263,17 @@ describe('case000 data', () => {
   });
 
   it('unlocks analysis actions only after all configured conditions are met', () => {
-    const resignature = case000.analysisActions.find((action) => action.id === 'resignature');
+    const resignature = case000.actions.find((action) => action.id === 'scan-persona-signature');
     expect(resignature).toBeDefined();
     if (!resignature) return;
 
-    expect(isAnalysisActionUnlocked({
+    expect(isInvestigationActionUnlocked({
       action: resignature,
       visitedNodeIds: ['victim-medium'],
       pinnedNodeIds: [],
       taggedNodes: {},
     })).toBe(false);
-    expect(isAnalysisActionUnlocked({
+    expect(isInvestigationActionUnlocked({
       action: resignature,
       visitedNodeIds: ['victim-medium'],
       pinnedNodeIds: ['shot-log'],
@@ -279,6 +284,8 @@ describe('case000 data', () => {
   it('supports every analysis unlock condition type', () => {
     const action = {
       id: 'condition-matrix',
+      type: 'compare_nodes' as const,
+      cost: 1 as const,
       title: '条件照合',
       description: '条件照合',
       resultLog: '完了',
@@ -290,7 +297,7 @@ describe('case000 data', () => {
       ],
     };
 
-    expect(isAnalysisActionUnlocked({
+    expect(isInvestigationActionUnlocked({
       action,
       visitedNodeIds: ['shot-log'],
       pinnedNodeIds: ['victim-medium'],
