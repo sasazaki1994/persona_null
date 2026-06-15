@@ -1,7 +1,7 @@
-import type { AnalysisAction, TaggedNodes } from './types';
+import type { InvestigationAction, TaggedNodes } from './types';
 
-export function isAnalysisActionUnlocked(params: {
-  action: AnalysisAction;
+export function isInvestigationActionUnlocked(params: {
+  action: InvestigationAction;
   visitedNodeIds: string[];
   pinnedNodeIds: string[];
   taggedNodes: TaggedNodes;

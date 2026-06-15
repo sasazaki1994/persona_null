@@ -132,10 +132,10 @@ describe('Persona Null player flow', () => {
     expect(container.querySelector('.record-status-bar')?.textContent).toContain('根拠未提出');
     expect(container.querySelector('.record-status-bar')?.textContent).toContain('矛盾未分類');
 
-    clickButton('提出根拠に登録');
+    clickButton('判断根拠に追加');
     expect(container.querySelector('.operation-toast')?.textContent).toContain('EVIDENCE PINNED');
     expect(container.querySelector('.record-status-bar')?.textContent).toContain('根拠提出済');
-    clickButton('提出根拠から解除');
+    clickButton('判断根拠から外す');
     expect(container.querySelector('.operation-toast')?.textContent).toContain('EVIDENCE RELEASED');
   });
 
@@ -207,7 +207,7 @@ describe('Persona Null player flow', () => {
     case000.nodes.slice(0, case000.requiredNodesToJudge).forEach((node) => clickButton(`ノード：${node.title}`));
     expect(container.textContent).toContain('判断根拠の登録');
 
-    clickButton('提出根拠に登録');
+    clickButton('判断根拠に追加');
     expect(container.textContent).toContain('矛盾記録の分類');
 
     clickButton('人格署名の矛盾');
@@ -362,7 +362,7 @@ describe('Persona Null player flow', () => {
     expect(container.textContent).toContain(`記録種別：${case000.nodes[0].type}`);
     expect(container.textContent).toContain('確認 1 / 4');
 
-    clickButton('提出根拠に登録');
+    clickButton('判断根拠に追加');
     expect(container.textContent).toContain('根拠 1');
 
     clickButton('間宮の発砲記憶');
@@ -435,7 +435,7 @@ describe('Persona Null player flow', () => {
     expect(container.textContent).toContain('監査官メモ');
     expect(container.textContent).toContain('詳細ログ');
 
-    clickButton('提出根拠に登録');
+    clickButton('判断根拠に追加');
     clickButton('記憶由来の矛盾');
     expect(findButton('最終判断へ進む')?.disabled).toBe(false);
     clickButton('最終判断へ進む');

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { aggregateAuditTendency } from './auditTendency';
-import { canUnlockJudgment, getCurrentGuidance, getJudgmentRequirements, isAnalysisActionUnlocked, isWarningLog, type CurrentGuidance, type JudgmentRequirement } from './auditRules';
+import { canUnlockJudgment, getCurrentGuidance, getJudgmentRequirements, isInvestigationActionUnlocked, isWarningLog, type CurrentGuidance, type JudgmentRequirement } from './auditRules';
 import { case000, cases, contradictionTagLabels } from './data/cases';
 import { AnnotatedText } from './components/AnnotatedText';
 import { TypewriterText } from './components/TypewriterText';
@@ -8,7 +8,7 @@ import { PersonProfile } from './components/PersonProfile';
 import { MemoryNetwork } from './MemoryNetwork';
 import { loadCaseResults, loadReadFlags, markRead, saveCaseResult } from './storage';
 import { auditValueLabels } from './types';
-import type { AnalysisAction, AnalysisUnlockCondition, CaseRecord, CityStats, ContradictionTag, DecisionOption, MemoryNode, NodeImportance, SavedCaseResult, Screen, TaggedNodes } from './types';
+import type { InvestigationAction, AnalysisUnlockCondition, CaseRecord, CityStats, ContradictionTag, DecisionOption, MemoryNode, NodeImportance, SavedCaseResult, Screen, TaggedNodes } from './types';
 import './styles.css';
 
 const clampStat = (value: number) => Math.max(0, Math.min(100, value));
@@ -162,9 +162,9 @@ function App() {
   };
 
   const executeAction = (actionId: string) => {
-    const action = caseRecord.analysisActions.find((item) => item.id === actionId);
+    const action = caseRecord.actions.find((item) => item.id === actionId);
     if (!action || executedActionIds.includes(actionId)) return;
-    if (!isAnalysisActionUnlocked({ action, visitedNodeIds, pinnedNodeIds, taggedNodes })) {
+    if (!isInvestigationActionUnlocked({ action, visitedNodeIds, pinnedNodeIds, taggedNodes })) {
       appendLog(`解析権限未解放：${action.title}。必要記録を確認してください。`);
       return;
     }
@@ -172,7 +172,7 @@ function App() {
       appendLog('監査リソース不足：追加解析を実行できません。既存記録のみで判断してください。');
       return;
     }
-    setResources((value) => value - 1);
+    setResources((value) => value - action.cost);
     setExecutedActionIds((ids) => [...ids, actionId]);
     appendLog(action.resultLog);
     showFeedback('AUDIT RESOURCE CONSUMED');
@@ -411,9 +411,9 @@ function getAnalysisConditionItems(caseRecord: CaseRecord, condition: AnalysisUn
   }
 }
 
-function AnalysisActionControl(props: {
+function InvestigationActionControl(props: {
   caseRecord: CaseRecord;
-  action: AnalysisAction;
+  action: InvestigationAction;
   executed: boolean;
   onExecute: (actionId: string) => void;
   pinnedNodeIds: string[];
@@ -421,7 +421,7 @@ function AnalysisActionControl(props: {
   taggedNodes: TaggedNodes;
   visitedNodeIds: string[];
 }) {
-  const unlocked = isAnalysisActionUnlocked(props);
+  const unlocked = isInvestigationActionUnlocked(props);
   const requirements = (props.action.unlockConditions ?? []).flatMap((condition) => getAnalysisConditionItems(props.caseRecord, condition, props));
 
   return (
@@ -473,16 +473,16 @@ function InvestigationScreen(props: InvestigationProps) {
   const taggedNodeCount = Object.values(props.taggedNodes).filter((tags) => tags.length > 0).length;
   const pinnedNodes = caseRecord.nodes.filter((node) => props.pinnedNodeIds.includes(node.id));
   const analysisReports = selectedNode
-    ? caseRecord.analysisActions.filter((action) => (
+    ? caseRecord.actions.filter((action) => (
         props.executedActionIds.includes(action.id)
         && action.targetNodeIds?.includes(selectedNode.id)
         && action.reportText
       ))
     : [];
-  const hasExecutableAnalysis = caseRecord.analysisActions.some((action) => (
+  const hasExecutableAnalysis = caseRecord.actions.some((action) => (
     !props.executedActionIds.includes(action.id)
     && props.resources > 0
-    && isAnalysisActionUnlocked({
+    && isInvestigationActionUnlocked({
       action,
       visitedNodeIds: props.visitedNodeIds,
       pinnedNodeIds: props.pinnedNodeIds,
@@ -605,7 +605,7 @@ function InvestigationScreen(props: InvestigationProps) {
             ))}
           </div>
         </div>
-        <MemoryNetwork analysisActions={caseRecord.analysisActions} nodes={caseRecord.nodes} selectedNodeId={props.selectedNodeId} visitedNodeIds={props.visitedNodeIds} pinnedNodeIds={props.pinnedNodeIds} taggedNodes={props.taggedNodes} executedActionIds={props.executedActionIds} onSelectNode={props.onSelectNode} />
+        <MemoryNetwork actions={caseRecord.actions} nodes={caseRecord.nodes} selectedNodeId={props.selectedNodeId} visitedNodeIds={props.visitedNodeIds} pinnedNodeIds={props.pinnedNodeIds} taggedNodes={props.taggedNodes} executedActionIds={props.executedActionIds} onSelectNode={props.onSelectNode} />
       </section>
 
       <aside className="pane right-pane">
@@ -640,7 +640,7 @@ function InvestigationScreen(props: InvestigationProps) {
             <div className="pin-box">
               <h3>判断根拠</h3>
               <button onClick={() => props.onTogglePin(selectedNode.id)} disabled={!props.pinnedNodeIds.includes(selectedNode.id) && props.pinnedNodeIds.length >= 3}>
-                {props.pinnedNodeIds.includes(selectedNode.id) ? '提出根拠から解除' : '提出根拠に登録'}
+                {props.pinnedNodeIds.includes(selectedNode.id) ? '判断根拠から外す' : '判断根拠に追加'}
               </button>
               <small>{pinnedNodes.length ? `提出済み ${pinnedNodes.length} / 3` : '最低1件を提出'}</small>
             </div>
@@ -703,8 +703,8 @@ function InvestigationScreen(props: InvestigationProps) {
             <div className="analysis-resource-row"><span>監査リソース残数</span><ResourceGauge caseRecord={props.caseRecord} resources={props.resources} /></div>
             <details className="inline-details actions">
               <summary>解析メニューを表示</summary>
-              {caseRecord.analysisActions.map((action) => (
-                <AnalysisActionControl
+              {caseRecord.actions.map((action) => (
+                <InvestigationActionControl
                   caseRecord={caseRecord}
                   action={action}
                   executed={props.executedActionIds.includes(action.id)}
@@ -741,6 +741,17 @@ function InvestigationScreen(props: InvestigationProps) {
               </p>
             ))}
           </div>
+          {!props.canJudge && (
+            <ul className="judgment-blockers" aria-label="判断できない理由">
+              {props.requirements.filter((requirement) => !requirement.completed).map((requirement) => (
+                <li key={requirement.id}>{
+                  requirement.id === 'nodes' ? '必要なノードを確認してください'
+                    : requirement.id === 'pins' ? '判断根拠が未選択です'
+                      : '矛盾分類が未完了です'
+                }</li>
+              ))}
+            </ul>
+          )}
           <button className={`judge ${props.canJudge ? 'ready' : ''}`} disabled={!props.canJudge} onClick={props.onJudge}>{props.canJudge ? '最終判断へ進む' : '条件を満たすと判断可能'}</button>
         </section>
         <section className="logs audit-log">
@@ -870,7 +881,7 @@ function ResultScreen({ caseRecord, decision, finalStats, payload, taggedNodes, 
             <p><AnnotatedText text={decision.processing} /></p>
           </ResultSection>
           <ResultSection title="提出された判断根拠">
-            {pinned.length ? pinned.map((node) => <p key={node.id}>・{node.title}：{node.simpleFact}</p>) : <p>根拠提出なし。</p>}
+            {pinned.length ? pinned.map((node) => <p key={node.id}>・{node.title}：{node.summary}</p>) : <p>根拠提出なし。</p>}
           </ResultSection>
           <ResultSection title="分類された矛盾">
             {taggedEntries.length ? taggedEntries.map(([nodeId, tags]) => {
@@ -880,7 +891,7 @@ function ResultScreen({ caseRecord, decision, finalStats, payload, taggedNodes, 
           </ResultSection>
           <ResultSection title="実行した解析アクション">
             {payload.executedActionIds.length ? payload.executedActionIds.map((id) => {
-              const action = caseRecord.analysisActions.find((item) => item.id === id);
+              const action = caseRecord.actions.find((item) => item.id === id);
               return <p key={id}>・{action?.title ?? id}</p>;
             }) : <p>追加解析なし。既存記録のみで判断。</p>}
           </ResultSection>

@@ -297,9 +297,11 @@ export const cases: CaseRecord[] = [
         links: ['shot-log', 'missing-memory', 'arm-history', 'kasumi-key'],
       },
     ],
-    analysisActions: [
+    actions: [
       {
-        id: 'resignature',
+        id: 'scan-persona-signature',
+        type: 'scan_persona_signature',
+        cost: 1,
         title: '人格署名の再照合',
         description: '発砲ログと人格台帳の署名波形を再照合する。',
         resultLog: '解析完了：署名一致率は改善せず。間宮署名は残るが、単独の責任確定には不足。',
@@ -311,7 +313,22 @@ export const cases: CaseRecord[] = [
         ],
       },
       {
-        id: 'restore-eight',
+        id: 'scan-memory-origin',
+        type: 'scan_memory_origin',
+        cost: 1,
+        title: '記憶由来の走査',
+        description: '欠落8秒の保護処理と記憶由来を走査する。',
+        resultLog: '解析完了：欠落は内部保護処理を経由。本人由来か外部干渉由来かは確定不能。',
+        targetNodeIds: ['missing-memory'],
+        reportText: '欠落は内部保護処理を経由。本人由来か外部干渉由来かは確定不能。',
+        unlockConditions: [
+          { type: 'visited_nodes', nodeIds: ['missing-memory'] },
+        ],
+      },
+      {
+        id: 'restore-damaged-log',
+        type: 'restore_damaged_log',
+        cost: 1,
         title: '欠落8秒の復元',
         description: '海馬補助ログから欠損区間の復元を試行する。',
         resultLog: '解析完了：欠損区間は断片のみ復元。外部命令断定ではなく境界曖昧化を示唆。',
@@ -322,7 +339,9 @@ export const cases: CaseRecord[] = [
         ],
       },
       {
-        id: 'match-key-medium',
+        id: 'compare-key-medium',
+        type: 'compare_nodes',
+        cost: 1,
         title: '認証鍵と記録装置の照合',
         description: 'KASUMI-GATE-09 と七瀬未織の記録装置の接触痕を照合する。',
         resultLog: '解析完了：七瀬未織の記録装置側に同鍵形式の応答痕。記録装置を操作源と断定するには不足。未焼却音声断片を保全候補へ追加。',
@@ -490,21 +509,23 @@ export const cases: CaseRecord[] = [
         hasContradiction: true, requiresContradictionReview: true, suggestedTags: ['operation_subject', 'memory_origin'], position: [2.0, -0.8, 0.2], links: ['repeated-voice', 'fragment-memory', 'security-disposal'],
       },
     ],
-    analysisActions: [
+    actions: [
       {
-        id: 'compare-voice-signatures', title: '反復発話の署名比較', description: '各発話の署名波形を時系列比較する。',
+        id: 'compare-voice-signatures', type: 'compare_nodes', cost: 1, title: '反復発話の署名比較', description: '各発話の署名波形を時系列比較する。',
         resultLog: '解析完了：署名変動は発話区切りと同期。固定録音だけでは説明できないが、本人認証閾値には未達。',
         targetNodeIds: ['repeated-voice', 'signature-drift'], reportText: '署名変動は発話区切りと同期。固定録音だけでは説明できないが、本人認証閾値には未達。',
         unlockConditions: [{ type: 'visited_nodes', nodeIds: ['repeated-voice', 'signature-drift'] }],
       },
       {
-        id: 'reconstruct-fragment', title: '断片記憶の時系列復元', description: 'Case000記録と断片映像の時系列を比較する。',
+        id: 'reconstruct-fragment',
+        type: 'restore_damaged_log',
+        cost: 1, title: '断片記憶の時系列復元', description: 'Case000記録と断片映像の時系列を比較する。',
         resultLog: '解析完了：発砲直前0.8秒、制御表示は通常認証からKASUMI-GATE-09へ切替。間宮の発砲意図反応は検出されないが、命令処理署名は間宮怜司。命令元は未確定。',
         targetNodeIds: ['fragment-memory', 'kasumi-resonance'], reportText: '発砲直前0.8秒、制御表示は通常認証からKASUMI-GATE-09へ切替。間宮の発砲意図反応は検出されないが、命令処理署名は間宮怜司。命令元は未確定。',
         unlockConditions: [{ type: 'visited_nodes', nodeIds: ['fragment-memory', 'kasumi-resonance'] }],
       },
       {
-        id: 'classify-stop-response', title: '停止要求の応答分類', description: '削除停止要求と既知の媒体保護エラーを照合する。',
+        id: 'classify-stop-response', type: 'scan_memory_origin', cost: 1, title: '停止要求の応答分類', description: '削除停止要求と既知の媒体保護エラーを照合する。',
         resultLog: '解析完了：既知エラーとの完全一致なし。人格継続要求とも断定できず、異常応答として残存。',
         targetNodeIds: ['self-preservation', 'incineration-queue'], reportText: '既知エラーとの完全一致なし。人格継続要求とも断定できず、異常応答として残存。',
         unlockConditions: [{ type: 'visited_nodes', nodeIds: ['self-preservation'] }, { type: 'tagged_any', count: 1 }],
