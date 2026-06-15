@@ -1067,6 +1067,39 @@ button.judge:hover:not(:disabled) {
 .judgment-state.locked { color: #677a7c; }
 .judgment-state.ready { color: var(--accent-green); }
 button.judge:not(:disabled) { position: relative; font-weight: 800; letter-spacing: 0.08em; }
+.audit-report-check {
+  grid-column: 1 / -1;
+  border: 1px solid rgba(99, 213, 210, 0.22);
+  border-left: 3px solid #65878b;
+  background: rgba(3, 13, 17, 0.9);
+  padding: 0.55rem 0.7rem;
+  font-size: 0.68rem;
+}
+.audit-report-ruling_possible, .audit-report-pressure_ruling { border-left-color: #d9a957; }
+.audit-report-ruling_supported { border-left-color: var(--accent-green); }
+.audit-report-heading, .audit-report-counts, .audit-report-issues p { display: flex; align-items: center; gap: 0.65rem; }
+.audit-report-heading { justify-content: space-between; }
+.audit-report-heading span { color: #5f8d91; font: 0.55rem/1 ui-monospace, monospace; letter-spacing: 0.14em; }
+.audit-report-heading h3 { margin: 0.18rem 0; font-size: 0.8rem; }
+.audit-report-heading > strong { color: #c4e3e4; font-size: 0.66rem; }
+.audit-report-counts { flex-wrap: wrap; border-block: 1px solid rgba(99, 213, 210, 0.12); padding: 0.35rem 0; }
+.audit-report-counts span { color: #789ea2; }
+.audit-report-counts strong { color: #d6eeee; }
+.audit-report-summary { display: grid; grid-template-columns: 4.5rem 1fr; gap: 0.5rem; padding: 0.3rem 0; }
+.audit-report-summary span, .audit-report-issues > strong, .audit-report-warnings > strong { color: #70aeb1; }
+.audit-report-summary p { color: #c2dcde; }
+.audit-report-issues p { display: grid; grid-template-columns: minmax(0, 1fr) auto 5.2rem; margin: 0.15rem 0; }
+.audit-report-issues p span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.audit-report-issues em { color: #8db6b9; font-style: normal; }
+.audit-report-issues i { border: 1px solid rgba(99, 213, 210, 0.18); padding: 0.08rem 0.3rem; text-align: center; font-style: normal; }
+.audit-report-issues .issue-state-unreviewed { color: #ff8290; }
+.audit-report-issues .issue-state-weak { color: #e5b96e; }
+.audit-report-issues .issue-state-reviewed { color: var(--accent-green); }
+.audit-report-warnings { margin-top: 0.35rem; border-top: 1px solid rgba(255, 92, 114, 0.2); padding-top: 0.3rem; color: #d8b3b7; }
+.audit-report-warnings ul { display: flex; flex-wrap: wrap; gap: 0.2rem 1rem; margin: 0.2rem 0; padding-left: 1rem; }
+.audit-report-warnings p { color: #e5b96e; }
+.decision-audit-report { margin: 1rem 0; border: 1px solid #315d73; border-left: 3px solid var(--accent-cyan); background: rgba(6, 17, 29, 0.72); padding: 0.85rem 1rem; }
+.decision-audit-report h3, .decision-audit-report p { margin: 0.2rem 0; }
 
 .ruling-title { display: grid; gap: 0.15rem; margin-bottom: 1.2rem; }
 .ruling-title > span { color: #edffff; font-size: clamp(2rem, 5vw, 3.8rem); letter-spacing: 0.12em; }

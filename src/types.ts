@@ -175,6 +175,28 @@ export type CaseRecord = {
 
 export type TaggedNodes = Record<string, ContradictionTag[]>;
 
+export type AuditReportIssueState = {
+  issueId: string;
+  title: string;
+  reviewedNodeCount: number;
+  totalNodeCount: number;
+  hasPinnedEvidence: boolean;
+  hasTaggedContradiction: boolean;
+  state: 'unreviewed' | 'weak' | 'reviewed';
+};
+
+export type AuditReportCheck = {
+  reviewedNodes: number;
+  totalNodes: number;
+  pinnedEvidence: number;
+  taggedContradictions: number;
+  executedActions: number;
+  unresolvedIssues: AuditReportIssueState[];
+  warnings: string[];
+  summary: string;
+  state: 'insufficient' | 'ruling_possible' | 'ruling_supported' | 'pressure_ruling';
+};
+
 export type AuditPressureLevel = 'low' | 'medium' | 'high' | 'critical';
 
 export type AuditPressureEvent = {
