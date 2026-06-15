@@ -251,6 +251,23 @@ describe('case000 data', () => {
     ]);
   });
 
+  it('defines visible strategic side effects for every investigation action', () => {
+    for (const auditCase of [case000, case001]) {
+      expect(auditCase.actions.every((action) => action.riskDelta && Object.keys(action.riskDelta).length > 0)).toBe(true);
+      expect(auditCase.actions.every((action) => action.riskNote?.startsWith('解析副作用：'))).toBe(true);
+    }
+  });
+
+  it('renders ruling evidence alignment, risk states, and ignored issues', () => {
+    const appSource = terminologyFiles['./App.tsx'];
+
+    expect(appSource).toContain('提出根拠一致');
+    expect(appSource).toContain('あなたが提出していない記録を主要根拠に含みます');
+    expect(appSource).toContain('この裁定で保留・軽視される争点');
+    expect(appSource).toContain('ruling-risk-${riskLevel}');
+    expect(appSource).toContain('actionRiskDeltas');
+  });
+
   it('keeps investigation node details and analysis output free of production metadata', () => {
     const playerFacingInvestigationText = [
       ...case000.nodes.flatMap((node) => [node.summary, node.log, node.simpleFact, node.inspectorNote, node.warning, ...Object.keys(node.metrics), ...Object.values(node.metrics).map(String)]),

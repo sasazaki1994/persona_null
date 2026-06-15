@@ -223,7 +223,10 @@ describe('Persona Null player flow', () => {
     expect(container.textContent).toContain('優先される価値');
     expect(container.textContent).toContain('失われる価値');
     expect(container.textContent).toContain('採用される根拠');
-    expect(container.textContent).toContain('無視される争点');
+    expect(container.textContent).toContain('この裁定で保留・軽視される争点');
+    expect(container.textContent).toContain('提出根拠一致');
+    expect(container.querySelector('.ruling-risk-high')).not.toBeNull();
+    expect(container.querySelector('.ruling-risk-medium')).not.toBeNull();
     expect(container.textContent).toContain('都市ステータスへの影響');
     expect(container.querySelectorAll('.decision-processing')).toHaveLength(3);
     expect(container.textContent).toContain('記録整合性と治安維持を優先');
@@ -234,8 +237,8 @@ describe('Persona Null player flow', () => {
     expect(rulingOptions[0].textContent).toContain('優先される価値記録整合性優先');
     expect(rulingOptions[0].textContent).toContain('失われる価値人格断片保護');
     expect(rulingOptions[0].textContent).toContain('採用される根拠');
-    expect(rulingOptions[0].textContent).toContain('提出一致 0 / 2');
-    expect(rulingOptions[0].textContent).toContain('この裁定案は未提出記録を採用根拠に含みます。');
+    expect(rulingOptions[0].textContent).toContain('提出根拠一致 0 / 2');
+    expect(rulingOptions[0].textContent).toContain('この裁定案は、あなたが提出していない記録を主要根拠に含みます。');
     expect(findButton(case000.decisions[0].label)?.disabled).toBe(false);
     clickButton(case000.decisions[0].label);
 

@@ -150,6 +150,16 @@ meter { width: 100%; accent-color: #58dcff; }
 .decision-evidence-warning { border: 1px solid #ff476f; background: rgba(255, 71, 111, 0.1); padding: 0.65rem; color: #ffcfda; }
 .decision-evidence-warning p { margin: 0.2rem 0 0; color: inherit; }
 .decision-card > button { margin-top: auto; }
+.ruling-risk-label { align-self: flex-start; border: 1px solid currentColor; padding: 0.2rem 0.45rem; font: 700 0.62rem/1.2 ui-monospace, monospace; letter-spacing: 0.08em; }
+.ruling-risk-high { border-color: #ff476f; box-shadow: inset 0 0 0 1px rgba(255, 71, 111, 0.16); }
+.ruling-risk-high .ruling-risk-label { color: #ff9caf; }
+.ruling-risk-medium { border-color: #d9a94e; box-shadow: inset 0 0 0 1px rgba(217, 169, 78, 0.12); }
+.ruling-risk-medium .ruling-risk-label { color: #ffd987; }
+.ruling-risk-low { border-color: #52cfa7; box-shadow: inset 0 0 0 1px rgba(82, 207, 167, 0.12); }
+.ruling-risk-low .ruling-risk-label { color: #7dffbf; }
+.ruling-ignored-section ul { display: grid; gap: 0.4rem; margin: 0; padding-left: 1.2rem; color: #ffcfda; font-size: 0.78rem; line-height: 1.5; }
+.result-action-risk { border-left: 2px solid rgba(255, 207, 218, 0.55); padding-left: 0.65rem; }
+.result-action-risk p { margin: 0.25rem 0; }
 .decision-stat-deltas { display: flex; flex-wrap: wrap; gap: 0.35rem; }
 .decision-stat-deltas span { border: 1px solid currentColor; padding: 0.18rem 0.35rem; font-size: 0.7rem; }
 .secondary { border-color: #69808a; background: rgba(60, 74, 84, 0.55); }

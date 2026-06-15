@@ -55,6 +55,7 @@ function App() {
   const [taggedNodes, setTaggedNodes] = useState<TaggedNodes>({});
   const [resources, setResources] = useState(caseRecord.auditResourceMax);
   const [executedActionIds, setExecutedActionIds] = useState<string[]>([]);
+  const [actionRiskDeltas, setActionRiskDeltas] = useState<Record<string, Partial<CityStats>>>({});
   const [systemLogs, setSystemLogs] = useState<string[]>(['監査室端末を起動。都市OS 基礎公定通知を待機。']);
   const [decision, setDecision] = useState<DecisionOption | null>(null);
   const [resultPayload, setResultPayload] = useState<SavedCaseResult | null>(null);
@@ -175,6 +176,8 @@ function App() {
     setResources((value) => value - action.cost);
     setExecutedActionIds((ids) => [...ids, actionId]);
     appendLog(action.resultLog);
+    if (action.riskDelta) setActionRiskDeltas((deltas) => ({ ...deltas, [actionId]: action.riskDelta ?? {} }));
+    if (action.riskNote) appendLog(action.riskNote);
     showFeedback('AUDIT RESOURCE CONSUMED');
   };
 
@@ -188,6 +191,7 @@ function App() {
     setTaggedNodes({});
     setResources(nextCase.auditResourceMax);
     setExecutedActionIds([]);
+    setActionRiskDeltas({});
     setSystemLogs(['監査室端末を起動。都市OS 基礎公定通知を待機。', `監査対象選択：${nextCase.id.toUpperCase()} / ${nextCase.recordName}。`]);
     setDecision(null);
     setResultPayload(null);
@@ -199,7 +203,7 @@ function App() {
     return <DecisionScreen caseRecord={caseRecord} pinnedNodeIds={pinnedNodeIds} onBack={() => setScreen('investigation')} onDecide={submitDecision} />;
   }
   if (screen === 'result' && decision && resultPayload) {
-    return <ResultScreen caseRecord={caseRecord} decision={decision} finalStats={finalStats} payload={resultPayload} taggedNodes={taggedNodes} onArchive={() => setScreen('caseSelect')} />;
+    return <ResultScreen caseRecord={caseRecord} decision={decision} finalStats={finalStats} payload={resultPayload} taggedNodes={taggedNodes} actionRiskDeltas={actionRiskDeltas} onArchive={() => setScreen('caseSelect')} />;
   }
 
   return (
@@ -800,8 +804,13 @@ function DecisionScreen({ caseRecord, pinnedNodeIds, onBack, onDecide }: { caseR
             const ignoredIssues = caseRecord.issues.filter((issue) => option.ignoredIssueIds?.includes(issue.id));
             const submittedAcceptedCount = acceptedNodes.filter((node) => pinnedNodeIds.includes(node.id)).length;
 
+            const riskLevel = acceptedNodes.length > 0 && submittedAcceptedCount === acceptedNodes.length
+              ? 'low'
+              : submittedAcceptedCount > 0 ? 'medium' : 'high';
+
             return (
-              <article className="decision-card ruling-option" key={option.id}>
+              <article className={`decision-card ruling-option ruling-risk-${riskLevel}`} key={option.id}>
+                <span className="ruling-risk-label">根拠整合リスク：{riskLevel.toUpperCase()}</span>
                 <div className="ruling-option-heading">
                   <span className="ruling-option-index">{String.fromCharCode(65 + index)}</span>
                   <div><p className="eyebrow">裁定名 / RULING</p><h3>{option.label}</h3></div>
@@ -817,7 +826,7 @@ function DecisionScreen({ caseRecord, pinnedNodeIds, onBack, onDecide }: { caseR
                 <section className="ruling-evidence-section">
                   <div className="decision-section-heading">
                     <h4>採用される根拠</h4>
-                    <span>提出一致 {submittedAcceptedCount} / {acceptedNodes.length}</span>
+                    <span>提出根拠一致 {submittedAcceptedCount} / {acceptedNodes.length}</span>
                   </div>
                   {acceptedNodes.map((node) => (
                     <p className={pinnedNodeIds.includes(node.id) ? 'evidence-submitted' : 'evidence-unsubmitted'} key={node.id}>
@@ -827,13 +836,13 @@ function DecisionScreen({ caseRecord, pinnedNodeIds, onBack, onDecide }: { caseR
                   {acceptedNodes.length > 0 && submittedAcceptedCount === 0 && (
                     <div className="decision-evidence-warning" role="alert">
                       <strong>提出根拠との不一致</strong>
-                      <p>この裁定案は未提出記録を採用根拠に含みます。</p>
+                      <p>この裁定案は、あなたが提出していない記録を主要根拠に含みます。</p>
                     </div>
                   )}
                 </section>
                 <section className="ruling-ignored-section">
-                  <h4>無視される争点</h4>
-                  {ignoredIssues.map((issue) => <p key={issue.id}><strong>{issue.title}</strong>：{issue.description}</p>)}
+                  <h4>この裁定で保留・軽視される争点</h4>
+                  <ul>{ignoredIssues.map((issue) => <li key={issue.id}><strong>{issue.title}</strong>：{issue.description}</li>)}</ul>
                 </section>
                 <section>
                   <h4>都市ステータスへの影響</h4>
@@ -852,7 +861,7 @@ function DecisionScreen({ caseRecord, pinnedNodeIds, onBack, onDecide }: { caseR
   );
 }
 
-function ResultScreen({ caseRecord, decision, finalStats, payload, taggedNodes, onArchive }: { caseRecord: CaseRecord; decision: DecisionOption; finalStats: CityStats; payload: SavedCaseResult; taggedNodes: TaggedNodes; onArchive: () => void }) {
+function ResultScreen({ caseRecord, decision, finalStats, payload, taggedNodes, actionRiskDeltas, onArchive }: { caseRecord: CaseRecord; decision: DecisionOption; finalStats: CityStats; payload: SavedCaseResult; taggedNodes: TaggedNodes; actionRiskDeltas: Record<string, Partial<CityStats>>; onArchive: () => void }) {
   const pinned = caseRecord.nodes.filter((node) => payload.pinnedNodeIds.includes(node.id));
   const taggedEntries = Object.entries(taggedNodes).filter(([, tags]) => tags.length);
 
@@ -892,7 +901,15 @@ function ResultScreen({ caseRecord, decision, finalStats, payload, taggedNodes, 
           <ResultSection title="実行した解析アクション">
             {payload.executedActionIds.length ? payload.executedActionIds.map((id) => {
               const action = caseRecord.actions.find((item) => item.id === id);
-              return <p key={id}>・{action?.title ?? id}</p>;
+              const riskDelta = actionRiskDeltas[id] ?? action?.riskDelta;
+              const riskSummary = riskDelta
+                ? cityStatKeys.filter((key) => riskDelta[key] !== undefined).map((key) => `${statLabels[key]} ${(riskDelta[key] ?? 0) >= 0 ? '+' : ''}${riskDelta[key]}`).join(' / ')
+                : null;
+              return <div className="result-action-risk" key={id}>
+                <p>・{action?.title ?? id}</p>
+                {riskSummary && <p><strong>副作用：</strong>{riskSummary}</p>}
+                {action?.riskNote && <p><strong>注記：</strong>{action.riskNote.replace(/^解析副作用：/, '')}</p>}
+              </div>;
             }) : <p>追加解析なし。既存記録のみで判断。</p>}
           </ResultSection>
           <ResultSection title="都市ステータス変動">
