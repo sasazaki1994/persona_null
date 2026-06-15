@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { aggregateAuditTendency } from './auditTendency';
+import { applyAuditPressureEvent, createAuditPressureEvent } from './auditPressure';
 import { canUnlockJudgment, getCurrentGuidance, getJudgmentRequirements, isInvestigationActionUnlocked, isWarningLog, type CurrentGuidance, type JudgmentRequirement } from './auditRules';
 import { case000, cases, contradictionTagLabels } from './data/cases';
 import { getCaseContinuityEffect, type CaseContinuityEffect } from './caseContinuity';
@@ -9,7 +10,7 @@ import { PersonProfile } from './components/PersonProfile';
 import { MemoryNetwork } from './MemoryNetwork';
 import { loadCaseResults, loadReadFlags, markRead, saveCaseResult } from './storage';
 import { auditValueLabels } from './types';
-import type { InvestigationAction, AnalysisUnlockCondition, CaseRecord, CityStats, ContradictionTag, DecisionOption, MemoryNode, NodeImportance, SavedCaseResult, Screen, TaggedNodes } from './types';
+import type { AuditPressureEvent, AuditPressureLevel, AuditPressureState, InvestigationAction, AnalysisUnlockCondition, CaseRecord, CityStats, ContradictionTag, DecisionOption, MemoryNode, NodeImportance, SavedCaseResult, Screen, TaggedNodes } from './types';
 import './styles.css';
 
 const clampStat = (value: number) => Math.max(0, Math.min(100, value));
@@ -46,6 +47,15 @@ const importanceLabels: Record<NodeImportance, string> = {
   critical: '重大',
 };
 
+const initialAuditPressure: AuditPressureState = { value: 0, max: 100, level: 'low', events: [] };
+
+const auditPressureMessages: Record<AuditPressureLevel, string> = {
+  low: '処理圧力：低。追加監査は許容範囲内です。',
+  medium: '処理圧力：中。都市警備局から裁定予定時刻の再照会あり。',
+  high: '処理圧力：高。処理遅延により、行政裁定圧力が上昇しています。',
+  critical: '処理圧力：臨界。未確定人格記録の自動処理要求が発生しています。',
+};
+
 function App() {
   const [screen, setScreen] = useState<Screen>('title');
   const [selectedCaseId, setSelectedCaseId] = useState(case000.id);
@@ -65,6 +75,7 @@ function App() {
   const continuityEffect = getCaseContinuityEffect({ currentCaseId: selectedCaseId, savedResults: savedCaseResults, caseRecords: cases });
   const [readFlags, setReadFlags] = useState<string[]>(() => loadReadFlags());
   const [feedback, setFeedback] = useState<{ id: number; message: string } | null>(null);
+  const [auditPressure, setAuditPressure] = useState<AuditPressureState>(initialAuditPressure);
   const wasJudgmentReady = useRef(false);
 
   const selectedNode = caseRecord.nodes.find((node) => node.id === selectedNodeId) ?? null;
@@ -96,8 +107,25 @@ function App() {
     setFeedback({ id: Date.now(), message });
   };
 
+  const appendLog = (message: string) => setSystemLogs((logs) => [...logs, message].slice(-8));
+
+  const addAuditPressure = (event: AuditPressureEvent) => {
+    setAuditPressure((state) => applyAuditPressureEvent(state, event));
+    appendLog(event.message);
+  };
+
   useEffect(() => {
-    if (canJudge && !wasJudgmentReady.current) showFeedback('JUDGMENT READY');
+    if (canJudge && !wasJudgmentReady.current) {
+      showFeedback('JUDGMENT READY');
+      const event = createAuditPressureEvent({
+        source: 'judgment_ready',
+        label: '裁定可能状態',
+        delta: 5,
+        message: '裁定可能状態を検出。都市OSは最終判断の提出を待機しています。',
+      });
+      setAuditPressure((state) => applyAuditPressureEvent(state, event));
+      setSystemLogs((logs) => [...logs, event.message].slice(-8));
+    }
     wasJudgmentReady.current = canJudge;
   }, [canJudge]);
 
@@ -117,6 +145,10 @@ function App() {
       executedActionIds,
       finalStats: nextFinalStats,
       completedAt: new Date().toISOString(),
+      auditPressure: {
+        value: auditPressure.value,
+        level: auditPressure.level,
+      },
     };
 
     const saved = saveCaseResult(nextResultPayload);
@@ -128,12 +160,18 @@ function App() {
     setScreen('result');
   };
 
-  const appendLog = (message: string) => setSystemLogs((logs) => [...logs, message].slice(-8));
   const selectNode = (nodeId: string) => {
+    const firstReview = !visitedNodeIds.includes(nodeId);
     setSelectedNodeId(nodeId);
     setVisitedNodeIds((ids) => (ids.includes(nodeId) ? ids : [...ids, nodeId]));
     const node = caseRecord.nodes.find((item) => item.id === nodeId);
     appendLog(`記憶ノード確認：${node?.title ?? nodeId}。公定値と監査記録を照合。`);
+    if (firstReview) addAuditPressure(createAuditPressureEvent({
+      source: 'node_review',
+      label: '記憶ノード確認',
+      delta: 4,
+      message: '処理圧力上昇：記憶ノード確認により、都市警備局の再照会頻度が上昇。',
+    }));
     showFeedback('SCAN COMPLETE');
   };
 
@@ -161,7 +199,15 @@ function App() {
     const nextTags = removing ? currentTags.filter((item) => item !== tag) : [...currentTags, tag];
     setTaggedNodes({ ...taggedNodes, [node.id]: nextTags });
     appendLog(`${removing ? '矛盾分類解除' : '矛盾分類登録'}：${node.title} / ${contradictionTagLabels[tag]}。`);
-    if (!removing) showFeedback('CONTRADICTION TAGGED');
+    if (!removing) {
+      addAuditPressure(createAuditPressureEvent({
+        source: 'tagging',
+        label: '矛盾分類',
+        delta: 3,
+        message: '処理圧力上昇：矛盾分類が行政処理系へ通知されました。',
+      }));
+      showFeedback('CONTRADICTION TAGGED');
+    }
   };
 
   const executeAction = (actionId: string) => {
@@ -178,6 +224,12 @@ function App() {
     setResources((value) => value - action.cost);
     setExecutedActionIds((ids) => [...ids, actionId]);
     appendLog(action.resultLog);
+    addAuditPressure(createAuditPressureEvent({
+      source: 'analysis',
+      label: '追加解析',
+      delta: 8,
+      message: '処理圧力上昇：追加解析により、処理期限監視が強化されました。',
+    }));
     if (action.riskDelta) setActionRiskDeltas((deltas) => ({ ...deltas, [actionId]: action.riskDelta ?? {} }));
     if (action.riskNote) appendLog(action.riskNote);
     showFeedback('AUDIT RESOURCE CONSUMED');
@@ -194,6 +246,7 @@ function App() {
     setResources(nextCase.auditResourceMax);
     setExecutedActionIds([]);
     setActionRiskDeltas({});
+    setAuditPressure(initialAuditPressure);
     setSystemLogs(['監査室端末を起動。都市OS 基礎公定通知を待機。', `監査対象選択：${nextCase.id.toUpperCase()} / ${nextCase.recordName}。`]);
     setDecision(null);
     setResultPayload(null);
@@ -205,10 +258,10 @@ function App() {
     setScreen('investigation');
   }} />;
   if (screen === 'decision') {
-    return <DecisionScreen caseRecord={caseRecord} pinnedNodeIds={pinnedNodeIds} onBack={() => setScreen('investigation')} onDecide={submitDecision} />;
+    return <DecisionScreen auditPressure={auditPressure} caseRecord={caseRecord} pinnedNodeIds={pinnedNodeIds} onBack={() => setScreen('investigation')} onDecide={submitDecision} />;
   }
   if (screen === 'result' && decision && resultPayload) {
-    return <ResultScreen caseRecord={caseRecord} decision={decision} finalStats={finalStats} payload={resultPayload} taggedNodes={taggedNodes} actionRiskDeltas={actionRiskDeltas} onArchive={() => setScreen('caseSelect')} />;
+    return <ResultScreen auditPressure={auditPressure} caseRecord={caseRecord} decision={decision} finalStats={finalStats} payload={resultPayload} taggedNodes={taggedNodes} actionRiskDeltas={actionRiskDeltas} onArchive={() => setScreen('caseSelect')} />;
   }
 
   return (
@@ -225,6 +278,7 @@ function App() {
       guidance={guidance}
       requirements={requirements}
       canJudge={canJudge}
+      auditPressure={auditPressure}
       onSelectNode={selectNode}
       onTogglePin={togglePin}
       onToggleTag={toggleTag}
@@ -400,6 +454,7 @@ type InvestigationProps = {
   guidance: CurrentGuidance;
   requirements: JudgmentRequirement[];
   canJudge: boolean;
+  auditPressure: AuditPressureState;
   onSelectNode: (nodeId: string) => void;
   onTogglePin: (nodeId: string) => void;
   onToggleTag: (node: MemoryNode, tag: ContradictionTag) => void;
@@ -537,6 +592,7 @@ function InvestigationScreen(props: InvestigationProps) {
         <p className="eyebrow">{caseRecord.organizationName} / {caseRecord.id.toUpperCase()}</p>
         <h2>{caseRecord.title}</h2>
         <GuidancePanel guidance={props.guidance} />
+        <AuditPressureGauge state={props.auditPressure} />
         <section className="pane-section compact-progress status-chip-row" aria-label="監査進行">
           <span className={props.visitedNodeIds.length >= caseRecord.requiredNodesToJudge ? 'status-chip valid' : 'status-chip muted'}>必要ノード確認 <strong>{props.visitedNodeIds.length}/{caseRecord.requiredNodesToJudge}</strong></span>
           <span className={props.pinnedNodeIds.length >= 1 ? 'status-chip valid' : 'status-chip muted'}>提出根拠 <strong>{props.pinnedNodeIds.length}/1</strong></span>
@@ -783,6 +839,14 @@ function InvestigationScreen(props: InvestigationProps) {
             </ul>
           )}
           <button className={`judge ${props.canJudge ? 'ready' : ''}`} disabled={!props.canJudge} onClick={props.onJudge}>{props.canJudge ? '最終判断へ進む' : '条件を満たすと判断可能'}</button>
+          {props.auditPressure.level === 'high' && <p className="audit-pressure-warning" role="alert">{auditPressureMessages.high}</p>}
+          {props.auditPressure.level === 'critical' && (
+            <div className="audit-pressure-critical" role="alert">
+              <strong>処理圧力：臨界</strong>
+              <p>都市OSは自動処理案を生成済みです。</p>
+              <p>監査官による裁定提出が遅延した場合、未確定人格記録は行政処理へ移送されます。</p>
+            </div>
+          )}
         </section>
         <section className="logs audit-log">
           <div className="audit-log-heading"><strong>AUDIT LOG</strong><span>監査ログ / {String(props.systemLogs.length).padStart(2, '0')}</span></div>
@@ -802,6 +866,16 @@ function InvestigationScreen(props: InvestigationProps) {
   );
 }
 
+function AuditPressureGauge({ state }: { state: AuditPressureState }) {
+  return (
+    <section className={`pane-section audit-pressure audit-pressure-${state.level}`} aria-label="処理圧力">
+      <div><strong>処理圧力 {state.value} / {state.max}</strong><span>状態：{state.level.toUpperCase()}</span></div>
+      <progress max={state.max} value={state.value}>{state.value}</progress>
+      <p>{auditPressureMessages[state.level]}</p>
+    </section>
+  );
+}
+
 function StatusBars({ stats }: { stats: CityStats }) {
   return (
     <div className="status-chips" aria-label="都市ステータス">
@@ -814,7 +888,7 @@ function StatusBars({ stats }: { stats: CityStats }) {
   );
 }
 
-function DecisionScreen({ caseRecord, pinnedNodeIds, onBack, onDecide }: { caseRecord: CaseRecord; pinnedNodeIds: string[]; onBack: () => void; onDecide: (decision: DecisionOption) => void }) {
+function DecisionScreen({ auditPressure, caseRecord, pinnedNodeIds, onBack, onDecide }: { auditPressure: AuditPressureState; caseRecord: CaseRecord; pinnedNodeIds: string[]; onBack: () => void; onDecide: (decision: DecisionOption) => void }) {
   return (
     <Shell>
       <section className="document-card wide ruling-sheet">
@@ -824,6 +898,12 @@ function DecisionScreen({ caseRecord, pinnedNodeIds, onBack, onDecide }: { caseR
           <p className="irreversible-notice"><span aria-hidden="true">!</span> 判断は不可逆です</p>
           <p>提出根拠と各裁定案が採用する記録、保留する争点、都市ステータスへの影響を照合してください。</p>
         </header>
+        <section className={`decision-pressure audit-pressure-${auditPressure.level}`}>
+          <h3>処理圧力下での裁定</h3>
+          <p>現在値：{auditPressure.value} / {auditPressure.max}</p>
+          <p>状態：{auditPressure.level.toUpperCase()}</p>
+          <small>この数値は裁定の正否を決定しません。<br />ただし、裁定記録には処理圧力下での判断として保存されます。</small>
+        </section>
         <div className="decision-list">
           {caseRecord.decisions.map((option, index) => {
             const acceptedNodes = caseRecord.nodes.filter((node) => option.acceptedEvidenceNodeIds?.includes(node.id));
@@ -887,7 +967,7 @@ function DecisionScreen({ caseRecord, pinnedNodeIds, onBack, onDecide }: { caseR
   );
 }
 
-function ResultScreen({ caseRecord, decision, finalStats, payload, taggedNodes, actionRiskDeltas, onArchive }: { caseRecord: CaseRecord; decision: DecisionOption; finalStats: CityStats; payload: SavedCaseResult; taggedNodes: TaggedNodes; actionRiskDeltas: Record<string, Partial<CityStats>>; onArchive: () => void }) {
+function ResultScreen({ auditPressure, caseRecord, decision, finalStats, payload, taggedNodes, actionRiskDeltas, onArchive }: { auditPressure: AuditPressureState; caseRecord: CaseRecord; decision: DecisionOption; finalStats: CityStats; payload: SavedCaseResult; taggedNodes: TaggedNodes; actionRiskDeltas: Record<string, Partial<CityStats>>; onArchive: () => void }) {
   const pinned = caseRecord.nodes.filter((node) => payload.pinnedNodeIds.includes(node.id));
   const taggedEntries = Object.entries(taggedNodes).filter(([, tags]) => tags.length);
 
@@ -912,6 +992,12 @@ function ResultScreen({ caseRecord, decision, finalStats, payload, taggedNodes, 
         </div>
         <p className="city-os-reference-note">この裁定は、以後の未確定人格案件における参照基準として保存されます。</p>
         <div className="result-grid">
+          <ResultSection title="処理圧力">
+            <p>最終処理圧力：{payload.auditPressure?.value ?? auditPressure.value} / {auditPressure.max}</p>
+            <p>圧力状態：{(payload.auditPressure?.level ?? auditPressure.level).toUpperCase()}</p>
+            <h4>圧力イベント履歴：直近5件</h4>
+            {auditPressure.events.slice(-5).map((event) => <p key={event.id}>・{event.label}：+{event.delta}</p>)}
+          </ResultSection>
           <ResultSection title="処理内容">
             <p><AnnotatedText text={decision.processing} /></p>
           </ResultSection>

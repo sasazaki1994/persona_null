@@ -163,9 +163,13 @@ describe('Persona Null player flow', () => {
 
   it('shows record status, resource gauge, and restrained operation feedback', () => {
     enterInvestigation();
+    expect(container.querySelector('[aria-label="処理圧力"]')?.textContent).toContain('処理圧力 0 / 100');
     expect(container.querySelectorAll('.resource-blocks i.filled')).toHaveLength(3);
 
     clickButton('ノード：発砲ログ');
+    expect(container.querySelector('[aria-label="処理圧力"]')?.textContent).toContain('処理圧力 4 / 100');
+    clickButton('ノード：発砲ログ');
+    expect(container.querySelector('[aria-label="処理圧力"]')?.textContent).toContain('処理圧力 4 / 100');
     expect(container.querySelector('.operation-toast')?.textContent).toContain('SCAN COMPLETE');
     expect(container.querySelector('.record-status-bar')?.textContent).toContain('RECORD STATUS');
     expect(container.querySelector('.record-status-bar')?.textContent).toContain('確認済');
@@ -252,6 +256,7 @@ describe('Persona Null player flow', () => {
     expect(container.textContent).toContain('矛盾記録の分類');
 
     clickButton('人格署名の矛盾');
+    expect(container.querySelector('[aria-label="処理圧力"]')?.textContent).toContain('処理圧力 24 / 100');
     expect(container.querySelector('.operation-toast')?.textContent).toContain('JUDGMENT READY');
     expect(container.querySelector('.judgment-state.ready')?.textContent).toContain('JUDGMENT READY');
     expect(container.textContent).toContain('必要ノード確認4/4完了');
@@ -299,6 +304,8 @@ describe('Persona Null player flow', () => {
     expect(container.querySelector('[aria-label="裁定結果要約"]')?.textContent).toContain('人格断片保護');
     expect(container.textContent).toContain('提出された判断根拠');
     expect(container.textContent).toContain('分類された矛盾');
+    expect(container.textContent).toContain('最終処理圧力：24 / 100');
+    expect(container.textContent).toContain('圧力状態：LOW');
     expect(container.textContent).toContain('都市ステータス変動');
     expect(container.textContent).toContain('この裁定は、以後の未確定人格案件における参照基準として保存されます。');
     expect(container.textContent).not.toContain('選択肢A');
@@ -425,6 +432,7 @@ describe('Persona Null player flow', () => {
     clickButton('欠落8秒の復元');
 
     expect(container.querySelector('.operation-toast')?.textContent).toContain('AUDIT RESOURCE CONSUMED');
+    expect(container.querySelector('[aria-label="処理圧力"]')?.textContent).toContain('処理圧力 16 / 100');
     expect(container.querySelector('.resource-gauge')?.textContent).toContain('2 / 3');
     expect(container.textContent).toContain('追加解析結果');
     expect(container.textContent).toContain('欠損区間は断片のみ復元。外部命令断定ではなく境界曖昧化を示唆。');

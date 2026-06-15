@@ -814,6 +814,23 @@ summary:focus-visible { outline: 1px solid var(--accent-cyan); outline-offset: 3
   font-variant-numeric: tabular-nums;
 }
 .status-chip strong { color: #aec4c7; }
+
+.audit-pressure { display: grid; gap: 0.45rem; }
+.audit-pressure > div { display: flex; justify-content: space-between; gap: 0.5rem; color: #dffaff; font-size: 0.75rem; }
+.audit-pressure > div span { color: #8fb8c0; font: 0.65rem/1 ui-monospace, monospace; letter-spacing: 0.08em; }
+.audit-pressure progress { width: 100%; height: 0.45rem; accent-color: var(--accent-cyan); }
+.audit-pressure p { margin: 0; color: #9fc4ca; font-size: 0.68rem; line-height: 1.45; }
+.audit-pressure-medium { border-color: rgba(255, 193, 92, 0.45); }
+.audit-pressure-medium progress { accent-color: #ffc15c; }
+.audit-pressure-high, .audit-pressure-critical { border-color: rgba(255, 92, 114, 0.55); }
+.audit-pressure-high progress, .audit-pressure-critical progress { accent-color: var(--warning-red); }
+.audit-pressure-warning { grid-column: 1 / -1; border-left: 2px solid #ffc15c; padding: 0.45rem 0.6rem; color: #ffd28a !important; }
+.audit-pressure-critical { grid-column: 1 / -1; border: 1px solid var(--warning-red); background: rgba(82, 9, 25, 0.45); padding: 0.65rem; color: #ffc0c9; }
+.audit-pressure-critical p { color: inherit; }
+.decision-pressure { margin: 1rem 0; border: 1px solid #315d73; border-left: 3px solid var(--accent-cyan); background: rgba(6, 17, 29, 0.72); padding: 0.85rem 1rem; }
+.decision-pressure h3, .decision-pressure p { margin: 0.2rem 0; }
+.decision-pressure small { color: #a9d3de; line-height: 1.5; }
+.decision-pressure.audit-pressure-high, .decision-pressure.audit-pressure-critical { border-left-color: var(--warning-red); }
 .status-chip.valid { border-color: rgba(120, 214, 166, 0.42); color: var(--accent-green); }
 .status-chip.valid strong { color: #b9edcf; }
 .status-chip.warning { border-color: rgba(255, 92, 114, 0.38); color: #ef8b9a; }

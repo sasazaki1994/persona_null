@@ -21,6 +21,12 @@ function isTaggedNodes(value: unknown): value is SavedCaseResult['taggedNodes'] 
   return Object.values(value).every(isStringArray);
 }
 
+function isAuditPressure(value: unknown): value is NonNullable<SavedCaseResult['auditPressure']> {
+  if (!isRecord(value)) return false;
+  return typeof value.value === 'number'
+    && ['low', 'medium', 'high', 'critical'].includes(String(value.level));
+}
+
 function isSavedCaseResult(value: unknown): value is SavedCaseResult {
   if (!isRecord(value)) return false;
   return typeof value.caseId === 'string'
@@ -29,7 +35,8 @@ function isSavedCaseResult(value: unknown): value is SavedCaseResult {
     && isTaggedNodes(value.taggedNodes)
     && isStringArray(value.executedActionIds)
     && isCityStats(value.finalStats)
-    && typeof value.completedAt === 'string';
+    && typeof value.completedAt === 'string'
+    && (value.auditPressure === undefined || isAuditPressure(value.auditPressure));
 }
 
 export function loadCaseResults(): SavedCaseResult[] {
