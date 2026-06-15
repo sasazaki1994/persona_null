@@ -307,6 +307,8 @@ export const cases: CaseRecord[] = [
         resultLog: '解析完了：署名一致率は改善せず。間宮署名は残るが、単独の責任確定には不足。',
         targetNodeIds: ['shot-log', 'victim-medium'],
         reportText: '署名一致率は改善せず。間宮署名は残るが、単独の責任確定には不足。',
+        riskDelta: { surveillance: 2, egoStability: -2 },
+        riskNote: '解析副作用：人格署名への再照合履歴が監視台帳に残り、対象人格の自我安定度を下げる可能性があります。',
         unlockConditions: [
           { type: 'visited_nodes', nodeIds: ['victim-medium'] },
           { type: 'pinned_any', count: 1 },
@@ -321,6 +323,8 @@ export const cases: CaseRecord[] = [
         resultLog: '解析完了：欠落は内部保護処理を経由。本人由来か外部干渉由来かは確定不能。',
         targetNodeIds: ['missing-memory'],
         reportText: '欠落は内部保護処理を経由。本人由来か外部干渉由来かは確定不能。',
+        riskDelta: { ethics: -1, egoStability: -3 },
+        riskNote: '解析副作用：保護処理への侵入走査により、残存記憶の連続性を損なう可能性があります。',
         unlockConditions: [
           { type: 'visited_nodes', nodeIds: ['missing-memory'] },
         ],
@@ -334,6 +338,8 @@ export const cases: CaseRecord[] = [
         resultLog: '解析完了：欠損区間は断片のみ復元。外部命令断定ではなく境界曖昧化を示唆。',
         targetNodeIds: ['missing-memory', 'arm-history'],
         reportText: '欠損区間は断片のみ復元。外部命令断定ではなく境界曖昧化を示唆。',
+        riskDelta: { ethics: -2, egoStability: -4 },
+        riskNote: '解析副作用：破損人格断片の強制復元は、証拠取得と人格保護を衝突させます。',
         unlockConditions: [
           { type: 'visited_nodes', nodeIds: ['missing-memory', 'arm-history'] },
         ],
@@ -347,6 +353,8 @@ export const cases: CaseRecord[] = [
         resultLog: '解析完了：七瀬未織の記録装置側に同鍵形式の応答痕。記録装置を操作源と断定するには不足。未焼却音声断片を保全候補へ追加。',
         targetNodeIds: ['kasumi-key', 'victim-medium', 'last-comm'],
         reportText: '七瀬未織の記録装置側に同鍵形式の応答痕。記録装置を操作源と断定するには不足。未焼却音声断片を保全候補へ追加。',
+        riskDelta: { security: -1, surveillance: 3 },
+        riskNote: '解析副作用：旧式認証鍵を再活性化して照合するため、監視範囲と一時的な侵入リスクが増加します。',
         unlockConditions: [
           { type: 'visited_nodes', nodeIds: ['kasumi-key', 'last-comm'] },
         ],
@@ -514,6 +522,7 @@ export const cases: CaseRecord[] = [
         id: 'compare-voice-signatures', type: 'compare_nodes', cost: 1, title: '反復発話の署名比較', description: '各発話の署名波形を時系列比較する。',
         resultLog: '解析完了：署名変動は発話区切りと同期。固定録音だけでは説明できないが、本人認証閾値には未達。',
         targetNodeIds: ['repeated-voice', 'signature-drift'], reportText: '署名変動は発話区切りと同期。固定録音だけでは説明できないが、本人認証閾値には未達。',
+        riskDelta: { surveillance: 2, egoStability: -2 }, riskNote: '解析副作用：反復発話への継続照合が人格断片の揺らぎを増幅する可能性があります。',
         unlockConditions: [{ type: 'visited_nodes', nodeIds: ['repeated-voice', 'signature-drift'] }],
       },
       {
@@ -522,12 +531,14 @@ export const cases: CaseRecord[] = [
         cost: 1, title: '断片記憶の時系列復元', description: 'Case000記録と断片映像の時系列を比較する。',
         resultLog: '解析完了：発砲直前0.8秒、制御表示は通常認証からKASUMI-GATE-09へ切替。間宮の発砲意図反応は検出されないが、命令処理署名は間宮怜司。命令元は未確定。',
         targetNodeIds: ['fragment-memory', 'kasumi-resonance'], reportText: '発砲直前0.8秒、制御表示は通常認証からKASUMI-GATE-09へ切替。間宮の発砲意図反応は検出されないが、命令処理署名は間宮怜司。命令元は未確定。',
+        riskDelta: { ethics: -2, egoStability: -4 }, riskNote: '解析副作用：破損人格断片の強制復元は、証拠取得と人格保護を衝突させます。',
         unlockConditions: [{ type: 'visited_nodes', nodeIds: ['fragment-memory', 'kasumi-resonance'] }],
       },
       {
         id: 'classify-stop-response', type: 'scan_memory_origin', cost: 1, title: '停止要求の応答分類', description: '削除停止要求と既知の媒体保護エラーを照合する。',
         resultLog: '解析完了：既知エラーとの完全一致なし。人格継続要求とも断定できず、異常応答として残存。',
         targetNodeIds: ['self-preservation', 'incineration-queue'], reportText: '既知エラーとの完全一致なし。人格継続要求とも断定できず、異常応答として残存。',
+        riskDelta: { security: -1, surveillance: 2 }, riskNote: '解析副作用：停止要求を再送するため、焼却キューの安全制御が一時的に弱まります。',
         unlockConditions: [{ type: 'visited_nodes', nodeIds: ['self-preservation'] }, { type: 'tagged_any', count: 1 }],
       },
     ],
