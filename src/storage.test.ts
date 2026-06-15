@@ -33,6 +33,22 @@ afterEach(() => {
 });
 
 describe('case result storage', () => {
+  it('loads legacy results without audit pressure and validates new pressure summaries', () => {
+    const withPressure: SavedCaseResult = {
+      ...validResult,
+      auditPressure: { value: 67, level: 'high' },
+    };
+    installLocalStorage({
+      'persona-null:case-results': JSON.stringify([
+        validResult,
+        withPressure,
+        { ...validResult, caseId: 'bad-pressure', auditPressure: { value: 42, level: 'urgent' } },
+      ]),
+    });
+
+    expect(loadCaseResults()).toEqual([validResult, withPressure]);
+  });
+
   it('filters invalid saved result entries when loading', () => {
     installLocalStorage({
       'persona-null:case-results': JSON.stringify([

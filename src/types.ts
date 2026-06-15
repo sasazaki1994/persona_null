@@ -175,6 +175,23 @@ export type CaseRecord = {
 
 export type TaggedNodes = Record<string, ContradictionTag[]>;
 
+export type AuditPressureLevel = 'low' | 'medium' | 'high' | 'critical';
+
+export type AuditPressureEvent = {
+  id: string;
+  source: 'node_review' | 'tagging' | 'analysis' | 'judgment_ready';
+  label: string;
+  delta: number;
+  message: string;
+};
+
+export type AuditPressureState = {
+  value: number;
+  max: number;
+  level: AuditPressureLevel;
+  events: AuditPressureEvent[];
+};
+
 export type SavedCaseResult = {
   caseId: string;
   decisionId: string;
@@ -183,4 +200,8 @@ export type SavedCaseResult = {
   executedActionIds: string[];
   finalStats: CityStats;
   completedAt: string;
+  auditPressure?: {
+    value: number;
+    level: AuditPressureLevel;
+  };
 };
