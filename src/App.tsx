@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { aggregateAuditTendency } from './auditTendency';
 import { canUnlockJudgment, getCurrentGuidance, getJudgmentRequirements, isInvestigationActionUnlocked, isWarningLog, type CurrentGuidance, type JudgmentRequirement } from './auditRules';
 import { case000, cases, contradictionTagLabels } from './data/cases';
+import { getCaseContinuityEffect, type CaseContinuityEffect } from './caseContinuity';
 import { AnnotatedText } from './components/AnnotatedText';
 import { TypewriterText } from './components/TypewriterText';
 import { PersonProfile } from './components/PersonProfile';
@@ -61,6 +62,7 @@ function App() {
   const [resultPayload, setResultPayload] = useState<SavedCaseResult | null>(null);
   const [savedCaseResults, setSavedCaseResults] = useState<SavedCaseResult[]>(() => loadCaseResults());
   const completedCaseIds = savedCaseResults.map((result) => result.caseId);
+  const continuityEffect = getCaseContinuityEffect({ currentCaseId: selectedCaseId, savedResults: savedCaseResults, caseRecords: cases });
   const [readFlags, setReadFlags] = useState<string[]>(() => loadReadFlags());
   const [feedback, setFeedback] = useState<{ id: number; message: string } | null>(null);
   const wasJudgmentReady = useRef(false);
@@ -198,7 +200,10 @@ function App() {
     wasJudgmentReady.current = false;
     setScreen('caseOverview');
   }} />;
-  if (screen === 'caseOverview') return <CaseOverviewScreen caseRecord={caseRecord} onNext={() => setScreen('investigation')} />;
+  if (screen === 'caseOverview') return <CaseOverviewScreen caseRecord={caseRecord} continuityEffect={continuityEffect} onNext={() => {
+    if (continuityEffect) appendLog(continuityEffect.investigationLog);
+    setScreen('investigation');
+  }} />;
   if (screen === 'decision') {
     return <DecisionScreen caseRecord={caseRecord} pinnedNodeIds={pinnedNodeIds} onBack={() => setScreen('investigation')} onDecide={submitDecision} />;
   }
@@ -326,13 +331,34 @@ function AuditTendencyPanel({ tendency }: { tendency: ReturnType<typeof aggregat
   );
 }
 
-function CaseOverviewScreen({ caseRecord, onNext }: { caseRecord: CaseRecord; onNext: () => void }) {
+function CaseOverviewScreen({ caseRecord, continuityEffect, onNext }: { caseRecord: CaseRecord; continuityEffect: CaseContinuityEffect | null; onNext: () => void }) {
   return (
     <Shell>
       <section className="document-card wide">
         <p className="eyebrow">事件概要</p>
         <h2>{caseRecord.title}</h2>
         <p><AnnotatedText text={caseRecord.overview} /></p>
+        {continuityEffect && (
+          <section className={`continuity-panel continuity-${continuityEffect.tone}`} aria-label="前回裁定の参照基準">
+            <p className="eyebrow">CITY OS / PRECEDENT REFERENCE</p>
+            <h3>前回裁定の参照基準</h3>
+            <h4>{continuityEffect.title}</h4>
+            <p>{continuityEffect.summary}</p>
+            <p className="continuity-notice">{continuityEffect.caseOverviewNotice}</p>
+            {continuityEffect.statusBias && (
+              <div className="continuity-bias">
+                <strong>都市ステータスへの暫定影響</strong>
+                <div className="decision-stat-deltas">
+                  {cityStatKeys.map((key) => {
+                    const delta = continuityEffect.statusBias?.[key];
+                    return delta === undefined ? null : <span key={key}>{statLabels[key]} {delta >= 0 ? '+' : ''}{delta}</span>;
+                  })}
+                </div>
+              </div>
+            )}
+            <small>この影響は事実記録を変更しません。監査室が参照する処理基準のみを変更します。</small>
+          </section>
+        )}
         <section className="overview-grid">
           <div className="person-profiles-panel">
             <h3>人物プロファイル</h3>

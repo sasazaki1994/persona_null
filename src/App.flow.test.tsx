@@ -69,6 +69,13 @@ describe('Persona Null player flow', () => {
     clickButton('調査を開始');
   };
 
+  const restartWithSavedResults = (results: unknown[]) => {
+    act(() => root.unmount());
+    localStorage.setItem('persona-null:case-results', JSON.stringify(results));
+    root = createRoot(container);
+    act(() => root.render(<App />));
+  };
+
   it('presents Case000 and Case001 as available incident files', () => {
     clickButton('監査端末を起動');
     clickButton('通知を確認');
@@ -80,6 +87,40 @@ describe('Persona Null player flow', () => {
     expect(container.textContent).not.toContain('凍結中');
     expect(findButton('Case001を開く')).toBeDefined();
     expect(container.querySelector('[aria-label="監査傾向"]')?.textContent).toContain('監査傾向：未記録');
+  });
+
+  it('does not show a continuity reference when Case000 has no saved ruling', () => {
+    clickButton('監査端末を起動');
+    clickButton('通知を確認');
+    clickButton('Case001を開く');
+
+    expect(container.querySelector('[aria-label="前回裁定の参照基準"]')).toBeNull();
+    expect(findButton('調査を開始')).toBeDefined();
+  });
+
+  it('shows a saved preservation ruling in the Case001 overview and investigation log', () => {
+    restartWithSavedResults([{
+      caseId: 'case000',
+      decisionId: 'freeze-evidence',
+      pinnedNodeIds: ['victim-medium'],
+      taggedNodes: { 'victim-medium': ['persona_signature'] },
+      executedActionIds: [],
+      finalStats: { security: 55, ethics: 67, surveillance: 70, egoStability: 64 },
+      completedAt: '2026-06-15T00:00:00.000Z',
+    }]);
+
+    clickButton('監査端末を起動');
+    clickButton('通知を確認');
+    clickButton('Case001を開く');
+
+    const continuityPanel = container.querySelector('[aria-label="前回裁定の参照基準"]');
+    expect(continuityPanel?.textContent).toContain('前回裁定：証拠保全の優先');
+    expect(continuityPanel?.textContent).toContain('制限付き証拠');
+    expect(continuityPanel?.textContent).toContain('都市ステータスへの暫定影響');
+    expect(continuityPanel?.textContent).toContain('事実記録を変更しません');
+
+    clickButton('調査を開始');
+    expect(container.querySelector('.audit-log')?.textContent ?? container.textContent).toContain('未確定人格断片の保全猶予が付与されています');
   });
 
   it('shows a saved Case001 result as processed in the case archive', () => {
