@@ -184,6 +184,30 @@ describe('Persona Null player flow', () => {
     expect(container.querySelector('.operation-toast')?.textContent).toContain('EVIDENCE RELEASED');
   });
 
+  it.each([
+    ['Case000を開く', '発砲ログ'],
+    ['Case001を開く', '焼却処理キュー'],
+  ])('shows and updates the audit report review for %s', (caseButton, firstNodeTitle) => {
+    clickButton('監査端末を起動');
+    clickButton('通知を確認');
+    clickButton(caseButton);
+    clickButton('調査を開始');
+
+    const report = container.querySelector('[aria-label="監査報告書チェック"]');
+    expect(report?.textContent).toContain('監査報告書チェック');
+    expect(report?.textContent).toContain('記録確認 0 / 7');
+    expect(report?.textContent).toContain('提出根拠 0');
+    expect(report?.textContent).toContain('矛盾分類 0');
+    expect(report?.textContent).toContain('裁定条件未達');
+    expect(report?.textContent).toContain('監査上の注意');
+    expect(report?.textContent).toContain('未確認の争点があります。');
+
+    clickButton(`ノード：${firstNodeTitle}`);
+    expect(report?.textContent).toContain('記録確認 1 / 7');
+    clickButton('判断根拠に追加');
+    expect(report?.textContent).toContain('提出根拠 1');
+  });
+
   it('clears operation feedback quickly without requiring another action', () => {
     enterInvestigation();
     vi.useFakeTimers();

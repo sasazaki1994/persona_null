@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { aggregateAuditTendency } from './auditTendency';
 import { applyAuditPressureEvent, createAuditPressureEvent } from './auditPressure';
+import { buildAuditReportCheck } from './auditReport';
 import { canUnlockJudgment, getCurrentGuidance, getJudgmentRequirements, isInvestigationActionUnlocked, isWarningLog, type CurrentGuidance, type JudgmentRequirement } from './auditRules';
 import { case000, cases, contradictionTagLabels } from './data/cases';
 import { getCaseContinuityEffect, type CaseContinuityEffect } from './caseContinuity';
@@ -10,7 +11,7 @@ import { PersonProfile } from './components/PersonProfile';
 import { MemoryNetwork } from './MemoryNetwork';
 import { loadCaseResults, loadReadFlags, markRead, saveCaseResult } from './storage';
 import { auditValueLabels } from './types';
-import type { AuditPressureEvent, AuditPressureLevel, AuditPressureState, InvestigationAction, AnalysisUnlockCondition, CaseRecord, CityStats, ContradictionTag, DecisionOption, MemoryNode, NodeImportance, SavedCaseResult, Screen, TaggedNodes } from './types';
+import type { AuditPressureEvent, AuditPressureLevel, AuditPressureState, AuditReportCheck, InvestigationAction, AnalysisUnlockCondition, CaseRecord, CityStats, ContradictionTag, DecisionOption, MemoryNode, NodeImportance, SavedCaseResult, Screen, TaggedNodes } from './types';
 import './styles.css';
 
 const clampStat = (value: number) => Math.max(0, Math.min(100, value));
@@ -100,6 +101,15 @@ function App() {
     taggedNodeCount,
     resources,
     canJudge,
+  });
+  const auditReportCheck = buildAuditReportCheck({
+    caseRecord,
+    visitedNodeIds,
+    pinnedNodeIds,
+    taggedNodes,
+    executedActionIds,
+    canJudge,
+    auditPressure: { value: auditPressure.value, level: auditPressure.level },
   });
   const finalStats = decision ? addStats(caseRecord.initialStats, decision.statDelta) : caseRecord.initialStats;
 
@@ -258,7 +268,7 @@ function App() {
     setScreen('investigation');
   }} />;
   if (screen === 'decision') {
-    return <DecisionScreen auditPressure={auditPressure} caseRecord={caseRecord} pinnedNodeIds={pinnedNodeIds} onBack={() => setScreen('investigation')} onDecide={submitDecision} />;
+    return <DecisionScreen auditPressure={auditPressure} auditReportCheck={auditReportCheck} caseRecord={caseRecord} pinnedNodeIds={pinnedNodeIds} onBack={() => setScreen('investigation')} onDecide={submitDecision} />;
   }
   if (screen === 'result' && decision && resultPayload) {
     return <ResultScreen auditPressure={auditPressure} caseRecord={caseRecord} decision={decision} finalStats={finalStats} payload={resultPayload} taggedNodes={taggedNodes} actionRiskDeltas={actionRiskDeltas} onArchive={() => setScreen('caseSelect')} />;
@@ -279,6 +289,7 @@ function App() {
       requirements={requirements}
       canJudge={canJudge}
       auditPressure={auditPressure}
+      auditReportCheck={auditReportCheck}
       onSelectNode={selectNode}
       onTogglePin={togglePin}
       onToggleTag={toggleTag}
@@ -455,6 +466,7 @@ type InvestigationProps = {
   requirements: JudgmentRequirement[];
   canJudge: boolean;
   auditPressure: AuditPressureState;
+  auditReportCheck: AuditReportCheck;
   onSelectNode: (nodeId: string) => void;
   onTogglePin: (nodeId: string) => void;
   onToggleTag: (node: MemoryNode, tag: ContradictionTag) => void;
@@ -838,6 +850,7 @@ function InvestigationScreen(props: InvestigationProps) {
               ))}
             </ul>
           )}
+          <AuditReportPanel report={props.auditReportCheck} />
           <button className={`judge ${props.canJudge ? 'ready' : ''}`} disabled={!props.canJudge} onClick={props.onJudge}>{props.canJudge ? '最終判断へ進む' : '条件を満たすと判断可能'}</button>
           {props.auditPressure.level === 'high' && <p className="audit-pressure-warning" role="alert">{auditPressureMessages.high}</p>}
           {props.auditPressure.level === 'critical' && (
@@ -866,6 +879,41 @@ function InvestigationScreen(props: InvestigationProps) {
   );
 }
 
+function AuditReportPanel({ report }: { report: AuditReportCheck }) {
+  return (
+    <section className={`audit-report-check audit-report-${report.state}`} aria-label="監査報告書チェック">
+      <div className="audit-report-heading">
+        <div><span>AUDIT REPORT REVIEW</span><h3>監査報告書チェック</h3></div>
+        <strong>{report.state === 'insufficient' ? '裁定条件未達' : '裁定可能'}</strong>
+      </div>
+      <div className="audit-report-counts">
+        <span>記録確認 <strong>{report.reviewedNodes} / {report.totalNodes}</strong></span>
+        <span>提出根拠 <strong>{report.pinnedEvidence}</strong></span>
+        <span>矛盾分類 <strong>{report.taggedContradictions}</strong></span>
+        <span>追加解析 <strong>{report.executedActions}</strong></span>
+      </div>
+      <div className="audit-report-summary"><span>報告状態</span><p>{report.summary}</p></div>
+      <div className="audit-report-issues">
+        <strong>争点整理</strong>
+        {report.unresolvedIssues.map((issue) => (
+          <p key={issue.issueId}>
+            <span>{issue.title}</span>
+            <em>{issue.reviewedNodeCount} / {issue.totalNodeCount}</em>
+            <i className={`issue-state-${issue.state}`}>{issue.state}</i>
+          </p>
+        ))}
+      </div>
+      {report.warnings.length > 0 && (
+        <div className="audit-report-warnings">
+          <strong>監査上の注意</strong>
+          <ul>{report.warnings.map((warning) => <li key={warning}>{warning}</li>)}</ul>
+          {report.state !== 'insufficient' && <p>この裁定は、未整理の争点を残したまま提出される可能性があります。</p>}
+        </div>
+      )}
+    </section>
+  );
+}
+
 function AuditPressureGauge({ state }: { state: AuditPressureState }) {
   return (
     <section className={`pane-section audit-pressure audit-pressure-${state.level}`} aria-label="処理圧力">
@@ -888,7 +936,7 @@ function StatusBars({ stats }: { stats: CityStats }) {
   );
 }
 
-function DecisionScreen({ auditPressure, caseRecord, pinnedNodeIds, onBack, onDecide }: { auditPressure: AuditPressureState; caseRecord: CaseRecord; pinnedNodeIds: string[]; onBack: () => void; onDecide: (decision: DecisionOption) => void }) {
+function DecisionScreen({ auditPressure, auditReportCheck, caseRecord, pinnedNodeIds, onBack, onDecide }: { auditPressure: AuditPressureState; auditReportCheck: AuditReportCheck; caseRecord: CaseRecord; pinnedNodeIds: string[]; onBack: () => void; onDecide: (decision: DecisionOption) => void }) {
   return (
     <Shell>
       <section className="document-card wide ruling-sheet">
@@ -898,6 +946,10 @@ function DecisionScreen({ auditPressure, caseRecord, pinnedNodeIds, onBack, onDe
           <p className="irreversible-notice"><span aria-hidden="true">!</span> 判断は不可逆です</p>
           <p>提出根拠と各裁定案が採用する記録、保留する争点、都市ステータスへの影響を照合してください。</p>
         </header>
+        <section className={`decision-audit-report audit-report-${auditReportCheck.state}`} aria-label="監査報告書状態">
+          <h3>監査報告書状態</h3>
+          <p>{auditReportCheck.summary}</p>
+        </section>
         <section className={`decision-pressure audit-pressure-${auditPressure.level}`}>
           <h3>処理圧力下での裁定</h3>
           <p>現在値：{auditPressure.value} / {auditPressure.max}</p>
