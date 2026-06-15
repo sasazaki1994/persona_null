@@ -36,7 +36,14 @@ export function loadCaseResults(): SavedCaseResult[] {
   try {
     const existing = window.localStorage.getItem(STORAGE_KEY);
     if (!existing) return [];
-    const value = JSON.parse(existing) as unknown;
+    let value: unknown;
+    try {
+      value = JSON.parse(existing) as unknown;
+    } catch (error) {
+      console.error(`Failed to parse ${STORAGE_KEY}.`, error);
+      window.localStorage.removeItem(STORAGE_KEY);
+      return [];
+    }
     if (!Array.isArray(value)) {
       console.error(`Invalid ${STORAGE_KEY}: expected an array.`);
       return [];

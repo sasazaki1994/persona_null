@@ -51,7 +51,7 @@ Feature: Persona Null Case000 playable audit slice
     Then the final judgment button is disabled
     And judgment blocker reasons are shown as a checklist
     And the checklist includes node visit count, pinned ground count, and contradiction classification status
-    And the UI names each unmet reason as a required node review, missing judgment ground, or incomplete contradiction classification
+    And the UI shows "必要なノードを確認してください", "判断根拠が未選択です", and "矛盾分類が未完了です" for the corresponding unmet conditions
 
   Scenario: Pinning judgment grounds
     Given the auditor is on the investigation screen
@@ -70,6 +70,7 @@ Feature: Persona Null Case000 playable audit slice
     When the auditor selects an important memory node with an auditHint
     Then the node detail shows a "監査官メモ" without asserting a final answer
     And the evidence registration control is labeled "判断根拠に追加"
+    And after registration the same control is labeled "判断根拠から外す"
 
   Scenario: Showing only node-specific contradiction candidates
     Given the auditor selected a memory node with suggested contradiction tags

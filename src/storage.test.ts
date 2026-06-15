@@ -19,6 +19,9 @@ function installLocalStorage(initial: Record<string, string> = {}) {
     setItem: vi.fn((key: string, value: string) => {
       data.set(key, value);
     }),
+    removeItem: vi.fn((key: string) => {
+      data.delete(key);
+    }),
   };
 
   vi.stubGlobal('window', { localStorage });
@@ -45,11 +48,13 @@ describe('case result storage', () => {
   });
 
   it('ignores malformed saved result JSON without throwing', () => {
-    installLocalStorage({
+    const { localStorage, data } = installLocalStorage({
       'persona-null:case-results': '{not-json',
     });
 
     expect(loadCaseResults()).toEqual([]);
+    expect(localStorage.removeItem).toHaveBeenCalledWith('persona-null:case-results');
+    expect(data.has('persona-null:case-results')).toBe(false);
   });
 
   it('returns whether saving succeeded and survives malformed existing data', () => {

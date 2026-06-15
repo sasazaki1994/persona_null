@@ -667,7 +667,7 @@ const finalStats: CityStats = {
 - `finalStats.security|ethics|surveillance|egoStability: number`
 - `completedAt: string`
 
-不正 JSON、配列でない JSON、不正 entry、localStorage 例外は `console.error` に記録し、空配列または valid entry のみを返す。
+不正 JSON は `console.error` に記録して `persona-null:case-results` を削除し、空配列を返す。配列でない JSON、不正 entry、localStorage 例外は `console.error` に記録し、空配列または valid entry のみを返す。
 
 ### 11.5 read flags
 
