@@ -330,6 +330,12 @@ function TitleScreen({ onNext }: { onNext: () => void }) {
         <h1>Persona Null</h1>
         <p>北霞市 都市OS 判断不能案件処理端末</p>
         <p className="muted">公定値は手続き上の事実であり、真実そのものではありません。</p>
+        <div className="boot-telemetry" aria-label="起動前監査状態">
+          <span><strong>CASE</strong> CASE000</span>
+          <span><strong>SUBJECT</strong> IDENTITY UNRESOLVED</span>
+          <span><strong>AUTH</strong> LIMITED</span>
+        </div>
+        <div className="boot-signal" aria-hidden="true"><i /><i /><i /><i /></div>
         <button className="terminal-boot-button" onClick={onNext}><span>監査端末を起動</span><small>INITIALIZE AUDIT SESSION</small></button>
         <p className="boot-case-id">KASUMI-GATE-09 / CASE000</p>
       </section>
@@ -366,6 +372,11 @@ function CaseSelectScreen({ completedCaseIds, savedCaseResults, onSelect }: { co
           <p className="eyebrow">CASE ARCHIVE / 事件ファイル選択</p>
           <h2>監査対象記録</h2>
           <p>都市OSが保留した事件記録から、監査可能なファイルを選択してください。</p>
+        </div>
+        <div className="archive-status-strip" aria-label="事件アーカイブ状態">
+          <span><strong>{cases.length}</strong>件の監査ファイル</span>
+          <span><strong>{completedCaseIds.length}</strong>件の処理済記録</span>
+          <span><strong>{tendency.recordedCases === 0 ? '未記録' : `${tendency.recordedCases}件`}</strong>監査傾向</span>
         </div>
         <AuditTendencyPanel tendency={tendency} />
         <div className="case-file-list">
@@ -417,6 +428,12 @@ function CaseOverviewScreen({ caseRecord, continuityEffect, onNext }: { caseReco
         <p className="eyebrow">事件概要</p>
         <h2>{caseRecord.title}</h2>
         <p><AnnotatedText text={caseRecord.overview} /></p>
+        <div className="case-brief-status" aria-label="事件監査条件">
+          <span><strong>{caseRecord.id.toUpperCase()}</strong> RECORD OPEN</span>
+          <span><strong>{caseRecord.nodes.length}</strong> MEMORY NODES</span>
+          <span><strong>{caseRecord.requiredNodesToJudge}</strong> REQUIRED SCANS</span>
+          <span><strong>{caseRecord.auditResourceMax}</strong> AUDIT RESOURCES</span>
+        </div>
         {continuityEffect && (
           <section className={`continuity-panel continuity-${continuityEffect.tone}`} aria-label="前回裁定の参照基準">
             <p className="eyebrow">CITY OS / PRECEDENT REFERENCE</p>
@@ -574,6 +591,11 @@ function InvestigationScreen(props: InvestigationProps) {
   const suggestedTags = selectedNode?.suggestedTags ?? [];
   const eligibleForTags = suggestedTags.length > 0;
   const taggedNodeCount = Object.values(props.taggedNodes).filter((tags) => tags.length > 0).length;
+  const requiredNodeProgress = Math.min(1, props.visitedNodeIds.length / caseRecord.requiredNodesToJudge);
+  const totalNodeProgress = Math.min(1, props.visitedNodeIds.length / caseRecord.nodes.length);
+  const pinnedProgress = Math.min(1, props.pinnedNodeIds.length);
+  const taggedProgress = Math.min(1, taggedNodeCount);
+  const resourceProgress = caseRecord.auditResourceMax === 0 ? 0 : props.resources / caseRecord.auditResourceMax;
   const analysisReports = selectedNode
     ? caseRecord.actions.filter((action) => (
         props.executedActionIds.includes(action.id)
@@ -597,12 +619,17 @@ function InvestigationScreen(props: InvestigationProps) {
         <div className="hud-panel-label"><span>01</span> CASE INDEX / PROGRESS</div>
         <p className="eyebrow">{caseRecord.id.toUpperCase()}</p>
         <h2>{caseRecord.title}</h2>
+        <div className="case-command-strip" aria-label="監査セッション状態">
+          <span>NODE {props.visitedNodeIds.length}/{caseRecord.nodes.length}</span>
+          <span>PIN {props.pinnedNodeIds.length}/3</span>
+          <span>PRESSURE {props.auditPressure.level.toUpperCase()}</span>
+        </div>
         <section className="case-progress-list" aria-label="監査進行">
-          <p className="status-chip"><span>必要ノード確認</span><strong>{props.visitedNodeIds.length}/{caseRecord.requiredNodesToJudge}</strong><i>必要ノード確認 {props.visitedNodeIds.length}/{caseRecord.requiredNodesToJudge}</i><em>必要ノード確認{props.visitedNodeIds.length}/{caseRecord.requiredNodesToJudge}{props.visitedNodeIds.length >= caseRecord.requiredNodesToJudge ? '完了' : '未達成'}</em></p>
-          <p className="status-chip"><span>確認済みノード</span><strong>{props.visitedNodeIds.length} / {caseRecord.nodes.length}</strong></p>
-          <p className="status-chip"><span>判断根拠</span><strong>{props.pinnedNodeIds.length} / 3</strong><em>判断根拠{props.pinnedNodeIds.length}/1{props.pinnedNodeIds.length >= 1 ? '完了' : '未達成'}</em></p>
-          <p className="status-chip"><span>矛盾分類</span><strong>{taggedNodeCount}</strong><em>矛盾分類{taggedNodeCount}/1{taggedNodeCount >= 1 ? '完了' : '未達成'}</em></p>
-          <p className="status-chip"><span>監査リソース</span><strong>{props.resources} / {caseRecord.auditResourceMax}</strong></p>
+          <p className={`status-chip progress-chip ${requiredNodeProgress >= 1 ? 'complete' : 'pending'}`}><span>必要ノード確認</span><strong>{props.visitedNodeIds.length}/{caseRecord.requiredNodesToJudge}</strong><i>必要ノード確認 {props.visitedNodeIds.length}/{caseRecord.requiredNodesToJudge}</i><em>必要ノード確認{props.visitedNodeIds.length}/{caseRecord.requiredNodesToJudge}{props.visitedNodeIds.length >= caseRecord.requiredNodesToJudge ? '完了' : '未達成'}</em><b className="progress-track" aria-hidden="true"><b style={{ width: `${requiredNodeProgress * 100}%` }} /></b></p>
+          <p className={`status-chip progress-chip ${totalNodeProgress >= 1 ? 'complete' : 'pending'}`}><span>確認済みノード</span><strong>{props.visitedNodeIds.length} / {caseRecord.nodes.length}</strong><b className="progress-track" aria-hidden="true"><b style={{ width: `${totalNodeProgress * 100}%` }} /></b></p>
+          <p className={`status-chip progress-chip ${pinnedProgress >= 1 ? 'complete' : 'pending'}`}><span>判断根拠</span><strong>{props.pinnedNodeIds.length} / 3</strong><em>判断根拠{props.pinnedNodeIds.length}/1{props.pinnedNodeIds.length >= 1 ? '完了' : '未達成'}</em><b className="progress-track" aria-hidden="true"><b style={{ width: `${pinnedProgress * 100}%` }} /></b></p>
+          <p className={`status-chip progress-chip ${taggedProgress >= 1 ? 'complete' : 'pending'}`}><span>矛盾分類</span><strong>{taggedNodeCount}</strong><em>矛盾分類{taggedNodeCount}/1{taggedNodeCount >= 1 ? '完了' : '未達成'}</em><b className="progress-track" aria-hidden="true"><b style={{ width: `${taggedProgress * 100}%` }} /></b></p>
+          <p className={`status-chip progress-chip ${resourceProgress <= 0.34 ? 'warning' : 'valid'}`}><span>監査リソース</span><strong>{props.resources} / {caseRecord.auditResourceMax}</strong><b className="progress-track" aria-hidden="true"><b style={{ width: `${resourceProgress * 100}%` }} /></b></p>
         </section>
         <ResourceGauge caseRecord={props.caseRecord} resources={props.resources} />
         {caseRecord.auditHearing && <button className="audit-hearing-open" type="button" onClick={() => props.onOpenModal({ type: 'audit_hearing' })}>監査尋問を開く</button>}
@@ -668,6 +695,11 @@ function InvestigationScreen(props: InvestigationProps) {
         {!selectedNode ? (
           <section className="empty-node-detail" aria-live="polite">
             <h2>記憶ノードを選択してください</h2>
+            <p>左の記憶ノード、または中央の Memory Network から確認対象を選択すると、短い記録・単純事実・警告・操作ボタンがここに展開されます。</p>
+            <div className="empty-scan-panel" aria-hidden="true">
+              <span>WAITING FOR NODE SIGNAL</span>
+              <i /><i /><i />
+            </div>
           </section>
         ) : <>
           <section className="node-header compact-node-header">
