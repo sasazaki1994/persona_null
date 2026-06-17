@@ -48,14 +48,6 @@ describe('Persona Null player flow', () => {
 
   const findButton = (label: string) => [...container.querySelectorAll('button')].find((candidate) => candidate.textContent?.includes(label));
 
-  const findSummary = (label: string) => [...container.querySelectorAll('summary')].find((candidate) => candidate.textContent?.includes(label));
-
-  const clickSummary = (label: string) => {
-    const summary = findSummary(label);
-    expect(summary, `summary containing ${label}`).toBeDefined();
-    act(() => summary?.click());
-  };
-
   const clickButton = (label: string) => {
     const button = findButton(label);
     expect(button, `button containing ${label}`).toBeDefined();
