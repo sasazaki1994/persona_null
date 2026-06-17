@@ -574,6 +574,11 @@ function InvestigationScreen(props: InvestigationProps) {
   const suggestedTags = selectedNode?.suggestedTags ?? [];
   const eligibleForTags = suggestedTags.length > 0;
   const taggedNodeCount = Object.values(props.taggedNodes).filter((tags) => tags.length > 0).length;
+  const requiredNodeProgress = Math.min(1, props.visitedNodeIds.length / caseRecord.requiredNodesToJudge);
+  const totalNodeProgress = Math.min(1, props.visitedNodeIds.length / caseRecord.nodes.length);
+  const pinnedProgress = Math.min(1, props.pinnedNodeIds.length);
+  const taggedProgress = Math.min(1, taggedNodeCount);
+  const resourceProgress = caseRecord.auditResourceMax === 0 ? 0 : props.resources / caseRecord.auditResourceMax;
   const analysisReports = selectedNode
     ? caseRecord.actions.filter((action) => (
         props.executedActionIds.includes(action.id)
@@ -597,12 +602,17 @@ function InvestigationScreen(props: InvestigationProps) {
         <div className="hud-panel-label"><span>01</span> CASE INDEX / PROGRESS</div>
         <p className="eyebrow">{caseRecord.id.toUpperCase()}</p>
         <h2>{caseRecord.title}</h2>
+        <div className="case-command-strip" aria-label="監査セッション状態">
+          <span>NODE {props.visitedNodeIds.length}/{caseRecord.nodes.length}</span>
+          <span>PIN {props.pinnedNodeIds.length}/3</span>
+          <span>PRESSURE {props.auditPressure.level.toUpperCase()}</span>
+        </div>
         <section className="case-progress-list" aria-label="監査進行">
-          <p className="status-chip"><span>必要ノード確認</span><strong>{props.visitedNodeIds.length}/{caseRecord.requiredNodesToJudge}</strong><i>必要ノード確認 {props.visitedNodeIds.length}/{caseRecord.requiredNodesToJudge}</i><em>必要ノード確認{props.visitedNodeIds.length}/{caseRecord.requiredNodesToJudge}{props.visitedNodeIds.length >= caseRecord.requiredNodesToJudge ? '完了' : '未達成'}</em></p>
-          <p className="status-chip"><span>確認済みノード</span><strong>{props.visitedNodeIds.length} / {caseRecord.nodes.length}</strong></p>
-          <p className="status-chip"><span>判断根拠</span><strong>{props.pinnedNodeIds.length} / 3</strong><em>判断根拠{props.pinnedNodeIds.length}/1{props.pinnedNodeIds.length >= 1 ? '完了' : '未達成'}</em></p>
-          <p className="status-chip"><span>矛盾分類</span><strong>{taggedNodeCount}</strong><em>矛盾分類{taggedNodeCount}/1{taggedNodeCount >= 1 ? '完了' : '未達成'}</em></p>
-          <p className="status-chip"><span>監査リソース</span><strong>{props.resources} / {caseRecord.auditResourceMax}</strong></p>
+          <p className={`status-chip progress-chip ${requiredNodeProgress >= 1 ? 'complete' : 'pending'}`}><span>必要ノード確認</span><strong>{props.visitedNodeIds.length}/{caseRecord.requiredNodesToJudge}</strong><i>必要ノード確認 {props.visitedNodeIds.length}/{caseRecord.requiredNodesToJudge}</i><em>必要ノード確認{props.visitedNodeIds.length}/{caseRecord.requiredNodesToJudge}{props.visitedNodeIds.length >= caseRecord.requiredNodesToJudge ? '完了' : '未達成'}</em><b className="progress-track" aria-hidden="true"><b style={{ width: `${requiredNodeProgress * 100}%` }} /></b></p>
+          <p className={`status-chip progress-chip ${totalNodeProgress >= 1 ? 'complete' : 'pending'}`}><span>確認済みノード</span><strong>{props.visitedNodeIds.length} / {caseRecord.nodes.length}</strong><b className="progress-track" aria-hidden="true"><b style={{ width: `${totalNodeProgress * 100}%` }} /></b></p>
+          <p className={`status-chip progress-chip ${pinnedProgress >= 1 ? 'complete' : 'pending'}`}><span>判断根拠</span><strong>{props.pinnedNodeIds.length} / 3</strong><em>判断根拠{props.pinnedNodeIds.length}/1{props.pinnedNodeIds.length >= 1 ? '完了' : '未達成'}</em><b className="progress-track" aria-hidden="true"><b style={{ width: `${pinnedProgress * 100}%` }} /></b></p>
+          <p className={`status-chip progress-chip ${taggedProgress >= 1 ? 'complete' : 'pending'}`}><span>矛盾分類</span><strong>{taggedNodeCount}</strong><em>矛盾分類{taggedNodeCount}/1{taggedNodeCount >= 1 ? '完了' : '未達成'}</em><b className="progress-track" aria-hidden="true"><b style={{ width: `${taggedProgress * 100}%` }} /></b></p>
+          <p className={`status-chip progress-chip ${resourceProgress <= 0.34 ? 'warning' : 'valid'}`}><span>監査リソース</span><strong>{props.resources} / {caseRecord.auditResourceMax}</strong><b className="progress-track" aria-hidden="true"><b style={{ width: `${resourceProgress * 100}%` }} /></b></p>
         </section>
         <ResourceGauge caseRecord={props.caseRecord} resources={props.resources} />
         {caseRecord.auditHearing && <button className="audit-hearing-open" type="button" onClick={() => props.onOpenModal({ type: 'audit_hearing' })}>監査尋問を開く</button>}
