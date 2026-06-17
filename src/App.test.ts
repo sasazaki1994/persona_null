@@ -158,6 +158,17 @@ describe('case000 data', () => {
     expect(case000.actions).toHaveLength(4);
   });
 
+  it('defines the Case000 audit hearing data for contradiction presentation', () => {
+    expect(case000.auditHearing?.title).toBe('都市OS暫定判断');
+    expect(case000.auditHearing?.requiredContradictions).toBe(1);
+    expect(case000.auditHearing?.statements.map((statement) => statement.text)).toEqual([
+      '発砲許可署名は間宮怜司と一致しています。',
+      '銃器ログは正常に記録されています。',
+      'したがって、間宮怜司を発砲主体として処理可能です。',
+    ]);
+    expect(case000.auditHearing?.statements.at(-1)?.contradictionNodeId).toBe('missing-memory');
+  });
+
 
   it('assigns red warning panels only to critical evidence nodes', () => {
     expect(Object.fromEntries(case000.nodes.map(({ id, warningLevel }) => [id, warningLevel]))).toEqual({

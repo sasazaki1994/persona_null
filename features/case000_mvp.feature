@@ -506,3 +506,19 @@ Feature: Persona Null Case000 playable audit slice
     And パネルと操作ボタンはサイバーな装飾を持つが本文の可読性を妨げない
     And 視覚演出は prefers-reduced-motion で抑制される
     And 保存形式と公開APIと事件進行条件は変更されない
+
+  Scenario: Detecting a contradiction in an audit hearing
+    Given the auditor is on the investigation screen
+    And Case000 exposes the audit hearing titled "都市OS暫定判断"
+    When the auditor opens the audit hearing modal
+    Then the modal is centered over a darkened background
+    And the hearing shows each 供述ログ line separately
+    And the controls are "追及", "証拠を提示", and "記録に戻る"
+    When the auditor presents a pinned judgment ground
+    Then only pinned judgment grounds are available as presentation targets
+    And an unsuitable judgment ground shows "この証拠では供述を崩せません"
+    When the auditor presents "発砲直前8秒の記憶欠落" or "右腕義体の外部制御痕" against the concluding statement
+    Then the hearing reports "記録矛盾を検出。"
+    And the final judgment contradiction condition is satisfied
+    And the page itself does not gain vertical scrolling
+    And the UI avoids direct courtroom, lawyer, and legacy objection terminology
