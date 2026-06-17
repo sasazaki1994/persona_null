@@ -144,6 +144,16 @@ export const cases: CaseRecord[] = [
         '処理要求ノードを都市組織圧力システムへ拡張する',
       ],
     },
+    auditHearing: {
+      id: 'city-os-provisional-ruling',
+      title: '都市OS暫定判断',
+      requiredContradictions: 1,
+      statements: [
+        { id: 'signature-match', speaker: 'city_os', text: '発砲許可署名は間宮怜司と一致しています。', hint: '署名一致だけで操作主体を確定できるか確認してください。' },
+        { id: 'weapon-log-normal', speaker: 'city_os', text: '銃器ログは正常に記録されています。', hint: '正常な記録と、操作した主体の確定は同じではありません。' },
+        { id: 'provisional-subject', speaker: 'city_os', text: 'したがって、間宮怜司を発砲主体として処理可能です。', contradictionNodeId: 'missing-memory', hint: '発砲時刻と重なる欠落、または義体の外部制御痕を提示してください。' },
+      ],
+    },
     issues: [
       {
         id: 'operation_subject',

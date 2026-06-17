@@ -90,6 +90,21 @@ export type MemoryNode = {
   links: string[];
 };
 
+export type AuditStatement = {
+  id: string;
+  speaker: 'city_os' | 'suspect' | 'witness' | 'security_bureau';
+  text: string;
+  contradictionNodeId?: string;
+  hint?: string;
+};
+
+export type AuditHearing = {
+  id: string;
+  title: string;
+  statements: AuditStatement[];
+  requiredContradictions: number;
+};
+
 export type CaseIssue = {
   id: string;
   title: string;
@@ -168,6 +183,7 @@ export type CaseRecord = {
   operatorCandidates: OperatorCandidate[];
   mvpScope: MvpScope;
   issues: CaseIssue[];
+  auditHearing?: AuditHearing;
   nodes: MemoryNode[];
   actions: InvestigationAction[];
   decisions: DecisionOption[];

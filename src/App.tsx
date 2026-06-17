@@ -46,7 +46,7 @@ function getStatTone(key: keyof CityStats, value: number) {
 
 const initialAuditPressure: AuditPressureState = { value: 0, max: 100, level: 'low', events: [] };
 
-type ModalType = 'case_summary' | 'node_detail' | 'decision' | null;
+type ModalType = 'case_summary' | 'node_detail' | 'decision' | 'audit_hearing' | null;
 
 type ModalState = {
   type: ModalType;
@@ -81,6 +81,7 @@ function App() {
   const [feedback, setFeedback] = useState<{ id: number; message: string } | null>(null);
   const [auditPressure, setAuditPressure] = useState<AuditPressureState>(initialAuditPressure);
   const [modal, setModal] = useState<ModalState>({ type: null });
+  const [hearingResolved, setHearingResolved] = useState(false);
   const wasJudgmentReady = useRef(false);
 
   const selectedNode = caseRecord.nodes.find((node) => node.id === selectedNodeId) ?? null;
@@ -89,15 +90,16 @@ function App() {
     visitedNodeCount: visitedCount,
     requiredNodesToJudge: caseRecord.requiredNodesToJudge,
     pinnedNodeCount: pinnedNodeIds.length,
-    taggedNodes,
+    taggedNodes: hearingResolved ? { ...taggedNodes, '__audit_hearing__': ['operation_subject'] } : taggedNodes,
   });
   const canJudge = canUnlockJudgment({
     visitedNodeCount: visitedCount,
     requiredNodesToJudge: caseRecord.requiredNodesToJudge,
     pinnedNodeCount: pinnedNodeIds.length,
-    taggedNodes,
+    taggedNodes: hearingResolved ? { ...taggedNodes, '__audit_hearing__': ['operation_subject'] } : taggedNodes,
   });
-  const taggedNodeCount = Object.values(taggedNodes).filter((tags) => tags.length > 0).length;
+  const effectiveTaggedNodes = hearingResolved ? { ...taggedNodes, '__audit_hearing__': ['operation_subject'] as ContradictionTag[] } : taggedNodes;
+  const taggedNodeCount = Object.values(effectiveTaggedNodes).filter((tags) => tags.length > 0).length;
   const guidance = getCurrentGuidance({
     visitedNodeCount: visitedCount,
     requiredNodesToJudge: caseRecord.requiredNodesToJudge,
@@ -110,7 +112,7 @@ function App() {
     caseRecord,
     visitedNodeIds,
     pinnedNodeIds,
-    taggedNodes,
+    taggedNodes: effectiveTaggedNodes,
     executedActionIds,
     canJudge,
     auditPressure: { value: auditPressure.value, level: auditPressure.level },
@@ -261,6 +263,7 @@ function App() {
     setExecutedActionIds([]);
     setActionRiskDeltas({});
     setAuditPressure(initialAuditPressure);
+    setHearingResolved(false);
     setSystemLogs(['監査室端末を起動。都市OS 基礎公定通知を待機。', `監査対象選択：${nextCase.id.toUpperCase()} / ${nextCase.recordName}。`]);
     setDecision(null);
     setResultPayload(null);
@@ -283,7 +286,7 @@ function App() {
       selectedNodeId={selectedNodeId}
       visitedNodeIds={visitedNodeIds}
       pinnedNodeIds={pinnedNodeIds}
-      taggedNodes={taggedNodes}
+      taggedNodes={effectiveTaggedNodes}
       resources={resources}
       executedActionIds={executedActionIds}
       systemLogs={systemLogs}
@@ -299,6 +302,12 @@ function App() {
       onTogglePin={togglePin}
       onToggleTag={toggleTag}
       onExecuteAction={executeAction}
+      onResolveHearing={(nodeId) => {
+        setHearingResolved(true);
+        setTaggedNodes((current) => ({ ...current, [nodeId]: Array.from(new Set([...(current[nodeId] ?? []), 'operation_subject'])) }));
+        appendLog('監査尋問：記録矛盾を検出。署名一致のみでは操作主体を確定できません。');
+        showFeedback('記録矛盾を検出');
+      }}
       onDecide={submitDecision}
       feedback={feedback?.message ?? null}
     />
@@ -479,6 +488,7 @@ type InvestigationProps = {
   onTogglePin: (nodeId: string) => void;
   onToggleTag: (node: MemoryNode, tag: ContradictionTag) => void;
   onExecuteAction: (actionId: string) => void;
+  onResolveHearing: (nodeId: string) => void;
   onDecide: (decision: DecisionOption) => void;
   feedback: string | null;
 };
@@ -595,6 +605,7 @@ function InvestigationScreen(props: InvestigationProps) {
           <p className="status-chip"><span>監査リソース</span><strong>{props.resources} / {caseRecord.auditResourceMax}</strong></p>
         </section>
         <ResourceGauge caseRecord={props.caseRecord} resources={props.resources} />
+        {caseRecord.auditHearing && <button className="audit-hearing-open" type="button" onClick={() => props.onOpenModal({ type: 'audit_hearing' })}>監査尋問を開く</button>}
         <section className="pane-section guidance-panel compact-guidance"><p className="eyebrow">次の監査手順</p><h3>{props.guidance.title}</h3><p>{props.guidance.instruction}</p></section>
         <section className="pane-section audit-pressure compact-pressure" aria-label="処理圧力"><div><strong>処理圧力 {props.auditPressure.value} / {props.auditPressure.max}</strong><span>{props.auditPressure.level.toUpperCase()}</span></div></section>
         <details className="pane-section disclosure-card compact-case-overview">
@@ -727,6 +738,7 @@ function InvestigationScreen(props: InvestigationProps) {
               {Object.entries(selectedNode.metrics).map(([key, value]) => <div key={key}><dt>{key}</dt><dd>{value}</dd></div>)}
             </dl>
             <ResourceGauge caseRecord={props.caseRecord} resources={props.resources} />
+        {caseRecord.auditHearing && <button className="audit-hearing-open" type="button" onClick={() => props.onOpenModal({ type: 'audit_hearing' })}>監査尋問を開く</button>}
           </details>
           <details className="pane-section disclosure-card">
             <summary>関連人物</summary>
@@ -816,11 +828,69 @@ function AuditModalLayer(props: InvestigationProps & { analysisReports: Investig
             </div>
           </>
         )}
+        {modal.type === 'audit_hearing' && caseRecord.auditHearing && (
+          <AuditHearingModalContent
+            hearing={caseRecord.auditHearing}
+            nodes={caseRecord.nodes}
+            pinnedNodeIds={props.pinnedNodeIds}
+            onBack={props.onCloseModal}
+            onResolve={props.onResolveHearing}
+          />
+        )}
         {modal.type === 'decision' && (
           <DecisionModalContent auditPressure={props.auditPressure} auditReportCheck={props.auditReportCheck} caseRecord={caseRecord} pinnedNodeIds={props.pinnedNodeIds} pinnedNodes={pinned} taggedEntries={taggedEntries} onBack={props.onCloseModal} onDecide={props.onDecide} />
         )}
       </section>
     </div>
+  );
+}
+
+
+function AuditHearingModalContent({ hearing, nodes, pinnedNodeIds, onBack, onResolve }: { hearing: NonNullable<CaseRecord['auditHearing']>; nodes: MemoryNode[]; pinnedNodeIds: string[]; onBack: () => void; onResolve: (nodeId: string) => void }) {
+  const [activeStatementId, setActiveStatementId] = useState(hearing.statements[0]?.id ?? '');
+  const [presenting, setPresenting] = useState(false);
+  const [message, setMessage] = useState('供述ログを確認し、判断根拠との不一致を照合してください。');
+  const [resolved, setResolved] = useState(false);
+  const pinnedNodes = nodes.filter((node) => pinnedNodeIds.includes(node.id));
+  const activeStatement = hearing.statements.find((statement) => statement.id === activeStatementId) ?? hearing.statements[0];
+  const validContradictionNodeIds = new Set(['missing-memory', 'arm-history']);
+
+  const presentNode = (node: MemoryNode) => {
+    if (activeStatement?.id === 'provisional-subject' && validContradictionNodeIds.has(node.id)) {
+      setResolved(true);
+      setPresenting(false);
+      setMessage('記録矛盾を検出。署名一致のみでは、操作主体を確定できません。');
+      onResolve(node.id);
+      return;
+    }
+    setMessage('この証拠では供述を崩せません');
+  };
+
+  return (
+    <>
+      <p className="eyebrow">監査尋問 / AUDIT HEARING</p>
+      <h2>{hearing.title}</h2>
+      <p className={`hearing-status ${resolved ? 'resolved' : ''}`} role="status">{message}</p>
+      <div className="hearing-statements" aria-label="供述ログ">
+        {hearing.statements.map((statement, index) => (
+          <button className={statement.id === activeStatement?.id ? 'active' : ''} type="button" key={statement.id} onClick={() => { setActiveStatementId(statement.id); setPresenting(false); setMessage(statement.hint ?? '供述ログを照合中。'); }}>
+            <span>{String(index + 1).padStart(2, '0')}</span>
+            <strong>{statement.text}</strong>
+          </button>
+        ))}
+      </div>
+      {presenting && (
+        <section className="pinned-evidence-picker" aria-label="提示する判断根拠">
+          <h3>提示する判断根拠</h3>
+          {pinnedNodes.length ? pinnedNodes.map((node) => <button type="button" key={node.id} onClick={() => presentNode(node)}>{node.title}</button>) : <p>ピン留め済み判断根拠がありません。</p>}
+        </section>
+      )}
+      <div className="modal-actions hearing-actions">
+        <button type="button" onClick={() => setMessage(activeStatement?.hint ?? '供述ログを追及しました。')}>追及</button>
+        <button type="button" onClick={() => setPresenting((value) => !value)}>証拠を提示</button>
+        <button className="secondary" type="button" onClick={onBack}>記録に戻る</button>
+      </div>
+    </>
   );
 }
 

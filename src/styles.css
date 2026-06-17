@@ -1682,3 +1682,64 @@ button.active:not(.annotated-keyword) {
   .modal-grid,
   .modal-decision-list { grid-template-columns: 1fr; }
 }
+
+.audit-hearing-open {
+  width: 100%;
+  border-color: rgba(255, 214, 102, 0.65);
+  background: linear-gradient(135deg, rgba(255, 214, 102, 0.18), rgba(0, 229, 255, 0.08));
+}
+
+.hearing-status {
+  border: 1px solid rgba(0, 229, 255, 0.28);
+  border-radius: 14px;
+  padding: 0.85rem 1rem;
+  background: rgba(0, 229, 255, 0.08);
+  color: var(--text);
+}
+
+.hearing-status.resolved {
+  border-color: rgba(86, 255, 173, 0.68);
+  box-shadow: 0 0 22px rgba(86, 255, 173, 0.18);
+  color: #baffdf;
+}
+
+.hearing-statements {
+  display: grid;
+  gap: 0.75rem;
+  margin: 1rem 0;
+}
+
+.hearing-statements button,
+.pinned-evidence-picker button {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.75rem;
+  width: 100%;
+  text-align: left;
+}
+
+.hearing-statements button.active {
+  border-color: rgba(255, 214, 102, 0.78);
+  background: rgba(255, 214, 102, 0.12);
+}
+
+.hearing-statements span {
+  color: var(--accent);
+  font-family: var(--mono-font);
+}
+
+.pinned-evidence-picker {
+  max-height: 28vh;
+  overflow: auto;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
+  padding: 0.9rem;
+  background: rgba(4, 8, 18, 0.62);
+}
+
+.hearing-actions {
+  position: sticky;
+  bottom: 0;
+  background: rgba(5, 8, 18, 0.92);
+  padding-top: 0.75rem;
+}
