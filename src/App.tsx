@@ -623,10 +623,10 @@ function InvestigationScreen(props: InvestigationProps) {
         <h2>{caseRecord.title}</h2>
         <div className="case-command-strip simplified" aria-label="監査セッション状態">
           <span>{props.visitedNodeIds.length}/{caseRecord.nodes.length} nodes</span>
-          <span>{props.auditPressure.level.toUpperCase()}</span>
+          <span aria-label="処理圧力">処理圧力 {props.auditPressure.value} / {props.auditPressure.max}</span>
         </div>
         <section className="case-progress-list" aria-label="監査進行">
-          <p className={`status-chip progress-chip ${requiredNodeProgress >= 1 ? 'complete' : 'pending'}`}><span>記録確認</span><strong>{props.visitedNodeIds.length}/{caseRecord.requiredNodesToJudge}</strong><b className="progress-track" aria-hidden="true"><b style={{ width: `${requiredNodeProgress * 100}%` }} /></b></p>
+          <p className={`status-chip progress-chip ${requiredNodeProgress >= 1 ? 'complete' : 'pending'}`}><span>必要ノード確認</span><strong>{props.visitedNodeIds.length}/{caseRecord.requiredNodesToJudge}</strong><b className="progress-track" aria-hidden="true"><b style={{ width: `${requiredNodeProgress * 100}%` }} /></b></p>
           <p className={`status-chip progress-chip ${pinnedProgress >= 1 ? 'complete' : 'pending'}`}><span>判断根拠</span><strong>{props.pinnedNodeIds.length}/1</strong><b className="progress-track" aria-hidden="true"><b style={{ width: `${pinnedProgress * 100}%` }} /></b></p>
           <p className={`status-chip progress-chip ${taggedProgress >= 1 ? 'complete' : 'pending'}`}><span>矛盾分類</span><strong>{taggedNodeCount}/1</strong><b className="progress-track" aria-hidden="true"><b style={{ width: `${taggedProgress * 100}%` }} /></b></p>
           <p className={`status-chip progress-chip ${resourceProgress <= 0.34 ? 'warning' : 'valid'}`}><span>監査リソース</span><strong>{props.resources} / {caseRecord.auditResourceMax}</strong><b className="progress-track" aria-hidden="true"><b style={{ width: `${resourceProgress * 100}%` }} /></b></p>
@@ -913,7 +913,7 @@ function AuditReportPanel({ report }: { report: AuditReportCheck }) {
 
   return (
     <section className={`audit-report-check compact-report audit-report-${report.state}`} aria-label="監査報告書チェック">
-      <strong>{report.state === 'insufficient' ? '裁定条件未達' : '裁定可能'}</strong>
+      <strong>監査報告書チェック：{report.state === 'insufficient' ? '裁定条件未達' : '裁定可能'}</strong>
       <span>記録 {report.reviewedNodes}/{report.totalNodes}</span>
       <span>根拠 {report.pinnedEvidence}</span>
       <span>分類 {report.taggedContradictions}</span>
