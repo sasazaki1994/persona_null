@@ -240,8 +240,9 @@ describe('Persona Null player flow', () => {
       Boolean(earlier && later && earlier.compareDocumentPosition(later) & Node.DOCUMENT_POSITION_FOLLOWING);
 
     expect(summary?.textContent).toContain('記録要約');
-    expect(summary?.textContent).toContain(selectedNode.summary);
-    expect(summary?.textContent).toContain(selectedNode.simpleFact);
+    expect(summary?.textContent).toContain('発砲命令を受理');
+    expect(summary?.textContent).toContain('命令には間宮');
+    expect(summary?.textContent).toContain('身体認証');
     expect(warning?.querySelector('.warning-text')?.textContent).toContain(selectedNode.warning);
     expect(findButton('詳細ログを開く')).toBeDefined();
     expect(appearsBefore(title, statusLine)).toBe(true);
@@ -465,8 +466,8 @@ describe('Persona Null player flow', () => {
     expect(container.textContent).toContain('表情・視線・生体反応に発砲意図は記録されていない');
     expect(container.textContent).toContain('発砲命令は');
     expect(container.textContent).toContain('で処理されている');
-    expect(container.textContent).toContain('命令元');
-    expect(container.textContent).toContain('未確定');
+    expect(container.textContent).toContain('発行元と実行主体');
+    expect(container.textContent).toContain('記録されていない');
     expect(container.textContent).toContain('詳細ログ');
 
     clickButton('判断根拠に追加');
