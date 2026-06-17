@@ -499,3 +499,10 @@ Feature: Persona Null Case000 playable audit slice
     And the detailed result sections do not repeat the ruling and value fields already shown in the summary
     And the result records submitted judgment grounds, classified contradictions, and city status changes
     And a short ending text is visually separated from administrative details
+
+  Scenario: 監査端末がスマートなサイバー表示として読める
+    Given 監査端末を起動して調査画面を開いている
+    Then Memory Network は知識マップとして視認できる
+    And パネルと操作ボタンはサイバーな装飾を持つが本文の可読性を妨げない
+    And 視覚演出は prefers-reduced-motion で抑制される
+    And 保存形式と公開APIと事件進行条件は変更されない
