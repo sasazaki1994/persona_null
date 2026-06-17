@@ -46,6 +46,13 @@ function getStatTone(key: keyof CityStats, value: number) {
 
 const initialAuditPressure: AuditPressureState = { value: 0, max: 100, level: 'low', events: [] };
 
+type ModalType = 'case_summary' | 'node_detail' | 'decision' | null;
+
+type ModalState = {
+  type: ModalType;
+  nodeId?: string;
+};
+
 const auditPressureMessages: Record<AuditPressureLevel, string> = {
   low: '処理圧力：低。追加監査は許容範囲内です。',
   medium: '処理圧力：中。都市警備局から裁定予定時刻の再照会あり。',
@@ -73,6 +80,7 @@ function App() {
   const [readFlags, setReadFlags] = useState<string[]>(() => loadReadFlags());
   const [feedback, setFeedback] = useState<{ id: number; message: string } | null>(null);
   const [auditPressure, setAuditPressure] = useState<AuditPressureState>(initialAuditPressure);
+  const [modal, setModal] = useState<ModalState>({ type: null });
   const wasJudgmentReady = useRef(false);
 
   const selectedNode = caseRecord.nodes.find((node) => node.id === selectedNodeId) ?? null;
@@ -257,15 +265,13 @@ function App() {
     setDecision(null);
     setResultPayload(null);
     wasJudgmentReady.current = false;
+    setModal({ type: null });
     setScreen('caseOverview');
   }} />;
   if (screen === 'caseOverview') return <CaseOverviewScreen caseRecord={caseRecord} continuityEffect={continuityEffect} onNext={() => {
     if (continuityEffect) appendLog(continuityEffect.investigationLog);
     setScreen('investigation');
   }} />;
-  if (screen === 'decision') {
-    return <DecisionScreen auditPressure={auditPressure} auditReportCheck={auditReportCheck} caseRecord={caseRecord} pinnedNodeIds={pinnedNodeIds} onBack={() => setScreen('investigation')} onDecide={submitDecision} />;
-  }
   if (screen === 'result' && decision && resultPayload) {
     return <ResultScreen auditPressure={auditPressure} caseRecord={caseRecord} decision={decision} finalStats={finalStats} payload={resultPayload} taggedNodes={taggedNodes} actionRiskDeltas={actionRiskDeltas} onArchive={() => setScreen('caseSelect')} />;
   }
@@ -286,11 +292,14 @@ function App() {
       canJudge={canJudge}
       auditPressure={auditPressure}
       auditReportCheck={auditReportCheck}
+      modal={modal}
+      onOpenModal={setModal}
+      onCloseModal={() => setModal({ type: null })}
       onSelectNode={selectNode}
       onTogglePin={togglePin}
       onToggleTag={toggleTag}
       onExecuteAction={executeAction}
-      onJudge={() => canJudge && setScreen('decision')}
+      onDecide={submitDecision}
       feedback={feedback?.message ?? null}
     />
   );
@@ -463,11 +472,14 @@ type InvestigationProps = {
   canJudge: boolean;
   auditPressure: AuditPressureState;
   auditReportCheck: AuditReportCheck;
+  modal: ModalState;
+  onOpenModal: (modal: ModalState) => void;
+  onCloseModal: () => void;
   onSelectNode: (nodeId: string) => void;
   onTogglePin: (nodeId: string) => void;
   onToggleTag: (node: MemoryNode, tag: ContradictionTag) => void;
   onExecuteAction: (actionId: string) => void;
-  onJudge: () => void;
+  onDecide: (decision: DecisionOption) => void;
   feedback: string | null;
 };
 
@@ -587,8 +599,8 @@ function InvestigationScreen(props: InvestigationProps) {
         <section className="pane-section audit-pressure compact-pressure" aria-label="処理圧力"><div><strong>処理圧力 {props.auditPressure.value} / {props.auditPressure.max}</strong><span>{props.auditPressure.level.toUpperCase()}</span></div></section>
         <details className="pane-section disclosure-card compact-case-overview">
           <summary>事件概要を開く / 事件・監査情報を表示</summary>
+          <button className="secondary" type="button" onClick={() => props.onOpenModal({ type: 'case_summary' })}>事件概要を開く</button>
           <p className="case-subtitle">{caseRecord.subtitle}</p>
-          <p>{caseRecord.overview}</p>
         </details>
         <section className="pane-section memory-node-index" aria-labelledby="memory-node-index-title">
           <div className="node-index-heading">
@@ -676,6 +688,7 @@ function InvestigationScreen(props: InvestigationProps) {
           )}
           {selectedNode.warning.trim() !== '' && selectedNode.warningLevel !== 'critical' && <span className="status-chip warning compact-warning-badge">警告</span>}
           <section className="pane-section priority-actions" aria-label="操作ボタン">
+            <button onClick={() => props.onOpenModal({ type: 'node_detail', nodeId: selectedNode.id })}>詳細ログを開く</button>
             <button onClick={() => props.onTogglePin(selectedNode.id)} disabled={!props.pinnedNodeIds.includes(selectedNode.id) && props.pinnedNodeIds.length >= 3}>
               {props.pinnedNodeIds.includes(selectedNode.id) ? '判断根拠から外す' : '判断根拠に追加'}
             </button>
@@ -721,14 +734,15 @@ function InvestigationScreen(props: InvestigationProps) {
               {caseRecord.personLogs.map((person) => <p key={person.id}><strong>{person.name}</strong><span>{person.role}</span></p>)}
             </div>
           </details>
-          <details className="pane-section disclosure-card">
-            <summary>原文ログ / 詳細記録を表示</summary>
+          <details className="pane-section disclosure-card compact-raw-log">
+            <summary>詳細記録を表示</summary>
             <h3>詳細ログ</h3>
+            <p>ログ全文は画面中央の記録ファイルで開きます。</p>
             <code>{selectedNode.log}</code>
             <dl className="metrics">{Object.entries(selectedNode.metrics).map(([key, value]) => <div key={`raw-${key}`}><dt>{key}</dt><dd>{value}</dd></div>)}</dl>
-            {analysisReports.length > 0 && <div className="analysis-report">{analysisReports.map((action) => <p key={`detail-${action.id}`}><AnnotatedText text={action.reportText ?? ''} /></p>)}</div>}
-            {selectedNode.auditHint && <p><strong>照合ヒント：</strong><AnnotatedText text={selectedNode.auditHint} /></p>}
+            <button type="button" onClick={() => props.onOpenModal({ type: 'node_detail', nodeId: selectedNode.id })}>詳細ログを開く</button>
           </details>
+
         </>}
       </aside>
 
@@ -737,11 +751,105 @@ function InvestigationScreen(props: InvestigationProps) {
         <p className={`judgment-state ${props.canJudge ? 'ready' : 'locked'}`}><span aria-hidden="true" />{props.canJudge ? 'JUDGMENT READY：' : 'LOCKED：'}{compactRequirementText}</p>
         <AuditReportPanel report={props.auditReportCheck} />
         <section className="audit-log compact-audit-log" aria-label="監査ログ"><strong>AUDIT LOG</strong><p className={`latest-log ${isWarningLog(props.systemLogs.at(-1) ?? '') ? 'warning-log' : ''}`}>{props.systemLogs.at(-1) ?? 'ログなし'}</p><details><summary>ログを表示</summary><div className="log-list">{props.systemLogs.map((log, index) => <p key={`${index}-${log}`}><span>{String(index + 1).padStart(2, '0')}</span>{log}</p>)}</div></details></section>
-        {props.canJudge && <button className="judge ready" onClick={props.onJudge}>最終判断へ進む</button>}
+        {props.canJudge && <button className="judge ready" onClick={() => props.onOpenModal({ type: 'decision' })}>最終判断へ進む</button>}
         {props.auditPressure.level === 'critical' && <p className="audit-pressure-critical" role="alert">{auditPressureMessages.critical}</p>}
         {props.auditPressure.level === 'high' && <span className="status-chip warning">warning: 処理圧力 高</span>}
       </footer>
+      <AuditModalLayer {...props} analysisReports={analysisReports} selectedNode={selectedNode} />
     </main>
+  );
+}
+
+function AuditModalLayer(props: InvestigationProps & { analysisReports: InvestigationAction[]; selectedNode: MemoryNode | null }) {
+  const { caseRecord, modal } = props;
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const modalNode = modal.type === 'node_detail' ? caseRecord.nodes.find((node) => node.id === modal.nodeId) ?? props.selectedNode : null;
+  const pinned = caseRecord.nodes.filter((node) => props.pinnedNodeIds.includes(node.id));
+  const taggedEntries = Object.entries(props.taggedNodes).filter(([, tags]) => tags.length > 0);
+
+  useEffect(() => {
+    if (!modal.type) return undefined;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') props.onCloseModal();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    dialogRef.current?.focus();
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [modal.type, props]);
+
+  if (!modal.type) return null;
+
+  return (
+    <div className="audit-modal-backdrop" onMouseDown={props.onCloseModal}>
+      <section className={`audit-modal audit-modal-${modal.type}`} role="dialog" aria-modal="true" tabIndex={-1} ref={dialogRef} onMouseDown={(event) => event.stopPropagation()}>
+        <div className="audit-modal-shell-label"><span>OPEN RECORD FILE</span><button type="button" className="audit-modal-close" onClick={props.onCloseModal}>閉じる</button></div>
+        {modal.type === 'case_summary' && (
+          <>
+            <p className="eyebrow">事件概要 / CASE SUMMARY</p>
+            <h2>{caseRecord.id.toUpperCase()}：{caseRecord.title}</h2>
+            <p className="case-subtitle">{caseRecord.subtitle}</p>
+            <p><AnnotatedText text={caseRecord.overview} /></p>
+            <section className="modal-grid">
+              <div><h3>関係者一覧</h3>{caseRecord.personLogs.map((person) => <p key={person.id}><strong>{person.name}</strong>：{person.role}</p>)}</div>
+              <div><h3>判断に必要な条件</h3>{props.requirements.map((requirement) => <p className={requirement.completed ? 'modal-complete' : 'modal-incomplete'} key={requirement.id}>{requirement.completed ? '✓' : '□'} {requirement.label}</p>)}</div>
+            </section>
+          </>
+        )}
+        {modal.type === 'node_detail' && modalNode && (
+          <>
+            <p className="eyebrow">詳細ログ / NODE DETAIL</p>
+            <h2>{modalNode.title}</h2>
+            <code>{modalNode.log}</code>
+            <h3>監査数値</h3>
+            <dl className="metrics">{Object.entries(modalNode.metrics).map(([key, value]) => <div key={key}><dt>{key}</dt><dd>{value}</dd></div>)}</dl>
+            <h3>監査室注記</h3>
+            <p><AnnotatedText text={modalNode.auditHint || modalNode.inspectorNote || '追加注記なし。'} /></p>
+            {props.analysisReports.length > 0 && <div className="analysis-report">{props.analysisReports.map((action) => <p key={action.id}><AnnotatedText text={action.reportText ?? ''} /></p>)}</div>}
+            <div className="modal-actions">
+              <button onClick={() => props.onTogglePin(modalNode.id)} disabled={!props.pinnedNodeIds.includes(modalNode.id) && props.pinnedNodeIds.length >= 3}>{props.pinnedNodeIds.includes(modalNode.id) ? '判断根拠から外す' : '判断根拠に追加'}</button>
+              <button className="secondary" onClick={props.onCloseModal}>閉じる</button>
+            </div>
+          </>
+        )}
+        {modal.type === 'decision' && (
+          <DecisionModalContent auditPressure={props.auditPressure} auditReportCheck={props.auditReportCheck} caseRecord={caseRecord} pinnedNodeIds={props.pinnedNodeIds} pinnedNodes={pinned} taggedEntries={taggedEntries} onBack={props.onCloseModal} onDecide={props.onDecide} />
+        )}
+      </section>
+    </div>
+  );
+}
+
+function DecisionModalContent({ auditPressure, auditReportCheck, caseRecord, pinnedNodeIds, pinnedNodes, taggedEntries, onBack, onDecide }: { auditPressure: AuditPressureState; auditReportCheck: AuditReportCheck; caseRecord: CaseRecord; pinnedNodeIds: string[]; pinnedNodes: MemoryNode[]; taggedEntries: [string, ContradictionTag[]][]; onBack: () => void; onDecide: (decision: DecisionOption) => void }) {
+  return (
+    <>
+      <p className="eyebrow">AUDIT RULING / FINAL AUTHORIZATION</p>
+      <h2>最終判断</h2>
+      <p className="irreversible-notice"><span aria-hidden="true">!</span> 判断は不可逆です</p>
+      <section className="modal-grid">
+        <div><h3>提出された判断根拠</h3>{pinnedNodes.length ? pinnedNodes.map((node) => <p key={node.id}>・{node.title}：{node.summary}</p>) : <p>根拠提出なし。</p>}</div>
+        <div><h3>分類済み矛盾</h3>{taggedEntries.length ? taggedEntries.map(([nodeId, tags]) => {
+          const node = caseRecord.nodes.find((item) => item.id === nodeId);
+          return <p key={nodeId}>・{node?.title ?? nodeId}：{tags.map((tag) => contradictionTagLabels[tag]).join(' / ')}</p>;
+        }) : <p>矛盾分類なし。</p>}</div>
+      </section>
+      <p>{auditReportCheck.summary} / 処理圧力 {auditPressure.value} ({auditPressure.level.toUpperCase()})</p>
+      <div className="decision-list modal-decision-list">
+        {caseRecord.decisions.map((option, index) => {
+          const acceptedNodes = caseRecord.nodes.filter((node) => option.acceptedEvidenceNodeIds?.includes(node.id));
+          const submittedAcceptedCount = acceptedNodes.filter((node) => pinnedNodeIds.includes(node.id)).length;
+          const ignoredIssues = caseRecord.issues.filter((issue) => option.ignoredIssueIds?.includes(issue.id));
+          const evidenceMismatch = acceptedNodes.length > 0 && submittedAcceptedCount === 0;
+          const riskLevel = acceptedNodes.length > 0 && submittedAcceptedCount === acceptedNodes.length ? 'low' : submittedAcceptedCount > 0 ? 'medium' : 'high';
+          return <article className={`decision-card ruling-option ruling-risk-${riskLevel}`} key={option.id}><span className="ruling-risk-label">根拠整合リスク：{riskLevel.toUpperCase()}</span><h3>{option.label}</h3><section className="decision-processing"><h4>裁定内容</h4><p><AnnotatedText text={option.processing} /></p></section><p><strong>優先される価値</strong>{option.prioritizedValues.join(' / ')}</p><p><strong>失われる価値</strong>{option.sacrificedValues.join(' / ')}</p><section className="ruling-evidence-section"><h4>採用される根拠</h4><p>提出根拠一致 {submittedAcceptedCount} / {acceptedNodes.length}</p></section>{evidenceMismatch && <div className="decision-evidence-warning" role="alert"><strong>提出根拠との不一致</strong><p>この裁定案は、あなたが提出していない記録を主要根拠に含みます。</p></div>}<section><h4>都市ステータスへの影響</h4><div className="decision-stat-deltas">{cityStatKeys.map((key) => <span className={option.statDelta[key] >= 0 ? 'delta-plus' : 'delta-minus'} key={key}>{statLabels[key]} {option.statDelta[key] >= 0 ? '+' : ''}{option.statDelta[key]}</span>)}</div></section><section className="ruling-ignored-section"><h4>この裁定で保留・軽視される争点</h4><ul>{ignoredIssues.map((issue) => <li key={issue.id}>{issue.title}</li>)}</ul></section><button onClick={() => onDecide(option)}>{option.label.startsWith(`${String.fromCharCode(65 + index)}.`) ? option.label : `${String.fromCharCode(65 + index)}. ${option.label}`}を確定</button></article>;
+        })}
+      </div>
+      <button className="secondary" onClick={onBack}>戻る</button>
+    </>
   );
 }
 
@@ -769,89 +877,6 @@ function StatusBars({ stats }: { stats: CityStats }) {
         </span>
       ))}
     </div>
-  );
-}
-
-function DecisionScreen({ auditPressure, auditReportCheck, caseRecord, pinnedNodeIds, onBack, onDecide }: { auditPressure: AuditPressureState; auditReportCheck: AuditReportCheck; caseRecord: CaseRecord; pinnedNodeIds: string[]; onBack: () => void; onDecide: (decision: DecisionOption) => void }) {
-  return (
-    <Shell>
-      <section className="document-card wide ruling-sheet">
-        <header className="ruling-sheet-header">
-          <p className="eyebrow">AUDIT RULING / FINAL AUTHORIZATION</p>
-          <h2>監査裁定書</h2>
-          <p className="irreversible-notice"><span aria-hidden="true">!</span> 判断は不可逆です</p>
-          <p>提出根拠と各裁定案が採用する記録、保留する争点、都市ステータスへの影響を照合してください。</p>
-        </header>
-        <section className={`decision-audit-report audit-report-${auditReportCheck.state}`} aria-label="監査報告書状態">
-          <h3>監査報告書状態</h3>
-          <p>{auditReportCheck.summary}</p>
-        </section>
-        <section className={`decision-pressure audit-pressure-${auditPressure.level}`}>
-          <h3>処理圧力下での裁定</h3>
-          <p>現在値：{auditPressure.value} / {auditPressure.max}</p>
-          <p>状態：{auditPressure.level.toUpperCase()}</p>
-          <small>この数値は裁定の正否を決定しません。<br />ただし、裁定記録には処理圧力下での判断として保存されます。</small>
-        </section>
-        <div className="decision-list">
-          {caseRecord.decisions.map((option, index) => {
-            const acceptedNodes = caseRecord.nodes.filter((node) => option.acceptedEvidenceNodeIds?.includes(node.id));
-            const ignoredIssues = caseRecord.issues.filter((issue) => option.ignoredIssueIds?.includes(issue.id));
-            const submittedAcceptedCount = acceptedNodes.filter((node) => pinnedNodeIds.includes(node.id)).length;
-
-            const riskLevel = acceptedNodes.length > 0 && submittedAcceptedCount === acceptedNodes.length
-              ? 'low'
-              : submittedAcceptedCount > 0 ? 'medium' : 'high';
-
-            return (
-              <article className={`decision-card ruling-option ruling-risk-${riskLevel}`} key={option.id}>
-                <span className="ruling-risk-label">根拠整合リスク：{riskLevel.toUpperCase()}</span>
-                <div className="ruling-option-heading">
-                  <span className="ruling-option-index">{String.fromCharCode(65 + index)}</span>
-                  <div><p className="eyebrow">裁定名 / RULING</p><h3>{option.label}</h3></div>
-                </div>
-                <section className="decision-processing">
-                  <h4>裁定内容</h4>
-                  <p><AnnotatedText text={option.processing} /></p>
-                </section>
-                <section className="decision-values">
-                  <p><strong>優先される価値</strong>{option.prioritizedValues.join(' / ')}</p>
-                  <p><strong>失われる価値</strong>{option.sacrificedValues.join(' / ')}</p>
-                </section>
-                <section className="ruling-evidence-section">
-                  <div className="decision-section-heading">
-                    <h4>採用される根拠</h4>
-                    <span>提出根拠一致 {submittedAcceptedCount} / {acceptedNodes.length}</span>
-                  </div>
-                  {acceptedNodes.map((node) => (
-                    <p className={pinnedNodeIds.includes(node.id) ? 'evidence-submitted' : 'evidence-unsubmitted'} key={node.id}>
-                      <span>{pinnedNodeIds.includes(node.id) ? '提出済' : '未提出'}</span>{node.title}：{node.simpleFact}
-                    </p>
-                  ))}
-                  {acceptedNodes.length > 0 && submittedAcceptedCount === 0 && (
-                    <div className="decision-evidence-warning" role="alert">
-                      <strong>提出根拠との不一致</strong>
-                      <p>この裁定案は、あなたが提出していない記録を主要根拠に含みます。</p>
-                    </div>
-                  )}
-                </section>
-                <section className="ruling-ignored-section">
-                  <h4>この裁定で保留・軽視される争点</h4>
-                  <ul>{ignoredIssues.map((issue) => <li key={issue.id}><strong>{issue.title}</strong>：{issue.description}</li>)}</ul>
-                </section>
-                <section>
-                  <h4>都市ステータスへの影響</h4>
-                  <div className="decision-stat-deltas">
-                    {cityStatKeys.map((key) => <span className={option.statDelta[key] >= 0 ? 'delta-plus' : 'delta-minus'} key={key}>{statLabels[key]} {option.statDelta[key] >= 0 ? '+' : ''}{option.statDelta[key]}</span>)}
-                  </div>
-                </section>
-                <button onClick={() => onDecide(option)}>{option.label}を確定</button>
-              </article>
-            );
-          })}
-        </div>
-        <button className="secondary" onClick={onBack}>調査に戻る</button>
-      </section>
-    </Shell>
   );
 }
 

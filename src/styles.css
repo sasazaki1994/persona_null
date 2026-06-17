@@ -1630,3 +1630,55 @@ button.active:not(.annotated-keyword) {
     transition: none;
   }
 }
+
+.audit-modal-backdrop {
+  position: fixed;
+  z-index: 80;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: clamp(0.75rem, 2vw, 2rem);
+  background: radial-gradient(circle at 50% 40%, rgba(19, 63, 76, 0.28), rgba(0, 0, 0, 0.78) 58%, rgba(0, 0, 0, 0.9));
+  backdrop-filter: blur(3px) brightness(0.68);
+}
+
+.streamlined-audit:has(.audit-modal-backdrop) .center-pane,
+.streamlined-audit:has(.audit-modal-backdrop) .MemoryNetwork,
+.streamlined-audit:has(.audit-modal-backdrop) .network {
+  opacity: 0.34;
+  filter: saturate(0.72);
+}
+
+.audit-modal {
+  width: min(960px, calc(100vw - 2rem));
+  max-height: min(82vh, 820px);
+  overflow: auto;
+  padding: 1.2rem;
+  border: 1px solid rgba(126, 234, 255, 0.7);
+  clip-path: polygon(0 14px, 14px 0, calc(100% - 18px) 0, 100% 18px, 100% 100%, 0 100%);
+  background:
+    linear-gradient(135deg, rgba(126, 234, 255, 0.1), transparent 24%),
+    linear-gradient(180deg, rgba(4, 13, 24, 0.98), rgba(2, 7, 11, 0.98));
+  box-shadow: 0 0 0 1px rgba(126, 234, 255, 0.16), 0 24px 80px rgba(0, 0, 0, 0.76), inset 0 0 32px rgba(88, 220, 255, 0.06);
+  scrollbar-width: thin;
+  scrollbar-color: #58dcff transparent;
+}
+
+.audit-modal:focus { outline: 1px solid rgba(126, 234, 255, 0.42); }
+.audit-modal h2 { margin-top: 0.25rem; color: #e6fbff; }
+.audit-modal h3 { color: #7eeaff; }
+.audit-modal code { max-height: 36vh; overflow: auto; }
+.audit-modal-shell-label { display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin-bottom: 0.75rem; color: #86a9b7; font-size: 0.72rem; letter-spacing: 0.16em; }
+.audit-modal-close { width: auto; min-height: auto; padding: 0.35rem 0.6rem; }
+.modal-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.85rem; margin: 1rem 0; }
+.modal-grid > div { border: 1px solid rgba(49, 93, 115, 0.72); background: rgba(6, 17, 29, 0.58); padding: 0.8rem; }
+.modal-complete { color: #7dffbf; }
+.modal-incomplete { color: #ffcfda; }
+.modal-actions { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-top: 1rem; }
+.modal-decision-list { grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 1rem 0; }
+
+@media (max-width: 899px) {
+  .audit-modal { width: calc(100vw - 1rem); max-height: 86vh; padding: 0.9rem; }
+  .modal-grid,
+  .modal-decision-list { grid-template-columns: 1fr; }
+}
