@@ -564,17 +564,6 @@ function InvestigationActionControl(props: {
   );
 }
 
-function ResourceGauge({ caseRecord, resources }: { caseRecord: CaseRecord; resources: number }) {
-  return (
-    <div className={`resource-gauge ${resources === 0 ? 'depleted' : resources === 1 ? 'low' : ''}`} aria-label={`監査リソース ${resources} / ${caseRecord.auditResourceMax}`}>
-      <span className="resource-blocks" aria-hidden="true">
-        {Array.from({ length: caseRecord.auditResourceMax }, (_, index) => <i className={index < resources ? 'filled' : ''} key={index} />)}
-      </span>
-      <strong>{resources} / {caseRecord.auditResourceMax}</strong>
-    </div>
-  );
-}
-
 function OperationToast({ message }: { message: string | null }) {
   if (!message) return null;
   return (
@@ -592,7 +581,6 @@ function InvestigationScreen(props: InvestigationProps) {
   const eligibleForTags = suggestedTags.length > 0;
   const taggedNodeCount = Object.values(props.taggedNodes).filter((tags) => tags.length > 0).length;
   const requiredNodeProgress = Math.min(1, props.visitedNodeIds.length / caseRecord.requiredNodesToJudge);
-  const totalNodeProgress = Math.min(1, props.visitedNodeIds.length / caseRecord.nodes.length);
   const pinnedProgress = Math.min(1, props.pinnedNodeIds.length);
   const taggedProgress = Math.min(1, taggedNodeCount);
   const resourceProgress = caseRecord.auditResourceMax === 0 ? 0 : props.resources / caseRecord.auditResourceMax;
@@ -612,6 +600,20 @@ function InvestigationScreen(props: InvestigationProps) {
   const compactRequirementText = props.canJudge
     ? '条件達成：最終判断へ進めます'
     : blockerText;
+  const visibleActions = selectedNode
+    ? caseRecord.actions.filter((action) => (
+        action.targetNodeIds?.includes(selectedNode.id)
+        && (
+          props.executedActionIds.includes(action.id)
+          || isInvestigationActionUnlocked({
+            action,
+            visitedNodeIds: props.visitedNodeIds,
+            pinnedNodeIds: props.pinnedNodeIds,
+            taggedNodes: props.taggedNodes,
+          })
+        )
+      ))
+    : [];
 
   return (
     <main className="app-shell game-grid streamlined-audit">
@@ -619,33 +621,24 @@ function InvestigationScreen(props: InvestigationProps) {
         <div className="hud-panel-label"><span>01</span> CASE INDEX / PROGRESS</div>
         <p className="eyebrow">{caseRecord.id.toUpperCase()}</p>
         <h2>{caseRecord.title}</h2>
-        <div className="case-command-strip" aria-label="監査セッション状態">
-          <span>NODE {props.visitedNodeIds.length}/{caseRecord.nodes.length}</span>
-          <span>PIN {props.pinnedNodeIds.length}/3</span>
-          <span>PRESSURE {props.auditPressure.level.toUpperCase()}</span>
+        <div className="case-command-strip simplified" aria-label="監査セッション状態">
+          <span>{props.visitedNodeIds.length}/{caseRecord.nodes.length} nodes</span>
+          <span>{props.auditPressure.level.toUpperCase()}</span>
         </div>
         <section className="case-progress-list" aria-label="監査進行">
-          <p className={`status-chip progress-chip ${requiredNodeProgress >= 1 ? 'complete' : 'pending'}`}><span>必要ノード確認</span><strong>{props.visitedNodeIds.length}/{caseRecord.requiredNodesToJudge}</strong><i>必要ノード確認 {props.visitedNodeIds.length}/{caseRecord.requiredNodesToJudge}</i><em>必要ノード確認{props.visitedNodeIds.length}/{caseRecord.requiredNodesToJudge}{props.visitedNodeIds.length >= caseRecord.requiredNodesToJudge ? '完了' : '未達成'}</em><b className="progress-track" aria-hidden="true"><b style={{ width: `${requiredNodeProgress * 100}%` }} /></b></p>
-          <p className={`status-chip progress-chip ${totalNodeProgress >= 1 ? 'complete' : 'pending'}`}><span>確認済みノード</span><strong>{props.visitedNodeIds.length} / {caseRecord.nodes.length}</strong><b className="progress-track" aria-hidden="true"><b style={{ width: `${totalNodeProgress * 100}%` }} /></b></p>
-          <p className={`status-chip progress-chip ${pinnedProgress >= 1 ? 'complete' : 'pending'}`}><span>判断根拠</span><strong>{props.pinnedNodeIds.length} / 3</strong><em>判断根拠{props.pinnedNodeIds.length}/1{props.pinnedNodeIds.length >= 1 ? '完了' : '未達成'}</em><b className="progress-track" aria-hidden="true"><b style={{ width: `${pinnedProgress * 100}%` }} /></b></p>
-          <p className={`status-chip progress-chip ${taggedProgress >= 1 ? 'complete' : 'pending'}`}><span>矛盾分類</span><strong>{taggedNodeCount}</strong><em>矛盾分類{taggedNodeCount}/1{taggedNodeCount >= 1 ? '完了' : '未達成'}</em><b className="progress-track" aria-hidden="true"><b style={{ width: `${taggedProgress * 100}%` }} /></b></p>
+          <p className={`status-chip progress-chip ${requiredNodeProgress >= 1 ? 'complete' : 'pending'}`}><span>記録確認</span><strong>{props.visitedNodeIds.length}/{caseRecord.requiredNodesToJudge}</strong><b className="progress-track" aria-hidden="true"><b style={{ width: `${requiredNodeProgress * 100}%` }} /></b></p>
+          <p className={`status-chip progress-chip ${pinnedProgress >= 1 ? 'complete' : 'pending'}`}><span>判断根拠</span><strong>{props.pinnedNodeIds.length}/1</strong><b className="progress-track" aria-hidden="true"><b style={{ width: `${pinnedProgress * 100}%` }} /></b></p>
+          <p className={`status-chip progress-chip ${taggedProgress >= 1 ? 'complete' : 'pending'}`}><span>矛盾分類</span><strong>{taggedNodeCount}/1</strong><b className="progress-track" aria-hidden="true"><b style={{ width: `${taggedProgress * 100}%` }} /></b></p>
           <p className={`status-chip progress-chip ${resourceProgress <= 0.34 ? 'warning' : 'valid'}`}><span>監査リソース</span><strong>{props.resources} / {caseRecord.auditResourceMax}</strong><b className="progress-track" aria-hidden="true"><b style={{ width: `${resourceProgress * 100}%` }} /></b></p>
         </section>
-        <ResourceGauge caseRecord={props.caseRecord} resources={props.resources} />
         {caseRecord.auditHearing && <button className="audit-hearing-open" type="button" onClick={() => props.onOpenModal({ type: 'audit_hearing' })}>監査尋問を開く</button>}
         <section className="pane-section guidance-panel compact-guidance"><p className="eyebrow">次の監査手順</p><h3>{props.guidance.title}</h3><p>{props.guidance.instruction}</p></section>
-        <section className="pane-section audit-pressure compact-pressure" aria-label="処理圧力"><div><strong>処理圧力 {props.auditPressure.value} / {props.auditPressure.max}</strong><span>{props.auditPressure.level.toUpperCase()}</span></div></section>
-        <details className="pane-section disclosure-card compact-case-overview">
-          <summary>事件概要を開く / 事件・監査情報を表示</summary>
-          <button className="secondary" type="button" onClick={() => props.onOpenModal({ type: 'case_summary' })}>事件概要を開く</button>
-          <p className="case-subtitle">{caseRecord.subtitle}</p>
-        </details>
+        <button className="secondary compact-case-button" type="button" onClick={() => props.onOpenModal({ type: 'case_summary' })}>事件概要</button>
         <section className="pane-section memory-node-index" aria-labelledby="memory-node-index-title">
           <div className="node-index-heading">
-            <h3 id="memory-node-index-title">争点別 記憶ノード</h3>
+            <h3 id="memory-node-index-title">記憶ノード</h3>
             <small>未確認 {caseRecord.nodes.length - props.visitedNodeIds.length}</small>
           </div>
-          <div className="compact-issue-titles" aria-label="争点名">{caseRecord.issues.map((issue) => { const reviewedCount = issue.relatedNodeIds.filter((nodeId) => props.visitedNodeIds.includes(nodeId)).length; const submittedCount = issue.relatedNodeIds.filter((nodeId) => props.pinnedNodeIds.includes(nodeId)).length; return <details className="inline-details" key={issue.id}><summary>争点詳細を表示</summary><h4>{issue.title}</h4><p>{issue.description}</p><div className="issue-progress"><span>確認 {reviewedCount} / {issue.relatedNodeIds.length}</span><span>根拠 {submittedCount}</span></div></details>; })}</div>
           <div className="memory-node-list flat-node-list">
             {caseRecord.nodes.map((node) => {
               const isSelected = node.id === props.selectedNodeId;
@@ -663,7 +656,6 @@ function InvestigationScreen(props: InvestigationProps) {
                   <strong>{node.title}</strong>
                   <span className="node-state-badges">
                     <i>{isSelected ? '選択中' : isVisited ? '確認済' : '未確認'}</i>
-                    {node.importance === 'critical' ? <i>CRITICAL</i> : node.importance === 'high' ? <i>warning</i> : null}
                     {isPinned && <i>根拠</i>}
                     {isTagged && <i>分類済</i>}
                   </span>
@@ -679,12 +671,6 @@ function InvestigationScreen(props: InvestigationProps) {
         <div className="network-caption compact-network-caption">
           <span>Memory Network</span>
           <small className="network-action-cue"><span aria-hidden="true">◎</span> ノードをクリック / 色で重要度を表示</small>
-          <div className="network-state-legend" aria-label="ノード監査状態">
-            <span><i className="legend-dot unreviewed" />未読</span>
-            <span><i className="legend-dot reviewed" />既読</span>
-            <span><i className="legend-ring double" />選択中</span>
-            <span><i className="legend-halo" />critical</span>
-          </div>
           <div className="importance-legend" aria-label="問題の重要度"><span className="importance-key standard"><i />標準</span><span className="importance-key high"><i />高</span><span className="importance-key critical"><i />重大</span></div>
         </div>
         <MemoryNetwork actions={caseRecord.actions} nodes={caseRecord.nodes} selectedNodeId={props.selectedNodeId} visitedNodeIds={props.visitedNodeIds} pinnedNodeIds={props.pinnedNodeIds} taggedNodes={props.taggedNodes} executedActionIds={props.executedActionIds} onSelectNode={props.onSelectNode} />
@@ -705,31 +691,20 @@ function InvestigationScreen(props: InvestigationProps) {
           <section className="node-header compact-node-header">
             <p className="eyebrow">{selectedNode.type}</p>
             <h2>{selectedNode.title}</h2>
-            <section className="record-status-bar"><div className="record-status-heading"><span>RECORD STATUS</span><small>記録状態：{props.visitedNodeIds.includes(selectedNode.id) ? '確認済' : '未確認'} / 記録種別：{selectedNode.type}</small></div><div className="record-status-chips">
-              <span className="status-chip valid">{props.visitedNodeIds.includes(selectedNode.id) ? '確認済' : '未確認'}</span><span className={`status-chip ${props.pinnedNodeIds.includes(selectedNode.id) ? 'valid' : 'muted'}`}>{props.pinnedNodeIds.includes(selectedNode.id) ? '根拠提出済' : '根拠未提出'}</span><span className={`status-chip ${(props.taggedNodes[selectedNode.id]?.length ?? 0) > 0 ? 'valid' : eligibleForTags ? 'warning' : 'muted'}`}>{(props.taggedNodes[selectedNode.id]?.length ?? 0) > 0 ? '矛盾分類済' : eligibleForTags ? '矛盾未分類' : '分類対象外'}</span>
-              {selectedNode.importance === 'critical'
-                ? <span className="status-chip critical">重大 critical</span>
-                : selectedNode.importance === 'high'
-                  ? <span className="status-chip warning">warning</span>
-                  : <span className="status-chip muted">standard</span>}
-            </div></section>
+            <p className="record-status-line">{props.visitedNodeIds.includes(selectedNode.id) ? '確認済' : '未確認'} / {selectedNode.importance === 'critical' ? '重大' : selectedNode.importance === 'high' ? '重要' : '標準'}</p>
           </section>
           <section className="pane-section node-summary short-record always-visible-detail">
-            <h3>短い記録</h3>
+            <h3>記録要約</h3>
             <p><AnnotatedText text={selectedNode.summary} /></p>
-          </section>
-          <section className="pane-section node-core-facts always-visible-detail">
-            <h3>単純事実</h3>
             <p><AnnotatedText text={selectedNode.simpleFact} /></p>
           </section>
-          {selectedNode.inspectorNote.trim() !== '' && <section className="pane-section inspector-note"><h3>監査官メモ</h3><TypewriterText text={selectedNode.inspectorNote} speed={14} animateKey={`note-${selectedNode.id}`} /></section>}
           {selectedNode.warningLevel === 'critical' && selectedNode.warning.trim() !== '' && (
             <section className="pane-section node-warning" role="alert">
               <h3>重大警告</h3>
               <p className="warning-text"><AnnotatedText text={selectedNode.warning} /></p>
             </section>
           )}
-          {selectedNode.warning.trim() !== '' && selectedNode.warningLevel !== 'critical' && <span className="status-chip warning compact-warning-badge">警告</span>}
+          {selectedNode.warning.trim() !== '' && selectedNode.warningLevel !== 'critical' && <p className="node-warning-line">警告：<AnnotatedText text={selectedNode.warning} /></p>}
           <section className="pane-section priority-actions" aria-label="操作ボタン">
             <button onClick={() => props.onOpenModal({ type: 'node_detail', nodeId: selectedNode.id })}>詳細ログを開く</button>
             <button onClick={() => props.onTogglePin(selectedNode.id)} disabled={!props.pinnedNodeIds.includes(selectedNode.id) && props.pinnedNodeIds.length >= 3}>
@@ -739,11 +714,10 @@ function InvestigationScreen(props: InvestigationProps) {
               <button className={props.taggedNodes[selectedNode.id]?.includes(tag) ? 'active' : ''} key={tag} onClick={() => props.onToggleTag(selectedNode, tag)}>
                 矛盾を分類：{contradictionTagLabels[tag]}
               </button>
-            )) : <small>この記録に分類可能な矛盾は検出されていません</small>}
-            <details className="inline-details actions">
-              <summary>解析メニューを表示 / 追加照合</summary>
-              {props.resources === 0 && <p className="warning-text">監査リソース不足：追加解析を実行できません。</p>}
-              {caseRecord.actions.map((action) => (
+            )) : null}
+            {visibleActions.length > 0 && (
+              <div className="actions compact-analysis-actions">
+                {visibleActions.map((action) => (
                 <InvestigationActionControl
                   caseRecord={caseRecord}
                   action={action}
@@ -755,8 +729,9 @@ function InvestigationScreen(props: InvestigationProps) {
                   taggedNodes={props.taggedNodes}
                   visitedNodeIds={props.visitedNodeIds}
                 />
-              ))}
-            </details>
+                ))}
+              </div>
+            )}
           </section>
           {analysisReports.length > 0 && (
             <section className="pane-section analysis-summary"><div className="analysis-report" aria-live="polite">
@@ -764,29 +739,6 @@ function InvestigationScreen(props: InvestigationProps) {
               {analysisReports.map((action) => <p key={action.id}><AnnotatedText text={action.reportText ?? ''} /></p>)}
             </div></section>
           )}
-          <details className="pane-section disclosure-card">
-            <summary>監査数値</summary>
-            <dl className="metrics">
-              {Object.entries(selectedNode.metrics).map(([key, value]) => <div key={key}><dt>{key}</dt><dd>{value}</dd></div>)}
-            </dl>
-            <ResourceGauge caseRecord={props.caseRecord} resources={props.resources} />
-        {caseRecord.auditHearing && <button className="audit-hearing-open" type="button" onClick={() => props.onOpenModal({ type: 'audit_hearing' })}>監査尋問を開く</button>}
-          </details>
-          <details className="pane-section disclosure-card">
-            <summary>関連人物</summary>
-            <div className="related-people-list">
-              {caseRecord.personLogs.map((person) => <p key={person.id}><strong>{person.name}</strong><span>{person.role}</span></p>)}
-            </div>
-          </details>
-          <details className="pane-section disclosure-card compact-raw-log">
-            <summary>詳細記録を表示</summary>
-            <h3>詳細ログ</h3>
-            <p>ログ全文は画面中央の記録ファイルで開きます。</p>
-            <code>{selectedNode.log}</code>
-            <dl className="metrics">{Object.entries(selectedNode.metrics).map(([key, value]) => <div key={`raw-${key}`}><dt>{key}</dt><dd>{value}</dd></div>)}</dl>
-            <button type="button" onClick={() => props.onOpenModal({ type: 'node_detail', nodeId: selectedNode.id })}>詳細ログを開く</button>
-          </details>
-
         </>}
       </aside>
 
@@ -794,7 +746,7 @@ function InvestigationScreen(props: InvestigationProps) {
       <footer className="bottom-pane compact-status-bar"><span className="hud-panel-label bottom-panel-label">JUDGMENT CONSOLE</span>
         <p className={`judgment-state ${props.canJudge ? 'ready' : 'locked'}`}><span aria-hidden="true" />{props.canJudge ? 'JUDGMENT READY：' : 'LOCKED：'}{compactRequirementText}</p>
         <AuditReportPanel report={props.auditReportCheck} />
-        <section className="audit-log compact-audit-log" aria-label="監査ログ"><strong>AUDIT LOG</strong><p className={`latest-log ${isWarningLog(props.systemLogs.at(-1) ?? '') ? 'warning-log' : ''}`}>{props.systemLogs.at(-1) ?? 'ログなし'}</p><details><summary>ログを表示</summary><div className="log-list">{props.systemLogs.map((log, index) => <p key={`${index}-${log}`}><span>{String(index + 1).padStart(2, '0')}</span>{log}</p>)}</div></details></section>
+        <section className="audit-log compact-audit-log" aria-label="監査ログ"><strong>AUDIT LOG</strong><p className={`latest-log ${isWarningLog(props.systemLogs.at(-1) ?? '') ? 'warning-log' : ''}`}>{props.systemLogs.at(-1) ?? 'ログなし'}</p></section>
         {props.canJudge && <button className="judge ready" onClick={() => props.onOpenModal({ type: 'decision' })}>最終判断へ進む</button>}
         {props.auditPressure.level === 'critical' && <p className="audit-pressure-critical" role="alert">{auditPressureMessages.critical}</p>}
         {props.auditPressure.level === 'high' && <span className="status-chip warning">warning: 処理圧力 高</span>}
@@ -957,15 +909,15 @@ function DecisionModalContent({ auditPressure, auditReportCheck, caseRecord, pin
 
 
 function AuditReportPanel({ report }: { report: AuditReportCheck }) {
+  const primaryWarning = report.warnings[0];
+
   return (
     <section className={`audit-report-check compact-report audit-report-${report.state}`} aria-label="監査報告書チェック">
-      <strong>監査報告書チェック</strong>
-      <span>記録確認 {report.reviewedNodes} / {report.totalNodes}</span>
-      <span>提出根拠 {report.pinnedEvidence}</span>
-      <span>矛盾分類 {report.taggedContradictions}</span>
-      <span>{report.state === 'insufficient' ? '裁定条件未達' : '裁定可能'}</span>
-      <strong>監査上の注意</strong>
-      {report.warnings.map((warning) => <span key={warning}>{warning}</span>)}
+      <strong>{report.state === 'insufficient' ? '裁定条件未達' : '裁定可能'}</strong>
+      <span>記録 {report.reviewedNodes}/{report.totalNodes}</span>
+      <span>根拠 {report.pinnedEvidence}</span>
+      <span>分類 {report.taggedContradictions}</span>
+      {primaryWarning && <span className="report-warning">{primaryWarning}</span>}
     </section>
   );
 }
