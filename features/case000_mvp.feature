@@ -16,6 +16,20 @@ Feature: Persona Null Case000 playable audit slice
     Then the investigation screen shows the Case000 status panes and memory network
     And the Case001 card is also shown as an available incident file
 
+
+  Scenario: Streamlined game audit UI
+    Given the auditor is on the investigation screen
+    Then the screen is organized into left progress, center memory network, and right selected-node detail regions
+    And city status, person profiles, incident overview, and raw logs are not always visible
+    And the bottom area shows judgment requirements in one line instead of a large log panel
+    And the final judgment action is hidden or disabled until node review, evidence, and contradiction conditions are met
+    When no memory node is selected
+    Then the right pane only asks the auditor to select a memory node
+    When the auditor selects a memory node in the Three.js network
+    Then the right pane shows only the node title, simple fact, short record, and operation buttons by default
+    And audit metrics, related people, and raw logs are available only behind collapsible controls
+    And warning-level alerts are reduced to small badges while critical alerts remain prominent
+
   Scenario: Inspecting memory nodes in the Three.js network
     Given the auditor is on the investigation screen
     When the auditor selects a memory node in the Three.js network
