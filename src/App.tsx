@@ -330,6 +330,12 @@ function TitleScreen({ onNext }: { onNext: () => void }) {
         <h1>Persona Null</h1>
         <p>北霞市 都市OS 判断不能案件処理端末</p>
         <p className="muted">公定値は手続き上の事実であり、真実そのものではありません。</p>
+        <div className="boot-telemetry" aria-label="起動前監査状態">
+          <span><strong>CASE</strong> CASE000</span>
+          <span><strong>SUBJECT</strong> IDENTITY UNRESOLVED</span>
+          <span><strong>AUTH</strong> LIMITED</span>
+        </div>
+        <div className="boot-signal" aria-hidden="true"><i /><i /><i /><i /></div>
         <button className="terminal-boot-button" onClick={onNext}><span>監査端末を起動</span><small>INITIALIZE AUDIT SESSION</small></button>
         <p className="boot-case-id">KASUMI-GATE-09 / CASE000</p>
       </section>
@@ -366,6 +372,11 @@ function CaseSelectScreen({ completedCaseIds, savedCaseResults, onSelect }: { co
           <p className="eyebrow">CASE ARCHIVE / 事件ファイル選択</p>
           <h2>監査対象記録</h2>
           <p>都市OSが保留した事件記録から、監査可能なファイルを選択してください。</p>
+        </div>
+        <div className="archive-status-strip" aria-label="事件アーカイブ状態">
+          <span><strong>{cases.length}</strong>件の監査ファイル</span>
+          <span><strong>{completedCaseIds.length}</strong>件の処理済記録</span>
+          <span><strong>{tendency.recordedCases === 0 ? '未記録' : `${tendency.recordedCases}件`}</strong>監査傾向</span>
         </div>
         <AuditTendencyPanel tendency={tendency} />
         <div className="case-file-list">
@@ -417,6 +428,12 @@ function CaseOverviewScreen({ caseRecord, continuityEffect, onNext }: { caseReco
         <p className="eyebrow">事件概要</p>
         <h2>{caseRecord.title}</h2>
         <p><AnnotatedText text={caseRecord.overview} /></p>
+        <div className="case-brief-status" aria-label="事件監査条件">
+          <span><strong>{caseRecord.id.toUpperCase()}</strong> RECORD OPEN</span>
+          <span><strong>{caseRecord.nodes.length}</strong> MEMORY NODES</span>
+          <span><strong>{caseRecord.requiredNodesToJudge}</strong> REQUIRED SCANS</span>
+          <span><strong>{caseRecord.auditResourceMax}</strong> AUDIT RESOURCES</span>
+        </div>
         {continuityEffect && (
           <section className={`continuity-panel continuity-${continuityEffect.tone}`} aria-label="前回裁定の参照基準">
             <p className="eyebrow">CITY OS / PRECEDENT REFERENCE</p>
@@ -678,6 +695,11 @@ function InvestigationScreen(props: InvestigationProps) {
         {!selectedNode ? (
           <section className="empty-node-detail" aria-live="polite">
             <h2>記憶ノードを選択してください</h2>
+            <p>左の記憶ノード、または中央の Memory Network から確認対象を選択すると、短い記録・単純事実・警告・操作ボタンがここに展開されます。</p>
+            <div className="empty-scan-panel" aria-hidden="true">
+              <span>WAITING FOR NODE SIGNAL</span>
+              <i /><i /><i />
+            </div>
           </section>
         ) : <>
           <section className="node-header compact-node-header">

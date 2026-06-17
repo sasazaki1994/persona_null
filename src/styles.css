@@ -2106,3 +2106,204 @@ button.active:not(.annotated-keyword) {
     transform: none;
   }
 }
+
+/* Second polish pass: make key screens feel like an active investigation deck. */
+.boot-telemetry {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.5rem;
+  max-width: 46rem;
+  margin: 1.35rem 0 0.2rem;
+}
+
+.boot-telemetry span,
+.archive-status-strip span,
+.case-brief-status span {
+  min-width: 0;
+  border: 1px solid rgba(168, 255, 241, 0.18);
+  background:
+    linear-gradient(90deg, rgba(168, 255, 241, 0.08), transparent 55%),
+    rgba(1, 8, 10, 0.55);
+  padding: 0.55rem 0.65rem;
+  color: #97bec1;
+  font: 0.64rem/1.35 ui-monospace, SFMono-Regular, Consolas, monospace;
+  letter-spacing: 0.08em;
+}
+
+.boot-telemetry strong,
+.archive-status-strip strong,
+.case-brief-status strong {
+  display: block;
+  color: #e9fffc;
+  font-size: 0.72rem;
+  letter-spacing: 0.13em;
+}
+
+.boot-signal {
+  display: flex;
+  align-items: end;
+  gap: 0.24rem;
+  height: 2.2rem;
+  margin: 0.9rem 0 -0.4rem;
+}
+
+.boot-signal i {
+  display: block;
+  width: 2.7rem;
+  border: 1px solid rgba(168, 255, 241, 0.2);
+  background: linear-gradient(180deg, rgba(168, 255, 241, 0.4), rgba(99, 213, 210, 0.08));
+  box-shadow: 0 0 12px rgba(99, 213, 210, 0.12);
+}
+
+.boot-signal i:nth-child(1) { height: 0.45rem; }
+.boot-signal i:nth-child(2) { height: 0.8rem; }
+.boot-signal i:nth-child(3) { height: 1.28rem; }
+.boot-signal i:nth-child(4) { height: 1.78rem; background: linear-gradient(180deg, rgba(255, 107, 138, 0.48), rgba(99, 213, 210, 0.08)); }
+
+.archive-status-strip,
+.case-brief-status {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.55rem;
+  margin: 1rem 0 1.15rem;
+}
+
+.case-brief-status {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin-top: 1.25rem;
+}
+
+.case-file::before {
+  background:
+    linear-gradient(90deg, rgba(168, 255, 241, 0.28), transparent 22%) top left / 8rem 1px no-repeat,
+    linear-gradient(180deg, rgba(168, 255, 241, 0.22), transparent 26%) top left / 1px 6rem no-repeat,
+    linear-gradient(270deg, rgba(255, 107, 138, 0.16), transparent 22%) bottom right / 6rem 1px no-repeat;
+}
+
+.case-file h3::before {
+  display: inline-block;
+  width: 0.55rem;
+  height: 0.55rem;
+  margin-right: 0.45rem;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  box-shadow: 0 0 10px currentColor;
+  color: var(--accent-cyan);
+  content: '';
+  vertical-align: 0.05em;
+}
+
+.overview-grid > div,
+.continuity-panel,
+.person-profile,
+.processing-note {
+  box-shadow: inset 0 0 24px rgba(168, 255, 241, 0.035);
+}
+
+.overview-grid > div {
+  position: relative;
+  overflow: hidden;
+  background:
+    linear-gradient(135deg, rgba(168, 255, 241, 0.06), transparent 36%),
+    rgba(4, 15, 19, 0.68);
+}
+
+.overview-grid > div::after {
+  position: absolute;
+  right: 0.65rem;
+  bottom: 0.5rem;
+  color: rgba(168, 255, 241, 0.06);
+  font: 700 2.8rem/1 ui-monospace, monospace;
+  content: 'DOSSIER';
+  pointer-events: none;
+}
+
+.empty-node-detail {
+  gap: 0.9rem;
+}
+
+.empty-node-detail h2 {
+  margin-bottom: 0;
+}
+
+.empty-node-detail p {
+  max-width: 28rem;
+}
+
+.empty-scan-panel {
+  display: grid;
+  gap: 0.55rem;
+  width: min(100%, 24rem);
+  margin-top: 0.45rem;
+  border: 1px solid rgba(168, 255, 241, 0.2);
+  background:
+    repeating-linear-gradient(90deg, rgba(168, 255, 241, 0.08) 0 1px, transparent 1px 12px),
+    rgba(1, 8, 10, 0.6);
+  padding: 0.8rem;
+}
+
+.empty-scan-panel span {
+  color: #7fb7ba;
+  font: 0.62rem/1.2 ui-monospace, SFMono-Regular, Consolas, monospace;
+  letter-spacing: 0.18em;
+}
+
+.empty-scan-panel i {
+  display: block;
+  height: 0.34rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(69, 108, 113, 0.38);
+}
+
+.empty-scan-panel i::after {
+  display: block;
+  width: 42%;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, transparent, rgba(168, 255, 241, 0.84), transparent);
+  content: '';
+  animation: empty-scan 1800ms ease-in-out infinite;
+}
+
+.empty-scan-panel i:nth-of-type(2)::after { animation-delay: 180ms; }
+.empty-scan-panel i:nth-of-type(3)::after { animation-delay: 360ms; }
+
+.audit-modal {
+  border-top-width: 3px;
+}
+
+.audit-modal-shell-label {
+  border-bottom: 1px solid rgba(168, 255, 241, 0.14);
+  padding-bottom: 0.7rem;
+}
+
+.modal-decision-list .decision-card {
+  min-height: 24rem;
+}
+
+.ruling-option:hover {
+  border-color: rgba(168, 255, 241, 0.66);
+  box-shadow: 0 0 24px rgba(99, 213, 210, 0.14), inset 0 0 24px rgba(168, 255, 241, 0.045);
+}
+
+@keyframes empty-scan {
+  0% { transform: translateX(-120%); }
+  55%, 100% { transform: translateX(260%); }
+}
+
+@media (max-width: 899px) {
+  .boot-telemetry,
+  .archive-status-strip,
+  .case-brief-status {
+    grid-template-columns: 1fr;
+  }
+  .boot-signal i { width: 2rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .empty-scan-panel i::after {
+    animation: none;
+    transform: none;
+  }
+}
