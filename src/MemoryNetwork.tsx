@@ -83,13 +83,13 @@ export function MemoryNetwork({
     const gridMaterials = Array.isArray(grid.material) ? grid.material : [grid.material];
     gridMaterials.forEach((material) => {
       material.transparent = true;
-      material.opacity = 0.16;
+      material.opacity = 0.08;
       material.depthWrite = false;
     });
     scene.add(grid);
 
-    const particlePositions = new Float32Array(210 * 3);
-    for (let index = 0; index < 210; index += 1) {
+    const particlePositions = new Float32Array(90 * 3);
+    for (let index = 0; index < 90; index += 1) {
       const offset = index * 3;
       particlePositions[offset] = ((index * 47) % 211) / 211 * 12 - 6;
       particlePositions[offset + 1] = ((index * 83) % 223) / 223 * 7 - 3.5;
@@ -99,7 +99,7 @@ export function MemoryNetwork({
     particleGeometry.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
     const particleMaterial = new THREE.PointsMaterial({
       color: '#79b4c5',
-      opacity: 0.3,
+      opacity: 0.16,
       transparent: true,
       size: 0.018,
       sizeAttenuation: true,
@@ -329,16 +329,6 @@ export function MemoryNetwork({
     };
   }, [analyzedNodeIds, nodes, pinnedNodeIds, selectedNodeId, taggedNodes, visitedNodeIds]);
 
-  const labelStates = labelNode ? [
-    visitedNodeIds.includes(labelNode.id) ? '確認済' : '未確認',
-    labelNode.id === selectedNodeId ? '選択中' : null,
-    pinnedNodeIds.includes(labelNode.id) ? '根拠提出済' : '根拠未提出',
-    requiresContradictionReview(labelNode)
-      ? ((taggedNodes[labelNode.id]?.length ?? 0) > 0 ? '矛盾分類済' : '矛盾未分類')
-      : '矛盾分類対象外',
-    analyzedNodeIds.has(labelNode.id) ? '解析結果あり' : '解析結果なし',
-  ].filter((state): state is string => Boolean(state)) : [];
-
   return (
     <div className="network-stage">
       <div className="network" ref={hostRef} aria-label="記憶ノードネットワーク">
@@ -346,16 +336,9 @@ export function MemoryNetwork({
       </div>
       {labelNode && (
         <aside className="network-node-label" aria-live="polite">
-          <p>{hoveredNodeId ? 'HOVER RECORD' : 'SELECTED RECORD'} / {labelNode.id}<span>{labelNode.id === selectedNodeId ? 'SCAN LOCKED' : 'SIGNAL TRACE'}</span></p>
+          <p>{hoveredNodeId ? 'HOVER' : 'SELECTED'} / {labelNode.id}</p>
           <h3>{labelNode.title}</h3>
-          <dl>
-            <div><dt>記録種別</dt><dd>{labelNode.type}</dd></div>
-            <div><dt>重要度</dt><dd>{importanceLabels[labelNode.importance]}</dd></div>
-            <div><dt>記録状態</dt><dd>{visitedNodeIds.includes(labelNode.id) ? '確認済' : '未確認'}</dd></div>
-          </dl>
-          <div className="network-node-states">
-            {labelStates.map((state) => <span key={state}>{state}</span>)}
-          </div>
+          <p className="network-node-summary">{labelNode.type} / {importanceLabels[labelNode.importance]} / {visitedNodeIds.includes(labelNode.id) ? '確認済' : '未確認'}</p>
         </aside>
       )}
     </div>

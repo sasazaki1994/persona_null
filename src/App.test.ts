@@ -344,13 +344,13 @@ describe('case000 data', () => {
     ]);
   });
 
-  it('types only the newest log while preserving chronological audit order', () => {
+  it('shows only the newest log in the compact audit console', () => {
     const appSource = terminologyFiles['./App.tsx'];
 
     expect(appSource).toContain('setSystemLogs((logs) => [...logs, message].slice(-8))');
     expect(appSource).toContain("props.systemLogs.at(-1)");
     expect(appSource).toContain('AUDIT LOG');
-    expect(appSource).toContain('<summary>ログを表示</summary>');
+    expect(appSource).not.toContain('<summary>ログを表示</summary>');
   });
 
   it('separates verified node facts from bounded inspector interpretation', () => {
