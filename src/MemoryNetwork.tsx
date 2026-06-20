@@ -80,8 +80,9 @@ export function MemoryNetwork({
 
     // three.js is the bulk of the bundle; load it on demand so the title and
     // case-select screens never ship it. The canvas host renders immediately,
-    // and the scene is built once the chunk resolves.
-    void import('three').then((THREE) => {
+    // and the scene is built once the chunk resolves. Importing the tree-shaken
+    // subset (instead of the whole namespace) keeps the vendor chunk smaller.
+    void import('./three-subset').then((THREE) => {
       if (cancelled || !hostRef.current) return;
       setNetworkReady(true);
 
