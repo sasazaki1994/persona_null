@@ -10,6 +10,8 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@fontsource/chakra-petch": "^5.2.7",
+    "@fontsource/share-tech-mono": "^5.2.7",
     "react": "^19.2.1",
     "react-dom": "^19.2.1",
     "three": "^0.181.2"
