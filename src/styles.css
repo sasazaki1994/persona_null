@@ -2552,8 +2552,33 @@ body::before {
   to { background-position: 0 220px; }
 }
 
-/* Soft animated horizon glow behind everything */
-.app-shell > *::after { /* keep existing corner brackets untouched */ }
+/* ---- Memory network deferred-load placeholder ---- */
+.network-loading {
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.7rem;
+  color: var(--accent-cyan-soft);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+.network-loading i {
+  width: 2.4rem;
+  height: 2px;
+  background: var(--duo-line);
+  opacity: 0.35;
+  animation: reform-loadbar 1.1s ease-in-out infinite;
+}
+.network-loading i:nth-child(3) { animation-delay: 0.15s; }
+.network-loading i:nth-child(4) { animation-delay: 0.3s; }
+@keyframes reform-loadbar { 0%, 100% { opacity: 0.2; transform: scaleX(0.6); } 50% { opacity: 0.9; transform: scaleX(1); } }
+@media (prefers-reduced-motion: reduce) { .network-loading i { animation: none; } }
 
 /* ---- Surfaces: deeper glass, duotone edge, refined corner cut ---- */
 .start-card,

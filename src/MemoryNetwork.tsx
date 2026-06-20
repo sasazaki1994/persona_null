@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import * as THREE from 'three';
+import type * as THREE from 'three';
 import type { InvestigationAction, MemoryNode, NodeImportance, TaggedNodes } from './types';
 
 type Props = {
@@ -43,6 +43,7 @@ export function MemoryNetwork({
   const onSelectRef = useRef(onSelectNode);
   const hoverRef = useRef<string | null>(null);
   const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
+  const [networkReady, setNetworkReady] = useState(false);
   const analyzedNodeIds = useMemo(() => new Set(
     actions
       .filter((action) => executedActionIds.includes(action.id))
@@ -73,6 +74,16 @@ export function MemoryNetwork({
   useEffect(() => {
     const host = hostRef.current;
     if (!host) return;
+
+    let cancelled = false;
+    let cleanup: (() => void) | undefined;
+
+    // three.js is the bulk of the bundle; load it on demand so the title and
+    // case-select screens never ship it. The canvas host renders immediately,
+    // and the scene is built once the chunk resolves.
+    void import('three').then((THREE) => {
+      if (cancelled || !hostRef.current) return;
+      setNetworkReady(true);
 
     const scene = new THREE.Scene();
     scene.background = new THREE.Color('#03070d');
@@ -332,7 +343,7 @@ export function MemoryNetwork({
     };
     animate();
 
-    return () => {
+    cleanup = () => {
       cancelAnimationFrame(animationId);
       renderer.domElement.removeEventListener('pointermove', handlePointerMove);
       renderer.domElement.removeEventListener('pointerleave', handlePointerLeave);
@@ -348,12 +359,24 @@ export function MemoryNetwork({
       });
       renderer.dispose();
     };
+    });
+
+    return () => {
+      cancelled = true;
+      cleanup?.();
+    };
   }, [nodes]);
 
   return (
     <div className="network-stage">
       <div className="network" ref={hostRef} aria-label="記憶ノードネットワーク">
         <div className="network-scanlines" aria-hidden="true" />
+        {!networkReady && (
+          <div className="network-loading" role="status">
+            <span>INITIALIZING MEMORY NETWORK</span>
+            <i /><i /><i />
+          </div>
+        )}
       </div>
       {labelNode && (
         <aside className="network-node-label" aria-live="polite">
