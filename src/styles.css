@@ -37,7 +37,7 @@ code { display: block; max-width: 100%; padding: 0.75rem; background: #06111d; b
 .shell { min-height: 100vh; display: grid; place-items: center; padding: 4rem; }
 .start-card, .document-card { width: min(760px, 92vw); border: 1px solid #45c7e8; background: rgba(4, 13, 24, 0.9); padding: 3rem; box-shadow: 0 0 42px rgba(62, 205, 255, 0.18); }
 .document-card.wide { width: min(1080px, 94vw); }
-.start-card h1 { font-size: clamp(4rem, 10vw, 8rem); margin: 0.1em 0; text-transform: uppercase; letter-spacing: 0.08em; }
+.start-card h1 { font-size: clamp(3rem, 13vw, 7rem); margin: 0.1em 0; text-transform: uppercase; letter-spacing: 0.08em; line-height: 1.05; overflow-wrap: normal; word-break: keep-all; }
 .document-card h2 { font-size: 2.2rem; margin-top: 0; }
 .eyebrow { color: #6de7ff; letter-spacing: 0.24em; text-transform: uppercase; }
 .muted { color: #86a9b7; }
@@ -290,7 +290,7 @@ meter { width: 100%; accent-color: #58dcff; }
   }
 
   .start-card h1 {
-    font-size: clamp(2.6rem, 17vw, 4rem);
+    font-size: clamp(2.2rem, 14vw, 4rem);
     letter-spacing: 0.04em;
   }
 
