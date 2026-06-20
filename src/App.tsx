@@ -837,10 +837,13 @@ function AuditHearingModalContent({ hearing, nodes, pinnedNodeIds, onBack, onRes
   const [resolved, setResolved] = useState(false);
   const pinnedNodes = nodes.filter((node) => pinnedNodeIds.includes(node.id));
   const activeStatement = hearing.statements.find((statement) => statement.id === activeStatementId) ?? hearing.statements[0];
-  const validContradictionNodeIds = new Set(['missing-memory', 'arm-history']);
+  const validContradictionNodeIds = new Set(
+    activeStatement?.contradictionNodeIds
+    ?? (activeStatement?.contradictionNodeId ? [activeStatement.contradictionNodeId] : []),
+  );
 
   const presentNode = (node: MemoryNode) => {
-    if (activeStatement?.id === 'provisional-subject' && validContradictionNodeIds.has(node.id)) {
+    if (validContradictionNodeIds.has(node.id)) {
       setResolved(true);
       setPresenting(false);
       setMessage('記録矛盾を検出。署名一致のみでは、操作主体を確定できません。');

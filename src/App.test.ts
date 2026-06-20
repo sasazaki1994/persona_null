@@ -167,6 +167,7 @@ describe('case000 data', () => {
       'したがって、間宮怜司を発砲主体として処理可能です。',
     ]);
     expect(case000.auditHearing?.statements.at(-1)?.contradictionNodeId).toBe('missing-memory');
+    expect(case000.auditHearing?.statements.at(-1)?.contradictionNodeIds).toEqual(['missing-memory', 'arm-history']);
   });
 
 

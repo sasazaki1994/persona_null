@@ -445,6 +445,42 @@ describe('Persona Null player flow', () => {
   });
 
 
+  const presentPinnedEvidence = (title: string) => {
+    const picker = container.querySelector('.pinned-evidence-picker');
+    const button = [...(picker?.querySelectorAll('button') ?? [])].find((candidate) => candidate.textContent?.includes(title));
+    expect(button, `pinned evidence button containing ${title}`).toBeDefined();
+    act(() => button?.click());
+  };
+
+  it('resolves the audit hearing from statement-defined contradiction records', () => {
+    enterInvestigation();
+
+    clickButton('ノード：義体稼働履歴');
+    clickButton('判断根拠に追加');
+    clickButton('監査尋問を開く');
+
+    clickButton('したがって、間宮怜司を発砲主体として処理可能です。');
+    clickButton('証拠を提示');
+    presentPinnedEvidence('義体稼働履歴');
+
+    expect(container.querySelector('.hearing-status.resolved')?.textContent).toContain('記録矛盾を検出');
+  });
+
+  it('rejects hearing evidence that is not a statement contradiction record', () => {
+    enterInvestigation();
+
+    clickButton('ノード：発砲ログ');
+    clickButton('判断根拠に追加');
+    clickButton('監査尋問を開く');
+
+    clickButton('したがって、間宮怜司を発砲主体として処理可能です。');
+    clickButton('証拠を提示');
+    presentPinnedEvidence('発砲ログ');
+
+    expect(container.querySelector('.hearing-status')?.textContent).toContain('この証拠では供述を崩せません');
+    expect(container.querySelector('.hearing-status.resolved')).toBeNull();
+  });
+
   it('plays Case001 through judgment and saves its result', () => {
     clickButton('監査端末を起動');
     clickButton('通知を確認');
