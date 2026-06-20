@@ -2815,3 +2815,74 @@ button:hover:not(:disabled):not(.annotated-keyword):not(.typewriter-skip)::after
   .judge.ready { animation: none !important; }
   button:not(.annotated-keyword):not(.typewriter-skip)::after { display: none; }
 }
+
+/* ============================================================
+   SCREEN USAGE — fill the viewport intentionally on desktop
+   ============================================================ */
+@media (min-width: 900px) {
+  /* Left pane becomes a flex column so the memory-node index is always
+     visible with its own scroll region, instead of being pushed below
+     the fold under the progress + guidance blocks. */
+  .streamlined-audit .progress-pane {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+    overflow: hidden;
+  }
+  /* Upper block (identity + progress + guidance) scrolls on its own so it
+     can never crowd out the node index below it. */
+  .streamlined-audit .progress-pane-top {
+    display: flex;
+    flex: 1 1 52%;
+    flex-direction: column;
+    gap: 0.5rem;
+    min-height: 0;
+    overflow-y: auto;
+    padding-right: 0.25rem;
+  }
+  .streamlined-audit .progress-pane-top > * { flex: 0 0 auto; }
+  .streamlined-audit .progress-pane-top > h2 { margin: 0.05rem 0; }
+  .streamlined-audit .progress-pane-top .pane-section { margin-top: 0; padding-top: 0.55rem; }
+
+  /* Compact the progress block so it reads as a tidy 2x2 status board. */
+  .streamlined-audit .case-progress-list {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.4rem;
+  }
+  .streamlined-audit .compact-guidance { padding: 0.65rem 0.75rem; }
+  .streamlined-audit .compact-guidance h3 { margin: 0.15rem 0 0.3rem; font-size: 0.95rem; }
+
+  /* Node index gets a guaranteed share of the pane with its own scroll. */
+  .streamlined-audit .memory-node-index {
+    display: flex;
+    flex: 1 1 48%;
+    flex-direction: column;
+    min-height: 9rem;
+    margin-top: 0;
+    padding-top: 0.55rem;
+  }
+  .streamlined-audit .memory-node-index .node-index-heading { flex: 0 0 auto; margin-bottom: 0.5rem; }
+  .streamlined-audit .memory-node-list.flat-node-list {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    padding-right: 0.3rem;
+    scrollbar-width: thin;
+    scrollbar-color: #315d73 transparent;
+  }
+  .streamlined-audit .progress-pane-top::-webkit-scrollbar,
+  .streamlined-audit .memory-node-list.flat-node-list::-webkit-scrollbar { width: 8px; }
+  .streamlined-audit .progress-pane-top::-webkit-scrollbar-thumb,
+  .streamlined-audit .memory-node-list.flat-node-list::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, var(--accent-cyan), var(--accent-violet));
+    border-radius: 8px;
+  }
+}
+
+/* Wider document surfaces so large displays are not mostly empty margin. */
+@media (min-width: 1100px) {
+  .start-card,
+  .document-card { width: min(880px, 90vw); }
+  .document-card.wide { width: min(1200px, 94vw); }
+}
