@@ -2509,3 +2509,309 @@ body::before {
     flex-wrap: wrap;
   }
 }
+
+/* ============================================================
+   PERSONA NULL — UI REFORM LAYER
+   Duotone (cyan x violet) neon audit-terminal restyle.
+   Appended last so it intentionally refines earlier rules.
+   ============================================================ */
+:root {
+  --accent-cyan: #5ee9e1;
+  --accent-cyan-soft: #8ff3ed;
+  --accent-violet: #9d8cff;
+  --accent-magenta: #ff61b3;
+  --accent-amber: #ffc24d;
+  --accent-green: #6ff0b0;
+  --warning-red: #ff5c72;
+  --text-primary: #dcefef;
+  --text-muted: #82a0a4;
+
+  --duo-line: linear-gradient(90deg, var(--accent-cyan), var(--accent-violet));
+  --neon-cyan-glow: 0 0 22px rgba(94, 233, 225, 0.5);
+  --neon-violet-glow: 0 0 22px rgba(157, 140, 255, 0.42);
+  --hairline: rgba(120, 205, 214, 0.22);
+  --panel-edge: rgba(108, 178, 192, 0.55);
+}
+
+/* ---- Ambient backdrop: layered aurora + slow parallax drift ---- */
+.app-shell {
+  background:
+    radial-gradient(140% 90% at 50% -10%, rgba(94, 233, 225, 0.10), transparent 42%),
+    radial-gradient(120% 80% at 88% 8%, rgba(157, 140, 255, 0.12), transparent 46%),
+    radial-gradient(120% 90% at 8% 96%, rgba(255, 97, 179, 0.06), transparent 44%),
+    linear-gradient(rgba(4, 10, 13, 0.30), rgba(1, 4, 6, 0.62));
+}
+.app-shell::before {
+  opacity: 0.12;
+  background:
+    repeating-linear-gradient(to bottom, transparent 0 3px, rgba(118, 211, 209, 0.07) 4px);
+  animation: reform-scan 9s linear infinite;
+}
+@keyframes reform-scan {
+  from { background-position: 0 0; }
+  to { background-position: 0 220px; }
+}
+
+/* Soft animated horizon glow behind everything */
+.app-shell > *::after { /* keep existing corner brackets untouched */ }
+
+/* ---- Surfaces: deeper glass, duotone edge, refined corner cut ---- */
+.start-card,
+.document-card,
+.pane,
+.center-pane,
+.bottom-pane,
+.result-section,
+.overview-grid > div {
+  border-color: var(--panel-edge);
+  background-image:
+    linear-gradient(135deg, rgba(94, 233, 225, 0.07), transparent 30%),
+    linear-gradient(305deg, rgba(157, 140, 255, 0.07), transparent 32%),
+    linear-gradient(180deg, rgba(6, 18, 26, 0.96), rgba(3, 9, 15, 0.95));
+  box-shadow:
+    0 18px 48px rgba(0, 0, 0, 0.5),
+    inset 0 0 28px rgba(94, 233, 225, 0.05);
+}
+.pane:hover,
+.overview-grid > div:hover {
+  border-color: rgba(120, 205, 214, 0.42);
+}
+
+/* Top duotone hairline accent on every primary surface */
+.start-card,
+.document-card,
+.pane,
+.bottom-pane { position: relative; }
+.start-card::before,
+.document-card::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 2px;
+  background: var(--duo-line);
+  opacity: 0.7;
+  filter: drop-shadow(0 0 6px rgba(94, 233, 225, 0.5));
+}
+
+/* ---- HUD panel labels: animated duotone scan ---- */
+.hud-panel-label { color: var(--accent-cyan-soft); }
+.hud-panel-label::after {
+  background: linear-gradient(90deg, var(--accent-cyan) 0%, var(--accent-violet) 45%, transparent 80%);
+  background-size: 220% 100%;
+  animation: reform-hud-sweep 4.5s ease-in-out infinite;
+}
+@keyframes reform-hud-sweep {
+  0%, 100% { background-position: 120% 0; opacity: 0.6; }
+  50% { background-position: 0 0; opacity: 1; }
+}
+.hud-panel-label span { color: var(--accent-violet); }
+
+/* ---- Buttons: tactile neon with sheen sweep ---- */
+button:not(.annotated-keyword):not(.typewriter-skip) {
+  border-color: rgba(94, 233, 225, 0.42);
+  background: linear-gradient(180deg, rgba(13, 38, 43, 0.9), rgba(7, 22, 28, 0.92));
+  color: #d6f4f2;
+  overflow: hidden;
+  transition: border-color 160ms ease, background 160ms ease, transform 140ms ease, box-shadow 200ms ease, color 160ms ease;
+}
+button:not(.annotated-keyword):not(.typewriter-skip)::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(115deg, transparent 30%, rgba(143, 243, 237, 0.16) 50%, transparent 70%);
+  transform: translateX(-130%);
+  transition: transform 520ms ease;
+  pointer-events: none;
+}
+button:hover:not(:disabled):not(.annotated-keyword):not(.typewriter-skip),
+button.active:not(.annotated-keyword) {
+  border-color: var(--accent-cyan);
+  background: linear-gradient(180deg, rgba(24, 72, 74, 0.92), rgba(12, 40, 46, 0.92));
+  color: #f3ffff;
+  box-shadow: 0 0 18px rgba(94, 233, 225, 0.22), inset 0 0 12px rgba(94, 233, 225, 0.08);
+  transform: translateY(-1px);
+}
+button:hover:not(:disabled):not(.annotated-keyword):not(.typewriter-skip)::after {
+  transform: translateX(130%);
+}
+
+/* Primary call-to-action buttons (full-width forward actions) */
+.terminal-boot-button,
+.document-card > button,
+.judge.ready,
+.audit-hearing-open {
+  border-color: rgba(157, 140, 255, 0.5);
+  background:
+    linear-gradient(180deg, rgba(28, 44, 92, 0.92), rgba(12, 24, 52, 0.94));
+  color: #eef0ff;
+  box-shadow: inset 0 0 0 1px rgba(157, 140, 255, 0.16), 0 0 20px rgba(94, 233, 225, 0.08);
+}
+.document-card > button:hover:not(:disabled),
+.judge.ready:hover:not(:disabled),
+.audit-hearing-open:hover {
+  border-color: var(--accent-violet);
+  box-shadow: 0 0 26px rgba(157, 140, 255, 0.3), inset 0 0 14px rgba(157, 140, 255, 0.12);
+}
+
+/* ---- Progress tracks: glowing duotone fill ---- */
+.progress-track { background: rgba(7, 22, 28, 0.85) !important; box-shadow: inset 0 0 0 1px rgba(108, 178, 192, 0.22); }
+.progress-track > b {
+  background: var(--duo-line) !important;
+  box-shadow: 0 0 12px rgba(94, 233, 225, 0.45);
+}
+.progress-chip.complete .progress-track > b {
+  background: linear-gradient(90deg, var(--accent-green), var(--accent-cyan)) !important;
+}
+
+/* ---- Status chips: crisper, duotone hover ---- */
+.status-chip {
+  border-color: rgba(108, 178, 192, 0.32);
+  background: linear-gradient(180deg, rgba(13, 28, 33, 0.85), rgba(8, 18, 23, 0.85));
+}
+.status-chip.valid { box-shadow: 0 0 12px rgba(111, 240, 176, 0.12); }
+
+/* ---- Memory network: neon framed stage ---- */
+.center-pane {
+  background:
+    radial-gradient(120% 80% at 50% 0%, rgba(157, 140, 255, 0.07), transparent 45%),
+    rgba(2, 8, 11, 0.78);
+}
+.network-panel-label { border-bottom: 1px solid var(--hairline); }
+.importance-key i { box-shadow: 0 0 10px currentColor; }
+
+/* ---- Modals: dramatic duotone framing ---- */
+.audit-modal-backdrop { background: radial-gradient(circle at 50% 40%, rgba(6, 16, 24, 0.78), rgba(0, 2, 4, 0.92)); backdrop-filter: blur(6px); }
+.audit-modal {
+  border-color: var(--panel-edge);
+  box-shadow: 0 30px 90px rgba(0, 0, 0, 0.65), 0 0 60px rgba(94, 233, 225, 0.12);
+}
+.audit-modal::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 2px;
+  background: var(--duo-line);
+  opacity: 0.8;
+}
+
+/* ---- Entrance motion ---- */
+.app-shell { animation: reform-fade-in 380ms ease-out both; }
+.start-card,
+.document-card { animation: reform-rise-in 420ms cubic-bezier(0.22, 0.61, 0.36, 1) both; }
+@keyframes reform-fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes reform-rise-in { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+
+/* ---- Title: living neon ---- */
+.terminal-boot h1 {
+  background: linear-gradient(96deg, #f4ffff 0%, #8ff3ed 38%, #9d8cff 78%, #ff61b3 110%);
+  background-size: 200% 100%;
+  background-clip: text;
+  -webkit-background-clip: text;
+  animation: reform-title-shift 7s ease-in-out infinite;
+  filter: drop-shadow(0 0 30px rgba(94, 233, 225, 0.22));
+}
+@keyframes reform-title-shift {
+  0%, 100% { background-position: 0 0; }
+  50% { background-position: 100% 0; }
+}
+.boot-signal i { background: var(--duo-line) !important; }
+
+/* ---- Case-select cards: lift + neon edge ---- */
+.case-file {
+  transition: transform 200ms ease, border-color 200ms ease, box-shadow 200ms ease;
+}
+.case-file:hover {
+  transform: translateY(-3px);
+  border-color: rgba(157, 140, 255, 0.5);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45), 0 0 30px rgba(157, 140, 255, 0.14);
+}
+
+/* ---- Result: ruling stamp glow ---- */
+.ruling-stamp { box-shadow: 0 0 30px rgba(94, 233, 225, 0.14), inset 0 0 24px rgba(94, 233, 225, 0.06); }
+.ruling-title > span {
+  background: var(--duo-line);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+}
+
+/* ---- Command-center surfaces: brackets, node index, console ---- */
+.game-grid > .pane::after,
+.game-grid > .center-pane::after,
+.game-grid > .bottom-pane::after {
+  width: 26px;
+  height: 26px;
+  border-right: 1px solid var(--accent-cyan);
+  border-bottom: 1px solid var(--accent-violet);
+  filter: drop-shadow(0 0 6px rgba(94, 233, 225, 0.5));
+}
+
+.pane-section::before {
+  width: 2.8rem;
+  border-top: 2px solid transparent;
+  background: var(--duo-line);
+  height: 2px;
+  border: 0;
+  filter: drop-shadow(0 0 4px rgba(94, 233, 225, 0.45));
+}
+
+/* Memory node index rows: vivid states + selected pulse */
+.memory-node-item {
+  border-color: rgba(108, 178, 192, 0.4);
+  transition: transform 140ms ease, border-color 160ms ease, box-shadow 200ms ease, background 160ms ease;
+}
+.memory-node-item:hover { transform: translateX(2px); }
+.memory-node-item.unvisited {
+  border-color: rgba(94, 233, 225, 0.78);
+  background: linear-gradient(180deg, rgba(24, 88, 96, 0.5), rgba(12, 44, 52, 0.46));
+  box-shadow: inset 3px 0 0 var(--accent-cyan), 0 0 14px rgba(94, 233, 225, 0.12);
+}
+.memory-node-item.selected {
+  border-color: #ff9bd0;
+  background: linear-gradient(180deg, rgba(120, 30, 78, 0.7), rgba(70, 18, 52, 0.66));
+  box-shadow: inset 3px 0 0 var(--accent-magenta), 0 0 18px rgba(255, 97, 179, 0.26);
+  animation: reform-node-pulse 2.4s ease-in-out infinite;
+}
+@keyframes reform-node-pulse {
+  0%, 100% { box-shadow: inset 3px 0 0 var(--accent-magenta), 0 0 14px rgba(255, 97, 179, 0.2); }
+  50% { box-shadow: inset 3px 0 0 var(--accent-magenta), 0 0 24px rgba(255, 97, 179, 0.34); }
+}
+.node-state-badges i { border-color: rgba(108, 178, 192, 0.55); }
+
+/* Judgment console: prominent top rail + ready glow */
+.compact-status-bar {
+  background:
+    var(--duo-line) top / 100% 2px no-repeat,
+    linear-gradient(180deg, rgba(7, 18, 26, 0.96), rgba(3, 9, 15, 0.95));
+}
+.judgment-state.ready {
+  color: var(--accent-green);
+  text-shadow: 0 0 12px rgba(111, 240, 176, 0.5);
+}
+.judgment-state.ready span { box-shadow: 0 0 12px var(--accent-green); animation: reform-pulse-dot 1.6s ease-in-out infinite; }
+@keyframes reform-pulse-dot { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+.judge.ready { animation: reform-judge-glow 2.6s ease-in-out infinite; }
+@keyframes reform-judge-glow {
+  0%, 100% { box-shadow: inset 0 0 0 1px rgba(157, 140, 255, 0.16), 0 0 18px rgba(94, 233, 225, 0.1); }
+  50% { box-shadow: inset 0 0 0 1px rgba(157, 140, 255, 0.3), 0 0 30px rgba(157, 140, 255, 0.28); }
+}
+
+/* Operation toast + feedback: duotone edge */
+.operation-toast { border-left-color: var(--accent-violet); box-shadow: 0 0 24px rgba(157, 140, 255, 0.18); }
+
+/* Section headings: stronger eyebrow + heading color */
+.eyebrow { color: var(--accent-cyan-soft); text-shadow: 0 0 10px rgba(94, 233, 225, 0.25); }
+.guidance-panel { border-color: rgba(94, 233, 225, 0.55); box-shadow: inset 3px 0 0 var(--accent-cyan), 0 0 20px rgba(94, 233, 225, 0.1); }
+
+@media (prefers-reduced-motion: reduce) {
+  .app-shell,
+  .start-card,
+  .document-card,
+  .terminal-boot h1,
+  .hud-panel-label::after,
+  .app-shell::before,
+  .memory-node-item.selected,
+  .judgment-state.ready span,
+  .judge.ready { animation: none !important; }
+  button:not(.annotated-keyword):not(.typewriter-skip)::after { display: none; }
+}
