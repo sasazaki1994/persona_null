@@ -109,6 +109,7 @@ npm run build
 | Build | Vite 7 |
 | Language | TypeScript strict |
 | Memory Network | Three.js |
+| Typography | Chakra Petch / Share Tech Mono（@fontsource で自前ホスト） |
 | State / Save | React state / localStorage |
 | Quality | ESLint / Vitest |
 | CI / Hosting | GitHub Actions / Vercel |

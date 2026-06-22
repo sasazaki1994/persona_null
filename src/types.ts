@@ -95,6 +95,12 @@ export type AuditStatement = {
   speaker: 'city_os' | 'suspect' | 'witness' | 'security_bureau';
   text: string;
   contradictionNodeId?: string;
+  /**
+   * Records that break this statement when presented as evidence. When omitted,
+   * `contradictionNodeId` is used as the single valid record. This lets the
+   * hearing UI stay data-driven instead of hardcoding case-specific node IDs.
+   */
+  contradictionNodeIds?: string[];
   hint?: string;
 };
 

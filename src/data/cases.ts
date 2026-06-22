@@ -151,7 +151,7 @@ export const cases: CaseRecord[] = [
       statements: [
         { id: 'signature-match', speaker: 'city_os', text: '発砲許可署名は間宮怜司と一致しています。', hint: '署名一致だけで操作主体を確定できるか確認してください。' },
         { id: 'weapon-log-normal', speaker: 'city_os', text: '銃器ログは正常に記録されています。', hint: '正常な記録と、操作した主体の確定は同じではありません。' },
-        { id: 'provisional-subject', speaker: 'city_os', text: 'したがって、間宮怜司を発砲主体として処理可能です。', contradictionNodeId: 'missing-memory', hint: '発砲時刻と重なる欠落、または義体の外部制御痕を提示してください。' },
+        { id: 'provisional-subject', speaker: 'city_os', text: 'したがって、間宮怜司を発砲主体として処理可能です。', contradictionNodeId: 'missing-memory', contradictionNodeIds: ['missing-memory', 'arm-history'], hint: '発砲時刻と重なる欠落、または義体の外部制御痕を提示してください。' },
       ],
     },
     issues: [

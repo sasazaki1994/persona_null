@@ -618,22 +618,24 @@ function InvestigationScreen(props: InvestigationProps) {
   return (
     <main className="app-shell game-grid streamlined-audit">
       <aside className="pane left-pane progress-pane">
-        <div className="hud-panel-label"><span>01</span> CASE INDEX / PROGRESS</div>
-        <p className="eyebrow">{caseRecord.id.toUpperCase()}</p>
-        <h2>{caseRecord.title}</h2>
-        <div className="case-command-strip simplified" aria-label="監査セッション状態">
-          <span>{props.visitedNodeIds.length}/{caseRecord.nodes.length} nodes</span>
-          <span aria-label="処理圧力">処理圧力 {props.auditPressure.value} / {props.auditPressure.max}</span>
+        <div className="progress-pane-top">
+          <div className="hud-panel-label"><span>01</span> CASE INDEX / PROGRESS</div>
+          <p className="eyebrow">{caseRecord.id.toUpperCase()}</p>
+          <h2>{caseRecord.title}</h2>
+          <div className="case-command-strip simplified" aria-label="監査セッション状態">
+            <span>{props.visitedNodeIds.length}/{caseRecord.nodes.length} nodes</span>
+            <span aria-label="処理圧力">処理圧力 {props.auditPressure.value} / {props.auditPressure.max}</span>
+          </div>
+          <section className="case-progress-list" aria-label="監査進行">
+            <p className={`status-chip progress-chip ${requiredNodeProgress >= 1 ? 'complete' : 'pending'}`}><span>必要ノード確認</span><strong>{props.visitedNodeIds.length}/{caseRecord.requiredNodesToJudge}</strong><b className="progress-track" aria-hidden="true"><b style={{ width: `${requiredNodeProgress * 100}%` }} /></b></p>
+            <p className={`status-chip progress-chip ${pinnedProgress >= 1 ? 'complete' : 'pending'}`}><span>判断根拠</span><strong>{props.pinnedNodeIds.length}/1</strong><b className="progress-track" aria-hidden="true"><b style={{ width: `${pinnedProgress * 100}%` }} /></b></p>
+            <p className={`status-chip progress-chip ${taggedProgress >= 1 ? 'complete' : 'pending'}`}><span>矛盾分類</span><strong>{taggedNodeCount}/1</strong><b className="progress-track" aria-hidden="true"><b style={{ width: `${taggedProgress * 100}%` }} /></b></p>
+            <p className={`status-chip progress-chip ${resourceProgress <= 0.34 ? 'warning' : 'valid'}`}><span>監査リソース</span><strong>{props.resources} / {caseRecord.auditResourceMax}</strong><b className="progress-track" aria-hidden="true"><b style={{ width: `${resourceProgress * 100}%` }} /></b></p>
+          </section>
+          {caseRecord.auditHearing && <button className="audit-hearing-open" type="button" onClick={() => props.onOpenModal({ type: 'audit_hearing' })}>監査尋問を開く</button>}
+          <section className="pane-section guidance-panel compact-guidance"><p className="eyebrow">次の監査手順</p><h3>{props.guidance.title}</h3><p>{props.guidance.instruction}</p></section>
+          <button className="secondary compact-case-button" type="button" onClick={() => props.onOpenModal({ type: 'case_summary' })}>事件概要</button>
         </div>
-        <section className="case-progress-list" aria-label="監査進行">
-          <p className={`status-chip progress-chip ${requiredNodeProgress >= 1 ? 'complete' : 'pending'}`}><span>必要ノード確認</span><strong>{props.visitedNodeIds.length}/{caseRecord.requiredNodesToJudge}</strong><b className="progress-track" aria-hidden="true"><b style={{ width: `${requiredNodeProgress * 100}%` }} /></b></p>
-          <p className={`status-chip progress-chip ${pinnedProgress >= 1 ? 'complete' : 'pending'}`}><span>判断根拠</span><strong>{props.pinnedNodeIds.length}/1</strong><b className="progress-track" aria-hidden="true"><b style={{ width: `${pinnedProgress * 100}%` }} /></b></p>
-          <p className={`status-chip progress-chip ${taggedProgress >= 1 ? 'complete' : 'pending'}`}><span>矛盾分類</span><strong>{taggedNodeCount}/1</strong><b className="progress-track" aria-hidden="true"><b style={{ width: `${taggedProgress * 100}%` }} /></b></p>
-          <p className={`status-chip progress-chip ${resourceProgress <= 0.34 ? 'warning' : 'valid'}`}><span>監査リソース</span><strong>{props.resources} / {caseRecord.auditResourceMax}</strong><b className="progress-track" aria-hidden="true"><b style={{ width: `${resourceProgress * 100}%` }} /></b></p>
-        </section>
-        {caseRecord.auditHearing && <button className="audit-hearing-open" type="button" onClick={() => props.onOpenModal({ type: 'audit_hearing' })}>監査尋問を開く</button>}
-        <section className="pane-section guidance-panel compact-guidance"><p className="eyebrow">次の監査手順</p><h3>{props.guidance.title}</h3><p>{props.guidance.instruction}</p></section>
-        <button className="secondary compact-case-button" type="button" onClick={() => props.onOpenModal({ type: 'case_summary' })}>事件概要</button>
         <section className="pane-section memory-node-index" aria-labelledby="memory-node-index-title">
           <div className="node-index-heading">
             <h3 id="memory-node-index-title">記憶ノード</h3>
@@ -837,10 +839,13 @@ function AuditHearingModalContent({ hearing, nodes, pinnedNodeIds, onBack, onRes
   const [resolved, setResolved] = useState(false);
   const pinnedNodes = nodes.filter((node) => pinnedNodeIds.includes(node.id));
   const activeStatement = hearing.statements.find((statement) => statement.id === activeStatementId) ?? hearing.statements[0];
-  const validContradictionNodeIds = new Set(['missing-memory', 'arm-history']);
+  const validContradictionNodeIds = new Set(
+    activeStatement?.contradictionNodeIds
+    ?? (activeStatement?.contradictionNodeId ? [activeStatement.contradictionNodeId] : []),
+  );
 
   const presentNode = (node: MemoryNode) => {
-    if (activeStatement?.id === 'provisional-subject' && validContradictionNodeIds.has(node.id)) {
+    if (validContradictionNodeIds.has(node.id)) {
       setResolved(true);
       setPresenting(false);
       setMessage('記録矛盾を検出。署名一致のみでは、操作主体を確定できません。');

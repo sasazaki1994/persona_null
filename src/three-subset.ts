@@ -1,0 +1,35 @@
+// Re-export only the three.js primitives the Memory Network actually uses.
+// Importing this module (instead of the whole `three` namespace) lets the
+// bundler tree-shake the large set of unused three.js features, shrinking the
+// lazily-loaded vendor chunk.
+export {
+  AdditiveBlending,
+  AmbientLight,
+  BoxGeometry,
+  BufferAttribute,
+  BufferGeometry,
+  Clock,
+  Color,
+  EdgesGeometry,
+  FogExp2,
+  GridHelper,
+  Group,
+  Line,
+  LineBasicMaterial,
+  LineSegments,
+  Mesh,
+  MeshBasicMaterial,
+  MeshStandardMaterial,
+  OctahedronGeometry,
+  PerspectiveCamera,
+  PointLight,
+  Points,
+  PointsMaterial,
+  Raycaster,
+  Scene,
+  SphereGeometry,
+  TorusGeometry,
+  Vector2,
+  Vector3,
+  WebGLRenderer,
+} from 'three';

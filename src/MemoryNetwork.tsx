@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import * as THREE from 'three';
+import type * as THREE from 'three';
 import type { InvestigationAction, MemoryNode, NodeImportance, TaggedNodes } from './types';
 
 type Props = {
@@ -43,12 +43,29 @@ export function MemoryNetwork({
   const onSelectRef = useRef(onSelectNode);
   const hoverRef = useRef<string | null>(null);
   const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
+  const [networkReady, setNetworkReady] = useState(false);
   const analyzedNodeIds = useMemo(() => new Set(
     actions
       .filter((action) => executedActionIds.includes(action.id))
       .flatMap((action) => action.targetNodeIds ?? []),
   ), [actions, executedActionIds]);
   const labelNode = nodes.find((node) => node.id === (hoveredNodeId ?? selectedNodeId)) ?? null;
+
+  // Interaction state is read every animation frame via refs so the heavy Three.js
+  // scene is built once per node set instead of being torn down on each click/pin/tag.
+  const selectedNodeIdRef = useRef<string | null>(selectedNodeId ?? null);
+  const visitedNodeIdsRef = useRef(visitedNodeIds);
+  const pinnedNodeIdsRef = useRef(pinnedNodeIds);
+  const taggedNodesRef = useRef(taggedNodes);
+  const analyzedNodeIdsRef = useRef(analyzedNodeIds);
+
+  useEffect(() => {
+    selectedNodeIdRef.current = selectedNodeId ?? null;
+    visitedNodeIdsRef.current = visitedNodeIds;
+    pinnedNodeIdsRef.current = pinnedNodeIds;
+    taggedNodesRef.current = taggedNodes;
+    analyzedNodeIdsRef.current = analyzedNodeIds;
+  }, [analyzedNodeIds, pinnedNodeIds, selectedNodeId, taggedNodes, visitedNodeIds]);
 
   useEffect(() => {
     onSelectRef.current = onSelectNode;
@@ -57,6 +74,17 @@ export function MemoryNetwork({
   useEffect(() => {
     const host = hostRef.current;
     if (!host) return;
+
+    let cancelled = false;
+    let cleanup: (() => void) | undefined;
+
+    // three.js is the bulk of the bundle; load it on demand so the title and
+    // case-select screens never ship it. The canvas host renders immediately,
+    // and the scene is built once the chunk resolves. Importing the tree-shaken
+    // subset (instead of the whole namespace) keeps the vendor chunk smaller.
+    void import('./three-subset').then((THREE) => {
+      if (cancelled || !hostRef.current) return;
+      setNetworkReady(true);
 
     const scene = new THREE.Scene();
     scene.background = new THREE.Color('#03070d');
@@ -256,16 +284,21 @@ export function MemoryNetwork({
     const clock = new THREE.Clock();
     const animate = () => {
       const elapsed = clock.getElapsedTime();
+      const currentSelectedNodeId = selectedNodeIdRef.current;
+      const currentVisited = visitedNodeIdsRef.current;
+      const currentPinned = pinnedNodeIdsRef.current;
+      const currentTagged = taggedNodesRef.current;
+      const currentAnalyzed = analyzedNodeIdsRef.current;
       nodeMeshes.forEach((mesh, nodeId) => {
         const node = nodeById.get(nodeId);
         if (!node) return;
-        const selected = nodeId === selectedNodeId;
+        const selected = nodeId === currentSelectedNodeId;
         const hovered = nodeId === hoverRef.current;
-        const visited = visitedNodeIds.includes(nodeId);
-        const pinned = pinnedNodeIds.includes(nodeId);
-        const classified = (taggedNodes[nodeId]?.length ?? 0) > 0;
+        const visited = currentVisited.includes(nodeId);
+        const pinned = currentPinned.includes(nodeId);
+        const classified = (currentTagged[nodeId]?.length ?? 0) > 0;
         const unclassified = requiresContradictionReview(node) && !classified;
-        const analyzed = analyzedNodeIds.has(nodeId);
+        const analyzed = currentAnalyzed.has(nodeId);
         const baseColor = importanceColors[node.importance];
         const unreadPulse = reduceMotion || visited ? 1 : 1 + Math.sin(elapsed * 1.8 + mesh.position.x) * 0.045;
         const contradictionPulse = reduceMotion || !node.hasContradiction ? 1 : 1 + Math.sin(elapsed * 2.4 + mesh.position.y) * 0.035;
@@ -311,7 +344,7 @@ export function MemoryNetwork({
     };
     animate();
 
-    return () => {
+    cleanup = () => {
       cancelAnimationFrame(animationId);
       renderer.domElement.removeEventListener('pointermove', handlePointerMove);
       renderer.domElement.removeEventListener('pointerleave', handlePointerLeave);
@@ -327,12 +360,24 @@ export function MemoryNetwork({
       });
       renderer.dispose();
     };
-  }, [analyzedNodeIds, nodes, pinnedNodeIds, selectedNodeId, taggedNodes, visitedNodeIds]);
+    });
+
+    return () => {
+      cancelled = true;
+      cleanup?.();
+    };
+  }, [nodes]);
 
   return (
     <div className="network-stage">
       <div className="network" ref={hostRef} aria-label="記憶ノードネットワーク">
         <div className="network-scanlines" aria-hidden="true" />
+        {!networkReady && (
+          <div className="network-loading" role="status">
+            <span>INITIALIZING MEMORY NETWORK</span>
+            <i /><i /><i />
+          </div>
+        )}
       </div>
       {labelNode && (
         <aside className="network-node-label" aria-live="polite">
