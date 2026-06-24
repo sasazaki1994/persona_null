@@ -10,6 +10,7 @@ export {
   BufferGeometry,
   Clock,
   Color,
+  ConeGeometry,
   EdgesGeometry,
   FogExp2,
   GridHelper,
