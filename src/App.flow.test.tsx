@@ -159,6 +159,9 @@ describe('Persona Null player flow', () => {
     // The live screen keeps only the top conditions, the network, and a single next-step line.
     expect(container.querySelector('.app-shell.audit-room')).not.toBeNull();
     expect(container.querySelector('[aria-label="処理圧力"]')?.textContent).toContain('処理圧力 0/100');
+    expect(container.querySelector('[aria-label="処理圧力"]')?.textContent).toContain('LOW');
+    expect(container.querySelector('[aria-label="監査報告書チェック"]')?.textContent).toContain('監査報告書：裁定条件未達');
+    expect(container.querySelector('[aria-label="処理圧力状態"]')?.textContent).toContain('追加監査は許容範囲内');
     expect(container.querySelector('[aria-label="監査リソース"]')?.textContent).toContain('監査リソース 3/3');
     expect(container.querySelector('.audit-modal')).toBeNull();
 
@@ -288,6 +291,8 @@ describe('Persona Null player flow', () => {
     clickButton('最終裁定へ進む');
     expect(container.textContent).toContain('AUDIT RULING');
     expect(container.textContent).toContain('判断は不可逆です');
+    expect(container.textContent).toContain('処理圧力下での裁定');
+    expect(container.textContent).toContain('追加監査は許容範囲内');
     expect(container.textContent).toContain('優先される価値');
     expect(container.textContent).toContain('失われる価値');
     expect(container.textContent).toContain('採用される根拠');
@@ -326,6 +331,21 @@ describe('Persona Null player flow', () => {
     expect(localStorage.getItem('persona-null:case-results')).not.toBeNull();
     clickButton('事件選択へ戻る');
     expect(container.querySelector('[aria-label="監査傾向"]')?.textContent).toContain('記録整合性優先1');
+  });
+
+  it('opens related memory records from the investigation person detail modal', () => {
+    enterInvestigation();
+
+    clickButton('関係者照会');
+    const rosterButton = [...(container.querySelectorAll('button') ?? [])].find((button) => button.textContent?.includes('詳細'));
+    act(() => rosterButton?.click());
+
+    const relatedLink = [...container.querySelectorAll<HTMLButtonElement>('.related-node-link')].find((button) => button.textContent?.includes('発砲'));
+    expect(relatedLink).toBeDefined();
+    act(() => relatedLink?.click());
+
+    expect(container.querySelector('.audit-modal-node_detail')).not.toBeNull();
+    expect(container.querySelector('.audit-modal .record-status-line')?.textContent).toContain('確認済');
   });
 
   it('opens person profiles only through a modal from the minimal roster', () => {
