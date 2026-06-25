@@ -112,7 +112,7 @@ describe('Persona Null player flow', () => {
     expect(continuityPanel?.textContent).toContain('事実記録を変更しません');
 
     clickButton('調査を開始');
-    expect(container.querySelector('.audit-log')?.textContent ?? container.textContent).toContain('未確定人格断片の保全猶予が付与されています');
+    expect(container.textContent).toContain('未確定人格断片の保全猶予が付与されています');
   });
 
   it('shows a saved Case001 result as processed in the case archive', () => {
@@ -153,46 +153,69 @@ describe('Persona Null player flow', () => {
     expect(findButton('Case001を開く')).toBeDefined();
   });
 
-  it('shows compact record status and restrained operation feedback', () => {
+  it('shows a sparse top bar and opens node detail in a modal', () => {
     enterInvestigation();
-    expect(container.querySelector('[aria-label="処理圧力"]')?.textContent).toContain('処理圧力 0 / 100');
-    expect(container.textContent).toContain('監査リソース3 / 3');
+
+    // The live screen keeps only the top conditions, the network, and a single next-step line.
+    expect(container.querySelector('.app-shell.audit-room')).not.toBeNull();
+    expect(container.querySelector('[aria-label="処理圧力"]')?.textContent).toContain('処理圧力 0/100');
+    expect(container.querySelector('[aria-label="監査リソース"]')?.textContent).toContain('監査リソース 3/3');
+    expect(container.querySelector('.audit-modal')).toBeNull();
 
     clickButton('ノード：発砲ログ');
-    expect(container.querySelector('[aria-label="処理圧力"]')?.textContent).toContain('処理圧力 4 / 100');
+    expect(container.querySelector('[aria-label="処理圧力"]')?.textContent).toContain('処理圧力 4/100');
     clickButton('ノード：発砲ログ');
-    expect(container.querySelector('[aria-label="処理圧力"]')?.textContent).toContain('処理圧力 4 / 100');
-    expect(container.querySelector('.operation-toast')?.textContent).toContain('SCAN COMPLETE');
-    expect(container.querySelector('.record-status-line')?.textContent).toContain('確認済');
-    expect(container.querySelector('.record-status-line')?.textContent).toContain('重大');
+    expect(container.querySelector('[aria-label="処理圧力"]')?.textContent).toContain('処理圧力 4/100');
+
+    const modal = container.querySelector('.audit-modal');
+    expect(modal).not.toBeNull();
+    expect(container.querySelector('.operation-toast')?.textContent).toContain('記録を開いた');
+    expect(modal?.querySelector('.record-status-line')?.textContent).toContain('確認済');
+    expect(modal?.querySelector('.record-status-line')?.textContent).toContain('重大');
 
     clickButton('判断根拠に追加');
     expect(container.querySelector('.operation-toast')?.textContent).toContain('EVIDENCE PINNED');
-    clickButton('判断根拠から外す');
+    clickButton('判断根拠から除外');
     expect(container.querySelector('.operation-toast')?.textContent).toContain('EVIDENCE RELEASED');
+  });
+
+  it('closes the node modal with the close button, backdrop, and Escape key', () => {
+    enterInvestigation();
+
+    clickButton('ノード：発砲ログ');
+    expect(container.querySelector('.audit-modal')).not.toBeNull();
+    clickButton('閉じる');
+    expect(container.querySelector('.audit-modal')).toBeNull();
+
+    clickButton('ノード：発砲ログ');
+    act(() => container.querySelector<HTMLElement>('.audit-modal-backdrop')?.dispatchEvent(new MouseEvent('mousedown', { bubbles: true })));
+    expect(container.querySelector('.audit-modal')).toBeNull();
+
+    clickButton('ノード：発砲ログ');
+    act(() => window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' })));
+    expect(container.querySelector('.audit-modal')).toBeNull();
   });
 
   it.each([
     ['Case000を開く', '発砲ログ'],
     ['Case001を開く', '焼却処理キュー'],
-  ])('shows and updates the audit report review for %s', (caseButton, firstNodeTitle) => {
+  ])('updates the judgment condition chips while investigating %s', (caseButton, firstNodeTitle) => {
     clickButton('監査端末を起動');
     clickButton('通知を確認');
     clickButton(caseButton);
     clickButton('調査を開始');
 
-    const report = container.querySelector('[aria-label="監査報告書チェック"]');
-    expect(report?.textContent).toContain('監査報告書チェック');
-    expect(report?.textContent).toContain('記録 0/7');
-    expect(report?.textContent).toContain('根拠 0');
-    expect(report?.textContent).toContain('分類 0');
-    expect(report?.textContent).toContain('裁定条件未達');
-    expect(report?.textContent).toContain('未確認の争点があります。');
+    const conditions = container.querySelector('[aria-label="判断条件"]');
+    expect(conditions?.textContent).toContain('判断条件');
+    expect(conditions?.textContent).toContain('必須記録確認0/4');
+    expect(conditions?.textContent).toContain('判断根拠0/1');
+    expect(conditions?.textContent).toContain('矛盾分類0/1');
+    expect(findButton('最終裁定へ進む')?.disabled).toBe(true);
 
     clickButton(`ノード：${firstNodeTitle}`);
-    expect(report?.textContent).toContain('記録 1/7');
+    expect(conditions?.textContent).toContain('必須記録確認1/4');
     clickButton('判断根拠に追加');
-    expect(report?.textContent).toContain('根拠 1');
+    expect(conditions?.textContent).toContain('判断根拠1/1');
   });
 
   it('clears operation feedback quickly without requiring another action', () => {
@@ -201,7 +224,7 @@ describe('Persona Null player flow', () => {
 
     try {
       clickButton('ノード：発砲ログ');
-      expect(container.querySelector('.operation-toast')?.textContent).toContain('SCAN COMPLETE');
+      expect(container.querySelector('.operation-toast')?.textContent).toContain('記録を開いた');
 
       act(() => vi.advanceTimersByTime(1400));
       expect(container.querySelector('.operation-toast')).toBeNull();
@@ -210,60 +233,59 @@ describe('Persona Null player flow', () => {
     }
   });
 
-  it('progresses from the concise investigation view to a result', () => {
+  it('progresses from the concise investigation view to a result through the decision modal', () => {
     expect(container.textContent).toContain('CITY OS AUDIT TERMINAL');
     expect(container.textContent).toContain('ACCESS: PROVISIONAL');
     expect(container.textContent).toContain('KASUMI-GATE-09 / CASE000');
     enterInvestigation();
 
-    expect(container.textContent).toContain('CASE INDEX');
-    expect(container.textContent).toContain('MEMORY NETWORK');
-    expect(container.textContent).toContain('EVIDENCE DETAIL');
-    expect(container.textContent).toContain('JUDGMENT CONSOLE');
-    expect(container.querySelector('.judgment-state.locked')?.textContent).toContain('LOCKED');
-
-    expect(container.textContent).toContain('次の監査手順');
-    expect(container.textContent).toContain('記憶ノードを4件以上確認してください');
-    expect(container.textContent).toContain('記憶ノードを選択してください');
-    expect(container.textContent).toContain('必要ノード確認0/4');
-    expect(container.textContent).toContain('判断根拠0/1');
-    expect(container.textContent).toContain('矛盾分類0/1');
+    expect(container.querySelector('.audit-room')).not.toBeNull();
+    expect(container.textContent).toContain('監査フェーズ：記録確認');
+    expect(container.querySelector('.next-step-line')?.textContent).toContain('記憶ノードを4件以上確認してください');
+    expect(container.querySelector('[aria-label="判断条件"]')?.textContent).toContain('必須記録確認0/4');
     expect(findButton('事件概要')).toBeDefined();
+    expect(findButton('関係者照会')).toBeDefined();
+    expect(findButton('最終裁定へ進む')?.disabled).toBe(true);
+    expect(container.querySelector('.judge-reason')?.textContent).toContain('記録確認が不足');
 
     clickButton('ノード：発砲ログ');
-    const selectedNode = case000.nodes[0];
-    const title = container.querySelector('.node-header h2');
-    const statusLine = container.querySelector('.record-status-line');
-    const summary = container.querySelector('.node-summary');
-    const warning = container.querySelector('.node-warning');
+    const modal = () => container.querySelector('.audit-modal');
     const appearsBefore = (earlier: Element | null, later: Element | null) =>
       Boolean(earlier && later && earlier.compareDocumentPosition(later) & Node.DOCUMENT_POSITION_FOLLOWING);
+    const title = modal()?.querySelector('h2') ?? null;
+    const summary = modal()?.querySelector('.node-summary') ?? null;
+    const warning = modal()?.querySelector('.node-warning') ?? null;
+    const log = modal()?.querySelector('.node-log-section') ?? null;
+    const note = modal()?.querySelector('.inspector-note') ?? null;
 
     expect(summary?.textContent).toContain('記録要約');
     expect(summary?.textContent).toContain('発砲命令を受理');
     expect(summary?.textContent).toContain('命令には間宮');
     expect(summary?.textContent).toContain('身体認証');
-    expect(warning?.querySelector('.warning-text')?.textContent).toContain(selectedNode.warning);
-    expect(findButton('詳細ログを開く')).toBeDefined();
-    expect(appearsBefore(title, statusLine)).toBe(true);
-    expect(appearsBefore(statusLine, summary)).toBe(true);
-    expect(appearsBefore(summary, warning)).toBe(true);
+    expect(warning?.querySelector('.warning-text')?.textContent).toContain(case000.nodes[0].warning);
+    expect(log?.textContent).toContain('詳細ログ');
+    expect(note?.textContent).toContain('監査官メモ');
+    expect(appearsBefore(title, summary)).toBe(true);
+    expect(appearsBefore(summary, log)).toBe(true);
+    expect(appearsBefore(log, note)).toBe(true);
 
     case000.nodes.slice(0, case000.requiredNodesToJudge).forEach((node) => clickButton(`ノード：${node.title}`));
-    expect(container.textContent).toContain('判断根拠の登録');
+    expect(container.textContent).toContain('監査フェーズ：根拠選定');
+    expect(container.querySelector('.next-step-line')?.textContent).toContain('根拠を1件以上登録');
 
     clickButton('判断根拠に追加');
-    expect(container.textContent).toContain('矛盾記録の分類');
+    expect(container.textContent).toContain('監査フェーズ：矛盾分類');
+    expect(container.querySelector('.next-step-line')?.textContent).toContain('矛盾対象ノードを1件以上分類');
 
     clickButton('人格署名の矛盾');
-    expect(container.querySelector('[aria-label="処理圧力"]')?.textContent).toContain('処理圧力 24 / 100');
+    expect(container.querySelector('[aria-label="処理圧力"]')?.textContent).toContain('処理圧力 24/100');
     expect(container.querySelector('.operation-toast')?.textContent).toContain('JUDGMENT READY');
-    expect(container.querySelector('.judgment-state.ready')?.textContent).toContain('JUDGMENT READY');
-    expect(container.textContent).toContain('必要ノード確認4/4');
-    expect(container.textContent).toContain('判断根拠1/1');
-    expect(container.textContent).toContain('矛盾分類1/1');
+    expect(container.querySelector('[aria-label="判断条件"]')?.textContent).toContain('必須記録確認4/4');
+    expect(container.querySelector('[aria-label="判断条件"]')?.textContent).toContain('判断根拠1/1');
+    expect(container.querySelector('[aria-label="判断条件"]')?.textContent).toContain('矛盾分類1/1');
+    expect(findButton('最終裁定へ進む')?.disabled).toBe(false);
 
-    clickButton('最終判断へ進む');
+    clickButton('最終裁定へ進む');
     expect(container.textContent).toContain('AUDIT RULING');
     expect(container.textContent).toContain('判断は不可逆です');
     expect(container.textContent).toContain('優先される価値');
@@ -282,84 +304,76 @@ describe('Persona Null player flow', () => {
     expect(rulingOptions).toHaveLength(case000.decisions.length);
     expect(rulingOptions[0].textContent).toContain('優先される価値記録整合性優先');
     expect(rulingOptions[0].textContent).toContain('失われる価値人格断片保護');
-    expect(rulingOptions[0].textContent).toContain('採用される根拠');
     expect(rulingOptions[0].textContent).toContain('提出根拠一致 0 / 2');
     expect(rulingOptions[0].textContent).toContain('この裁定案は、あなたが提出していない記録を主要根拠に含みます。');
     expect(findButton(case000.decisions[0].label)?.disabled).toBe(false);
     clickButton(case000.decisions[0].label);
 
-    expect(container.textContent).toContain('AUDIT RULING');
     expect(container.textContent).toContain('AUDIT RULING ARCHIVED');
     expect(container.textContent).toContain('裁定記録');
     expect(container.textContent).toContain('KASUMI-GATE-09');
     expect(container.textContent).toContain('保存完了');
     expect(container.querySelector('[aria-label="裁定結果要約"]')).not.toBeNull();
-    expect([...container.querySelectorAll('.result-section h3')].map((heading) => heading.textContent)).not.toContain('最終裁定');
-    expect([...container.querySelectorAll('.result-section h3')].map((heading) => heading.textContent)).not.toContain('優先された価値');
-    expect([...container.querySelectorAll('.result-section h3')].map((heading) => heading.textContent)).not.toContain('軽視された価値');
     expect(container.querySelector('[aria-label="裁定結果要約"]')?.textContent).toContain('間宮怜司を発砲責任者として拘束');
     expect(container.querySelector('[aria-label="裁定結果要約"]')?.textContent).toContain('救った価値（優先）');
     expect(container.querySelector('[aria-label="裁定結果要約"]')?.textContent).toContain('犠牲にした価値（軽視）');
-    expect(container.querySelector('[aria-label="裁定結果要約"]')?.textContent).toContain('記録整合性優先');
-    expect(container.querySelector('[aria-label="裁定結果要約"]')?.textContent).toContain('人格断片保護');
     expect(container.textContent).toContain('提出された判断根拠');
     expect(container.textContent).toContain('分類された矛盾');
     expect(container.textContent).toContain('最終処理圧力：24 / 100');
     expect(container.textContent).toContain('圧力状態：LOW');
-    expect(container.textContent).toContain('都市ステータス変動');
     expect(container.textContent).toContain('この裁定は、以後の未確定人格案件における参照基準として保存されます。');
-    expect(container.textContent).not.toContain('選択肢A');
     expect(container.querySelector('.ruling-stamp')).not.toBeNull();
     expect(localStorage.getItem('persona-null:case-results')).not.toBeNull();
     clickButton('事件選択へ戻る');
     expect(container.querySelector('[aria-label="監査傾向"]')?.textContent).toContain('記録整合性優先1');
   });
-  it('presents the investigation as an audit terminal with semantic cards, chips, and chronological logs', () => {
-    enterInvestigation();
 
-    expect(container.querySelector('.app-shell.game-grid')).not.toBeNull();
-    expect(container.textContent).toContain('AUDIT LOG');
-    expect(container.querySelectorAll('.status-chip').length).toBeGreaterThanOrEqual(4);
-    expect(container.textContent).toContain('必要ノード確認');
-    expect(container.textContent).toContain('監査リソース');
+  it('opens person profiles only through a modal from the minimal roster', () => {
+    clickButton('監査端末を起動');
+    clickButton('通知を確認');
+    clickButton('Case000を開く');
 
-    clickButton('ノード：発砲ログ');
-    expect(container.querySelector('.node-summary')).not.toBeNull();
-    expect(container.querySelector('.node-warning .warning-text')).not.toBeNull();
+    const roster = container.querySelector('[aria-label="関係者一覧"]');
+    expect(roster?.textContent).toContain('間宮怜司');
+    expect(roster?.textContent).toContain('法的人格ステータス');
+    // The roster stays minimal: no long person summary text until the modal opens.
+    expect(roster?.textContent).not.toContain('北霞市の再開発区画');
+    expect(container.querySelector('.audit-modal')).toBeNull();
 
-    expect(container.querySelector('.latest-log')?.textContent).toContain('記憶ノード確認');
+    const detailButton = [...(roster?.querySelectorAll('button') ?? [])].find((button) => button.textContent?.includes('詳細'));
+    act(() => detailButton?.click());
+
+    const modal = container.querySelector('.audit-modal');
+    expect(modal?.textContent).toContain('間宮怜司');
+    expect(modal?.textContent).toContain('北霞市の再開発区画');
+    expect(modal?.textContent).toContain('関係する記録');
   });
 
-  it('shows warning panels only for critical nodes, even when other nodes have warning text', () => {
+  it('shows warning panels only for critical or notice nodes, and stays free of meta text', () => {
     enterInvestigation();
 
     const normalNode = case000.nodes.find((node) => node.id === 'last-comm');
     const administrativeNode = case000.nodes.find((node) => node.id === 'processing-request');
     const evidenceLossNode = case000.nodes.find((node) => node.id === 'victim-medium');
-    expect(normalNode).toBeDefined();
-    expect(administrativeNode).toBeDefined();
-    expect(evidenceLossNode).toBeDefined();
     expect(normalNode).toMatchObject({ warningLevel: 'none' });
-    expect(normalNode?.warning.trim()).not.toBe('');
     expect(administrativeNode).toMatchObject({ warningLevel: 'none' });
-    expect(administrativeNode?.warning.trim()).not.toBe('');
     expect(evidenceLossNode).toMatchObject({ warningLevel: 'critical' });
 
     clickButton(`ノード：${normalNode?.title}`);
-    expect(container.querySelector('.node-warning')).toBeNull();
+    expect(container.querySelector('.audit-modal .node-warning')).toBeNull();
 
     clickButton(`ノード：${administrativeNode?.title}`);
-    expect(container.querySelector('.node-warning')).toBeNull();
+    expect(container.querySelector('.audit-modal .node-warning')).toBeNull();
 
     clickButton(`ノード：${evidenceLossNode?.title}`);
-    expect(container.querySelector('.node-warning .warning-text')?.textContent).toContain(evidenceLossNode?.warning);
-    const investigationText = container.querySelector('.game-grid')?.textContent ?? '';
+    expect(container.querySelector('.audit-modal .node-warning .warning-text')?.textContent).toContain(evidenceLossNode?.warning);
+    const investigationText = container.querySelector('.audit-room')?.textContent ?? '';
     for (const metaTerm of ['Case001', 'MVP', 'Jam', 'プレイヤー', '予告', '本編']) {
       expect(investigationText).not.toContain(metaTerm);
     }
   });
 
-  it('omits the inspector note section when the selected node has no inspector note', () => {
+  it('shows the audit officer memo even when the inspector note is empty, using the audit hint', () => {
     const node = case000.nodes[0];
     const originalInspectorNote = node.inspectorNote;
     node.inspectorNote = '';
@@ -368,10 +382,9 @@ describe('Persona Null player flow', () => {
       enterInvestigation();
       clickButton(`ノード：${node.title}`);
 
-      expect(container.querySelector('.inspector-note')).toBeNull();
-      const rightPaneText = container.querySelector('.right-pane')?.textContent ?? '';
-      expect(rightPaneText.indexOf('記録要約')).toBeLessThan(rightPaneText.indexOf('警告'));
-      expect(rightPaneText.indexOf('警告')).toBeLessThan(rightPaneText.indexOf('詳細ログ'));
+      const note = container.querySelector('.audit-modal .inspector-note');
+      expect(note?.textContent).toContain('監査官メモ');
+      expect(note?.textContent).toContain('公式記録上の発砲主体は明確');
     } finally {
       node.inspectorNote = originalInspectorNote;
     }
@@ -386,33 +399,23 @@ describe('Persona Null player flow', () => {
     expect(findButton('身体認証の矛盾')).toBeUndefined();
 
     clickButton('ノード：都市警備局の処理要求');
-    expect(container.querySelector('.tag-box')).toBeNull();
+    expect(container.querySelector('.audit-modal .node-detail-actions')?.querySelectorAll('button').length).toBe(1);
     expect(findButton('記憶由来の矛盾')).toBeUndefined();
   });
 
-  it('selects nodes from the memory node index and distinguishes review states', () => {
+  it('distinguishes review states and tracks unread nodes on the stage', () => {
     enterInvestigation();
 
-    expect(container.textContent).toContain('記憶ノード');
-    expect(container.textContent).toContain(`未確認 ${case000.nodes.length}`);
-    expect(findButton('発砲ログ')).toBeDefined();
+    expect(container.querySelector('.stage-unread')?.textContent).toContain(`未読ノード ${case000.nodes.length} / ${case000.nodes.length}`);
+    expect(findButton('ノード：発砲ログ')).toBeDefined();
 
-    clickButton('発砲ログ');
-    expect(container.textContent).toContain(`未確認 ${case000.nodes.length - 1}`);
-    expect(container.querySelector('.record-status-line')?.textContent).toContain('確認済');
-    expect(container.textContent).toContain(case000.nodes[0].type);
-    expect(container.textContent).toContain('必要ノード確認1/4');
-
-    clickButton('判断根拠に追加');
-    expect(container.textContent).toContain('判断根拠1/1');
-
-    clickButton('間宮の発砲記憶');
-    expect(container.textContent).toContain('確認済');
-    expect(container.textContent).toContain('選択中');
+    clickButton('ノード：発砲ログ');
+    expect(container.querySelector('.stage-unread')?.textContent).toContain(`未読ノード ${case000.nodes.length - 1} / ${case000.nodes.length}`);
+    expect(container.querySelector('.audit-modal .record-status-line')?.textContent).toContain('確認済');
+    expect(container.querySelector('[aria-label="判断条件"]')?.textContent).toContain('必須記録確認1/4');
   });
 
-
-  it('shows executed analysis reports on each target node', () => {
+  it('shows executed analysis reports inside the node modal', () => {
     enterInvestigation();
 
     clickButton('ノード：間宮の発砲記憶');
@@ -420,15 +423,13 @@ describe('Persona Null player flow', () => {
     clickButton('欠落8秒の復元');
 
     expect(container.querySelector('.operation-toast')?.textContent).toContain('AUDIT RESOURCE CONSUMED');
-    expect(container.querySelector('[aria-label="処理圧力"]')?.textContent).toContain('処理圧力 16 / 100');
-    expect(container.textContent).toContain('監査リソース2 / 3');
-    expect(container.textContent).toContain('追加解析結果');
-    expect(container.textContent).toContain('欠損区間は断片のみ復元。外部命令断定ではなく境界曖昧化を示唆。');
-    expect(container.querySelector('.node-record-details .analysis-report')).toBeNull();
-    expect(container.querySelector('.analysis-summary > .analysis-report')).not.toBeNull();
+    expect(container.querySelector('[aria-label="処理圧力"]')?.textContent).toContain('処理圧力 16/100');
+    expect(container.querySelector('[aria-label="監査リソース"]')?.textContent).toContain('監査リソース 2/3');
+    expect(container.querySelector('.audit-modal .analysis-summary')?.textContent).toContain('追加照合結果');
+    expect(container.querySelector('.audit-modal .analysis-summary')?.textContent).toContain('欠損区間は断片のみ復元。外部命令断定ではなく境界曖昧化を示唆。');
 
     clickButton('ノード：発砲ログ');
-    expect(container.querySelector('.analysis-report')).toBeNull();
+    expect(container.querySelector('.audit-modal .analysis-summary')).toBeNull();
   });
 
   it('hides analysis actions until their record conditions are met', () => {
@@ -444,7 +445,6 @@ describe('Persona Null player flow', () => {
     expect(findButton('認証鍵と記録装置の照合')).toBeUndefined();
   });
 
-
   const presentPinnedEvidence = (title: string) => {
     const picker = container.querySelector('.pinned-evidence-picker');
     const button = [...(picker?.querySelectorAll('button') ?? [])].find((candidate) => candidate.textContent?.includes(title));
@@ -457,7 +457,7 @@ describe('Persona Null player flow', () => {
 
     clickButton('ノード：義体稼働履歴');
     clickButton('判断根拠に追加');
-    clickButton('監査尋問を開く');
+    clickButton('監査尋問');
 
     clickButton('したがって、間宮怜司を発砲主体として処理可能です。');
     clickButton('証拠を提示');
@@ -471,7 +471,7 @@ describe('Persona Null player flow', () => {
 
     clickButton('ノード：発砲ログ');
     clickButton('判断根拠に追加');
-    clickButton('監査尋問を開く');
+    clickButton('監査尋問');
 
     clickButton('したがって、間宮怜司を発砲主体として処理可能です。');
     clickButton('証拠を提示');
@@ -489,27 +489,19 @@ describe('Persona Null player flow', () => {
     clickButton('調査を開始');
 
     ['焼却処理キュー', '反復発話ログ', '断片記憶', '自己保存反応'].forEach((title) => clickButton(`ノード：${title}`));
-    expect(container.textContent).toContain('必要ノード確認4/4');
+    expect(container.querySelector('[aria-label="判断条件"]')?.textContent).toContain('必須記録確認4/4');
     clickButton('ノード：反復発話ログ');
-    expect(container.textContent).toContain('私は、見ていました');
-    expect(container.textContent).toContain('犯人の顔ではなく');
-    expect(container.textContent).toContain('通常認証から');
-    expect(container.textContent).toContain('へ切り替わり');
-    expect(container.textContent).toContain('偽装処理された瞬間');
+    expect(container.querySelector('.audit-modal')?.textContent).toContain('私は、見ていました');
+    expect(container.querySelector('.audit-modal')?.textContent).toContain('犯人の顔ではなく');
 
     clickButton('ノード：断片記憶');
-    expect(container.querySelector('.node-warning')).toBeNull();
-    expect(container.textContent).toContain('表情・視線・生体反応に発砲意図は記録されていない');
-    expect(container.textContent).toContain('発砲命令は');
-    expect(container.textContent).toContain('で処理されている');
-    expect(container.textContent).toContain('発行元と実行主体');
-    expect(container.textContent).toContain('記録されていない');
-    expect(container.textContent).toContain('詳細ログ');
+    expect(container.querySelector('.audit-modal')?.textContent).toContain('表情・視線・生体反応に発砲意図は記録されていない');
+    expect(container.querySelector('.audit-modal .node-log-section')?.textContent).toContain('詳細ログ');
 
     clickButton('判断根拠に追加');
     clickButton('記憶由来の矛盾');
-    expect(findButton('最終判断へ進む')?.disabled).toBe(false);
-    clickButton('最終判断へ進む');
+    expect(findButton('最終裁定へ進む')?.disabled).toBe(false);
+    clickButton('最終裁定へ進む');
 
     expect(container.textContent).toContain('証言能力なしとして焼却処理を承認');
     expect(container.textContent).toContain('人格断片として証拠保全');

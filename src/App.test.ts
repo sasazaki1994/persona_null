@@ -345,12 +345,12 @@ describe('case000 data', () => {
     ]);
   });
 
-  it('shows only the newest log in the compact audit console', () => {
+  it('shows only the newest log in the single-line status footer', () => {
     const appSource = terminologyFiles['./App.tsx'];
 
     expect(appSource).toContain('setSystemLogs((logs) => [...logs, message].slice(-8))');
     expect(appSource).toContain("props.systemLogs.at(-1)");
-    expect(appSource).toContain('AUDIT LOG');
+    expect(appSource).toContain('latest-log');
     expect(appSource).not.toContain('<summary>ログを表示</summary>');
   });
 

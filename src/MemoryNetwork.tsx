@@ -239,6 +239,19 @@ export function MemoryNetwork({
       analysisMarker.userData.state = 'analysis';
       networkGroup.add(analysisMarker);
       objects.push(analysisMarker);
+
+      // Small pin marker that floats just above pinned (judgment-evidence) nodes.
+      const pinMarker = new THREE.Mesh(
+        new THREE.ConeGeometry(0.05, 0.12, 8),
+        new THREE.MeshBasicMaterial({ color: '#bafff8', transparent: true, opacity: 0.92, depthWrite: false }),
+      );
+      pinMarker.position.copy(mesh.position);
+      pinMarker.position.y += radius + 0.26;
+      pinMarker.rotation.x = Math.PI;
+      pinMarker.visible = false;
+      pinMarker.userData.state = 'pin-marker';
+      networkGroup.add(pinMarker);
+      objects.push(pinMarker);
       stateObjects.set(node.id, objects);
     });
 
@@ -330,6 +343,13 @@ export function MemoryNetwork({
             ring.material.opacity = reduceMotion ? 0.32 : 0.25 + (Math.sin(elapsed * 2.2 + mesh.position.x) + 1) * 0.1;
             object.rotation.z = reduceMotion ? 0 : Math.sin(elapsed * 0.9 + mesh.position.y) * 0.16;
           } else if (state === 'analysis') object.visible = analyzed;
+          else if (state === 'pin-marker') {
+            object.visible = pinned;
+            const radius = node.importance === 'critical' ? 0.22 : 0.16;
+            const bob = reduceMotion ? 0 : Math.sin(elapsed * 2.6 + mesh.position.x) * 0.03;
+            object.position.y = mesh.position.y + radius + 0.26 + bob;
+            object.rotation.y = reduceMotion ? 0 : elapsed * 0.9;
+          }
         });
       });
       linkLines.forEach((line, index) => {
