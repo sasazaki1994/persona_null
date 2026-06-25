@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { aggregateAuditTendency } from './auditTendency';
-import { applyAuditPressureEvent, createAuditPressureEvent } from './auditPressure';
+import { applyAuditPressureEvent, auditPressureLevelLabels, auditPressureMessages, createAuditPressureEvent } from './auditPressure';
 import { buildAuditReportCheck } from './auditReport';
 import { canUnlockJudgment, getCurrentGuidance, getJudgmentRequirements, isInvestigationActionUnlocked, type CurrentGuidance, type JudgmentRequirement } from './auditRules';
 import { case000, cases, contradictionTagLabels } from './data/cases';
@@ -614,6 +614,51 @@ function InvestigationActionControl(props: {
   );
 }
 
+function AuditReportPanel({ report }: { report: AuditReportCheck }) {
+  const primaryWarning = report.warnings[0];
+  const statusLabel = report.state === 'insufficient'
+    ? '裁定条件未達'
+    : report.state === 'pressure_ruling'
+      ? '圧力下裁定'
+      : report.state === 'ruling_supported'
+        ? '要件充足'
+        : '裁定可能';
+
+  return (
+    <section className={`audit-report-check compact-report audit-report-${report.state}`} aria-label="監査報告書チェック">
+      <strong>監査報告書：{statusLabel}</strong>
+      <span>記録 {report.reviewedNodes}/{report.totalNodes}</span>
+      <span>根拠 {report.pinnedEvidence}</span>
+      <span>分類 {report.taggedContradictions}</span>
+      {primaryWarning && <span className="report-warning">{primaryWarning}</span>}
+    </section>
+  );
+}
+
+function PressureConsole({ auditPressure, canJudge }: { auditPressure: AuditPressureState; canJudge: boolean }) {
+  const levelLabel = auditPressureLevelLabels[auditPressure.level];
+  const levelMessage = auditPressureMessages[auditPressure.level];
+
+  return (
+    <section className={`pressure-console audit-pressure-${auditPressure.level}`} aria-label="処理圧力状態">
+      <div className="pressure-console-head">
+        <span className="pressure-console-label">処理圧力</span>
+        <strong>{auditPressure.value}/{auditPressure.max}</strong>
+        <span className="pressure-console-level">{levelLabel}</span>
+        {canJudge && <span className="pressure-console-ready">JUDGMENT READY</span>}
+      </div>
+      <progress value={auditPressure.value} max={auditPressure.max} aria-hidden="true" />
+      <p className="pressure-console-message">{levelMessage}</p>
+      {auditPressure.level === 'high' && (
+        <p className="audit-pressure-warning" role="status">警告：処理遅延により、行政側から裁定期限の再照会が入っています。</p>
+      )}
+      {auditPressure.level === 'critical' && (
+        <p className="audit-pressure-critical" role="alert">警告：未確定人格記録の行政移送要求が発生しています。強制処理は行われませんが、記録に残ります。</p>
+      )}
+    </section>
+  );
+}
+
 function OperationToast({ message }: { message: string | null }) {
   if (!message) return null;
   return (
@@ -670,7 +715,9 @@ function InvestigationScreen(props: InvestigationProps) {
           <ConditionChip label="判断根拠" current={props.pinnedNodeIds.length} required={1} done={props.pinnedNodeIds.length >= 1} />
           <ConditionChip label="矛盾分類" current={taggedNodeCount} required={1} done={taggedNodeCount >= 1} />
           <span className="resource-chip" aria-label="監査リソース">監査リソース {props.resources}/{caseRecord.auditResourceMax}</span>
-          <span className={`pressure-chip pressure-${props.auditPressure.level}`} aria-label="処理圧力">処理圧力 {props.auditPressure.value}/{props.auditPressure.max}</span>
+          <span className={`pressure-chip pressure-${props.auditPressure.level}`} aria-label="処理圧力">
+            処理圧力 {props.auditPressure.value}/{props.auditPressure.max} · {auditPressureLevelLabels[props.auditPressure.level]}
+          </span>
         </div>
         <div className="topbar-actions">
           <button className="secondary" type="button" onClick={() => props.onOpenModal({ type: 'case_summary' })}>事件概要</button>
@@ -696,11 +743,13 @@ function InvestigationScreen(props: InvestigationProps) {
         <MemoryNetwork actions={caseRecord.actions} nodes={caseRecord.nodes} selectedNodeId={props.selectedNodeId} visitedNodeIds={props.visitedNodeIds} pinnedNodeIds={props.pinnedNodeIds} taggedNodes={props.taggedNodes} executedActionIds={props.executedActionIds} onSelectNode={props.onSelectNode} />
       </section>
 
-      <footer className="audit-next-step" aria-label="次の手続き">
+      <footer className="audit-next-step" aria-label="裁定コンソール">
         <div className="next-step-main">
           <span className="next-step-label">次の手続き</span>
           <p className={`next-step-line ${props.canJudge ? 'ready' : ''}`}>{nextStepLine}</p>
         </div>
+        <AuditReportPanel report={props.auditReportCheck} />
+        <PressureConsole auditPressure={props.auditPressure} canJudge={props.canJudge} />
         <p className="latest-log" aria-label="直近の照合">直近：{props.systemLogs.at(-1) ?? '—'}</p>
       </footer>
 
@@ -763,7 +812,12 @@ function AuditModalLayer(props: InvestigationProps & { analysisReports: Investig
         <PersonRosterModalContent caseRecord={caseRecord} onOpenPerson={(personId) => props.onOpenModal({ type: 'person_detail', personId })} />
       )}
       {modal.type === 'person_detail' && modalPerson && (
-        <PersonDetailModalContent person={modalPerson} nodes={caseRecord.nodes} onBack={() => props.onOpenModal({ type: 'person_roster' })} />
+        <PersonDetailModalContent
+          person={modalPerson}
+          nodes={caseRecord.nodes}
+          onBack={() => props.onOpenModal({ type: 'person_roster' })}
+          onOpenNode={props.onSelectNode}
+        />
       )}
       {modal.type === 'audit_hearing' && caseRecord.auditHearing && (
         <AuditHearingModalContent
@@ -907,7 +961,7 @@ function PersonRosterModalContent({ caseRecord, onOpenPerson }: { caseRecord: Ca
   );
 }
 
-function PersonDetailModalContent({ person, nodes, onBack }: { person: PersonLog; nodes: MemoryNode[]; onBack: () => void }) {
+function PersonDetailModalContent({ person, nodes, onBack, onOpenNode }: { person: PersonLog; nodes: MemoryNode[]; onBack: () => void; onOpenNode?: (nodeId: string) => void }) {
   const relatedNodes = getRelatedNodes(person, nodes);
   const legalStatus = getLegalPersonaStatus(person);
 
@@ -921,7 +975,17 @@ function PersonDetailModalContent({ person, nodes, onBack }: { person: PersonLog
       {relatedNodes.length > 0 && (
         <section className="person-related-nodes">
           <h3>関係する記録</h3>
-          <ul>{relatedNodes.map((node) => <li key={node.id}>{node.title}</li>)}</ul>
+          {onOpenNode ? (
+            <div className="related-node-links">
+              {relatedNodes.map((node) => (
+                <button type="button" className="related-node-link" key={node.id} onClick={() => onOpenNode(node.id)}>
+                  {node.title}
+                </button>
+              ))}
+            </div>
+          ) : (
+            <ul>{relatedNodes.map((node) => <li key={node.id}>{node.title}</li>)}</ul>
+          )}
         </section>
       )}
       <div className="modal-actions">
@@ -996,7 +1060,18 @@ function DecisionModalContent({ auditPressure, auditReportCheck, caseRecord, pin
           return <p key={nodeId}>・{node?.title ?? nodeId}：{tags.map((tag) => contradictionTagLabels[tag]).join(' / ')}</p>;
         }) : <p>矛盾分類なし。</p>}</div>
       </section>
-      <p>{auditReportCheck.summary} / 処理圧力 {auditPressure.value} ({auditPressure.level.toUpperCase()})</p>
+      <section className={`decision-pressure audit-pressure-${auditPressure.level}`} aria-label="処理圧力下での裁定">
+        <h3>処理圧力下での裁定</h3>
+        <p>
+          {auditReportCheck.summary} / 現在 {auditPressure.value}/{auditPressure.max}（{auditPressureLevelLabels[auditPressure.level]}）
+        </p>
+        <small>{auditPressureMessages[auditPressure.level]}</small>
+        {auditReportCheck.warnings.length > 0 && (
+          <ul className="decision-pressure-warnings">
+            {auditReportCheck.warnings.map((warning) => <li key={warning}>{warning}</li>)}
+          </ul>
+        )}
+      </section>
       <div className="decision-list modal-decision-list">
         {caseRecord.decisions.map((option, index) => {
           const acceptedNodes = caseRecord.nodes.filter((node) => option.acceptedEvidenceNodeIds?.includes(node.id));

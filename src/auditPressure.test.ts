@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { applyAuditPressureEvent, createAuditPressureEvent, getAuditPressureLevel } from './auditPressure';
+import { applyAuditPressureEvent, auditPressureLevelLabels, auditPressureMessages, createAuditPressureEvent, getAuditPressureLevel } from './auditPressure';
+import type { AuditPressureLevel } from './types';
 import type { AuditPressureState } from './types';
 
 describe('audit pressure rules', () => {
@@ -7,6 +8,13 @@ describe('audit pressure rules', () => {
     expect([0, 29, 30, 59, 60, 79, 80, 100].map(getAuditPressureLevel)).toEqual([
       'low', 'low', 'medium', 'medium', 'high', 'high', 'critical', 'critical',
     ]);
+  });
+
+  it('provides a label and player-facing message for every pressure level', () => {
+    (['low', 'medium', 'high', 'critical'] as AuditPressureLevel[]).forEach((level) => {
+      expect(auditPressureLevelLabels[level].length).toBeGreaterThan(0);
+      expect(auditPressureMessages[level]).toContain('処理圧力');
+    });
   });
 
   it('applies events, retains history, and clamps the value at 100', () => {

@@ -2984,6 +2984,7 @@ button:hover:not(:disabled):not(.annotated-keyword):not(.typewriter-skip)::after
   color: #a9d3de;
   font-variant-numeric: tabular-nums;
 }
+.pressure-chip.pressure-medium { border-color: rgba(255, 193, 92, 0.45); color: #ffd28a; }
 .pressure-chip.pressure-high { border-color: rgba(255, 180, 77, 0.6); color: #ffce8a; }
 .pressure-chip.pressure-critical { border-color: var(--warning-red); color: #ffb3c2; }
 
@@ -3020,23 +3021,52 @@ button:hover:not(:disabled):not(.annotated-keyword):not(.typewriter-skip)::after
 .stage-caption .importance-legend { position: static; display: flex; grid-column: auto; grid-row: auto; max-width: none; margin: 0; }
 .audit-stage .network-stage { min-height: 0; height: 100%; }
 
-/* Bottom bar: one-line next step + a single subdued latest-log line. */
+/* Bottom bar: next step, audit report check, pressure console, latest log. */
 .audit-next-step {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.4rem 1rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1.1fr) minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 0.55rem 0.85rem;
   padding: 0.6rem 0.9rem;
   border: 1px solid #245a72;
   background: rgba(3, 10, 18, 0.92);
   box-shadow: inset 0 0 24px rgba(71, 222, 255, 0.06);
 }
-.next-step-main { display: flex; align-items: baseline; gap: 0.7rem; min-width: 0; }
+.next-step-main { display: flex; align-items: baseline; gap: 0.7rem; min-width: 0; grid-column: 1; }
 .next-step-label { color: #6de7ff; font-size: 0.66rem; letter-spacing: 0.18em; text-transform: uppercase; white-space: nowrap; }
 .next-step-line { margin: 0; color: #e6fbff; font-size: 0.95rem; }
 .next-step-line.ready { color: var(--accent-green); }
-.audit-next-step .latest-log { margin: 0; color: #6f8b92; font-size: 0.72rem; letter-spacing: 0.02em; max-width: 48%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.audit-next-step .latest-log { margin: 0; color: #6f8b92; font-size: 0.72rem; letter-spacing: 0.02em; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; align-self: center; }
+.audit-next-step .audit-report-check.compact-report { margin: 0; grid-column: 2; }
+.pressure-console {
+  display: grid;
+  gap: 0.28rem;
+  min-width: 0;
+  grid-column: 3;
+  border: 1px solid rgba(99, 213, 210, 0.22);
+  border-left: 3px solid #65878b;
+  background: rgba(3, 13, 17, 0.72);
+  padding: 0.45rem 0.6rem;
+}
+.pressure-console-head { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem 0.55rem; color: #a9d3de; font-size: 0.68rem; }
+.pressure-console-label { color: #6f8b92; letter-spacing: 0.12em; text-transform: uppercase; }
+.pressure-console-head strong { color: #e6fbff; font-variant-numeric: tabular-nums; }
+.pressure-console-level { border: 1px solid rgba(126, 234, 255, 0.35); padding: 0.08rem 0.35rem; color: #bdf8ff; font: 0.6rem/1 var(--font-mono); letter-spacing: 0.08em; }
+.pressure-console-ready { color: var(--accent-green); font: 0.6rem/1 var(--font-mono); letter-spacing: 0.08em; }
+.pressure-console progress { width: 100%; height: 0.38rem; accent-color: var(--accent-cyan); }
+.pressure-console-message { margin: 0; color: #8fb8c0; font-size: 0.66rem; line-height: 1.4; }
+.pressure-console.audit-pressure-medium { border-left-color: #d9a957; }
+.pressure-console.audit-pressure-medium progress { accent-color: #ffc15c; }
+.pressure-console.audit-pressure-high,
+.pressure-console.audit-pressure-critical { border-left-color: var(--warning-red); }
+.pressure-console.audit-pressure-high progress,
+.pressure-console.audit-pressure-critical progress { accent-color: var(--warning-red); }
+.pressure-console .audit-pressure-warning { margin: 0.15rem 0 0; border-left: 2px solid #ffc15c; padding-left: 0.45rem; color: #ffd28a; font-size: 0.64rem; line-height: 1.4; }
+.pressure-console .audit-pressure-critical { margin: 0.15rem 0 0; border: 1px solid rgba(255, 92, 114, 0.55); background: rgba(82, 9, 25, 0.35); padding: 0.45rem 0.55rem; color: #ffc0c9; font-size: 0.64rem; line-height: 1.4; }
+.decision-pressure-warnings { margin: 0.45rem 0 0; padding-left: 1rem; color: #e5b96e; }
+.decision-pressure-warnings li { margin: 0.12rem 0; }
+.related-node-links { display: flex; flex-wrap: wrap; gap: 0.45rem; margin-top: 0.45rem; }
+.related-node-link { width: auto; min-height: 2rem; padding: 0.35rem 0.75rem; }
 
 /* Dim the live stage while a modal is open. */
 .audit-room:has(.audit-modal-backdrop) .audit-stage,
@@ -3090,5 +3120,7 @@ button:hover:not(:disabled):not(.annotated-keyword):not(.typewriter-skip)::after
   .audit-topbar { grid-template-columns: 1fr; }
   .topbar-actions { justify-content: flex-start; }
   .judge-reason { text-align: left; }
-  .audit-next-step .latest-log { max-width: 100%; }
+  .audit-next-step { grid-template-columns: 1fr; }
+  .audit-next-step .audit-report-check.compact-report,
+  .pressure-console { grid-column: 1; }
 }
